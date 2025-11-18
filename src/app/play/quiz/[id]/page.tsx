@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import TimerBar from '@/components/TimerBar';
@@ -33,8 +33,10 @@ const QuizPage = () => {
   const [timerKey, setTimerKey] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
+  const missingQuizRedirectedRef = useRef(false);
   useEffect(() => {
-    if (!questions.length) {
+    if (!questions.length && !missingQuizRedirectedRef.current) {
+      missingQuizRedirectedRef.current = true;
       router.replace(routeId === 'upload' ? '/play/import' : '/play/library');
     }
   }, [questions.length, routeId, router]);

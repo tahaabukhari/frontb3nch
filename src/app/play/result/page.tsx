@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -24,8 +24,10 @@ const ResultPage = () => {
   }));
   const [copied, setCopied] = useState(false);
 
+  const redirectRef = useRef(false);
   useEffect(() => {
-    if (!questions.length) {
+    if (!questions.length && !redirectRef.current) {
+      redirectRef.current = true;
       router.replace('/play/library');
     }
   }, [questions.length, router]);
