@@ -1,17 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '@/lib/store';
 import { calculateAverage, computeScorePercent, formatDuration, totalDuration } from '@/lib/utils';
-
-const Result3D = dynamic(() => import('@/components/Result3D'), {
-  ssr: false,
-  loading: () => <div className="h-72 w-full animate-pulse rounded-3xl bg-slate-800" />,
-});
+import ResultBadge from '@/components/ResultBadge';
 
 const ResultPage = () => {
   const router = useRouter();
@@ -100,7 +95,7 @@ const ResultPage = () => {
             </div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Deck: {quizId || 'custom upload'}</p>
           </div>
-          <Result3D score={percent} />
+          <ResultBadge score={percent} />
         </div>
         <div className="grid gap-8 lg:grid-cols-2">
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-left shadow-inner sm:p-8">
