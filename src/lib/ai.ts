@@ -3,7 +3,7 @@ import { GoogleGenerativeAI, type GenerativeModel, type ModelParams } from '@goo
 export const getGeminiKey = () => {
   const key = process.env['GEMINI-API-KEY'] ?? process.env.GEMINI_API_KEY;
   if (!key) {
-    throw new Error('Missing GEMINI-API-KEY environment variable');
+    throw new Error('Missing GEMINI_API_KEY or GEMINI-API-KEY environment variable');
   }
   return key;
 };
