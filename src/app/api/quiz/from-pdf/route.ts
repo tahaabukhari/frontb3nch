@@ -10,16 +10,33 @@ export const runtime = 'nodejs';
 
 type PdfParseFn = (dataBuffer: Buffer) => Promise<{ text: string }>;
 
+type PdfParseModule = {
+  default?: PdfParseFn;
+  PDFParse?: new (options: { data: Buffer }) => { getText: () => Promise<{ text: string }> };
+};
+
 let cachedPdfParseFn: PdfParseFn | null = null;
 const loadPdfParse = async (): Promise<PdfParseFn> => {
   if (cachedPdfParseFn) return cachedPdfParseFn;
-  const mod = (await import('pdf-parse')) as { default?: PdfParseFn };
-  const fn = typeof mod?.default === 'function' ? mod.default : ((mod as unknown) as PdfParseFn);
-  if (typeof fn !== 'function') {
-    throw new Error('pdf-parse module did not export a function');
+  const mod = (await import('pdf-parse')) as PdfParseModule | PdfParseFn;
+  if (typeof mod === 'function') {
+    cachedPdfParseFn = mod as PdfParseFn;
+    return cachedPdfParseFn;
   }
-  cachedPdfParseFn = fn;
-  return fn;
+  if (typeof (mod as PdfParseModule)?.default === 'function') {
+    cachedPdfParseFn = (mod as PdfParseModule).default as PdfParseFn;
+    return cachedPdfParseFn;
+  }
+  if (typeof (mod as PdfParseModule)?.PDFParse === 'function') {
+    cachedPdfParseFn = async (dataBuffer: Buffer) => {
+      const ParserCtor = (mod as PdfParseModule).PDFParse!;
+      const parser = new ParserCtor({ data: dataBuffer });
+      const payload = await parser.getText();
+      return typeof payload === 'string' ? { text: payload } : payload;
+    };
+    return cachedPdfParseFn;
+  }
+  throw new Error('pdf-parse module did not expose a parser entry point');
 };
 
 const requestSchema = z.object({
