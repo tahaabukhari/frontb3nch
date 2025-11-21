@@ -201,8 +201,9 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to analyze PDF';
     console.error('from-pdf error', error);
-    return NextResponse.json({ error: 'Failed to analyze PDF' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to analyze PDF', detail: message }, { status: 500 });
   }
 }
 

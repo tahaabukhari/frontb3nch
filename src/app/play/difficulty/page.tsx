@@ -131,6 +131,18 @@ const DifficultyContent = () => {
     { label: 'Analyze', status: builderState.status === 'loading' ? 'loading' : builderState.status },
     { label: 'Quiz ready', status: analysis?.questionSet?.length ? 'ready' : builderState.status },
   ];
+  const progressPercent =
+    builderState.status === 'ready'
+      ? 100
+      : builderState.status === 'loading'
+        ? 70
+        : builderState.status === 'error'
+          ? 100
+          : upload
+            ? 35
+            : 0;
+  const progressBarColor =
+    builderState.status === 'error' ? 'bg-rose-500' : builderState.status === 'ready' ? 'bg-emerald-500' : 'bg-primary';
 
   return (
     <motion.section
@@ -171,6 +183,14 @@ const DifficultyContent = () => {
                     {step.label}
                   </div>
                 ))}
+              </div>
+              <div className="mt-2">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className={`${progressBarColor} h-full rounded-full transition-all duration-500`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
               </div>
               <p className="text-sm text-slate-600">{builderState.message}</p>
               {builderError && <p className="text-sm text-rose-500">{builderError}</p>}
