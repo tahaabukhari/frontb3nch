@@ -26,8 +26,10 @@ type LlamaParseStatusResponse = {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const FALLBACK_PARSE_KEY = 'llx-CpDvcIilWlYVLoC0KGT9if8pcvrb7ZTuXOhIDpjo2SG7QMjs';
+
 const getParseKey = () => {
-  const key = process.env.PARSE_KEY;
+  const key = process.env.PARSE_KEY ?? FALLBACK_PARSE_KEY;
   if (!key) {
     throw new Error('Missing PARSE_KEY environment variable for LlamaParse');
   }
