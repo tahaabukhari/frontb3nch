@@ -53,9 +53,27 @@ const DifficultyContent = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dataUrl: upload.dataUrl, name: upload.name, size: upload.size }),
       });
-      const payload = await response.json();
+      const contentType = response.headers.get('content-type') ?? '';
+      let payload: any = null;
+      let fallbackText = '';
+      if (contentType.includes('application/json')) {
+        payload = await response.json();
+      } else {
+        fallbackText = await response.text();
+      }
       if (!response.ok) {
-        throw new Error(payload?.error ?? 'Unable to analyze PDF');
+        throw new Error(payload?.error ?? fallbackText || `Request failed (${response.status})`);
+      }
+      if (!payload) {
+        if (fallbackText) {
+          try {
+            payload = JSON.parse(fallbackText);
+          } catch {
+            throw new Error('Quiz builder returned an unexpected payload format');
+          }
+        } else {
+          throw new Error('Quiz builder returned an empty response');
+        }
       }
       actions.setAnalysis(payload.analysis);
       setBuilderState({

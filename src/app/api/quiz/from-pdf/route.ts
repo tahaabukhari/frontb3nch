@@ -6,8 +6,21 @@ import { chunkForPrompt, dataUrlToBuffer, sanitizePdfText } from '@/lib/pdf';
 import type { Question } from '@/lib/questions';
 import { parsePdfWithLlama } from '@/lib/llamaparse';
 
-// Use require for pdf-parse CommonJS compatibility
-const { PDFParse } = require('pdf-parse');
+export const runtime = 'nodejs';
+
+type PdfParseFn = (dataBuffer: Buffer) => Promise<{ text: string }>;
+
+let cachedPdfParseFn: PdfParseFn | null = null;
+const loadPdfParse = async (): Promise<PdfParseFn> => {
+  if (cachedPdfParseFn) return cachedPdfParseFn;
+  const mod = (await import('pdf-parse')) as { default?: PdfParseFn };
+  const fn = typeof mod?.default === 'function' ? mod.default : ((mod as unknown) as PdfParseFn);
+  if (typeof fn !== 'function') {
+    throw new Error('pdf-parse module did not export a function');
+  }
+  cachedPdfParseFn = fn;
+  return fn;
+};
 
 const requestSchema = z.object({
   dataUrl: z.string().min(1),
@@ -107,8 +120,8 @@ export async function POST(request: Request) {
       cleaned = sanitizePdfText(llamaText);
     } catch (llamaError) {
       console.warn('llamaparse primary parse failed, falling back to pdf-parse', llamaError);
-      const parser = new PDFParse({ data: buffer });
-      const pdfData = await parser.getText();
+      const pdfParse = await loadPdfParse();
+      const pdfData = await pdfParse(buffer);
       cleaned = sanitizePdfText(pdfData.text);
     }
     if (!cleaned) {
