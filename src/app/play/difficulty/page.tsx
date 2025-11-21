@@ -62,7 +62,7 @@ const DifficultyContent = () => {
         fallbackText = await response.text();
       }
       if (!response.ok) {
-        throw new Error(payload?.error ?? fallbackText || `Request failed (${response.status})`);
+        throw new Error((payload?.error ?? fallbackText) || `Request failed (${response.status})`);
       }
       if (!payload) {
         if (fallbackText) {
