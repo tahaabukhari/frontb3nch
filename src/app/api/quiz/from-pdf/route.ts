@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getGeminiModel } from '@/lib/ai';
 import { chunkForPrompt, dataUrlToBuffer, sanitizePdfText } from '@/lib/pdf';
 import type { Question } from '@/lib/questions';
+import { parsePdfWithLlama } from '@/lib/llamaparse';
 
 // Use require for pdf-parse CommonJS compatibility
 const { PDFParse } = require('pdf-parse');
@@ -100,22 +101,39 @@ export async function POST(request: Request) {
     if (buffer.length > 15 * 1024 * 1024) {
       return NextResponse.json({ error: 'File exceeds 15MB limit' }, { status: 413 });
     }
-    const parser = new PDFParse({ data: buffer });
-    const pdfData = await parser.getText();
-    const cleaned = sanitizePdfText(pdfData.text);
+    let cleaned = '';
+    try {
+      const llamaText = await parsePdfWithLlama(buffer, name);
+      cleaned = sanitizePdfText(llamaText);
+    } catch (llamaError) {
+      console.warn('llamaparse primary parse failed, falling back to pdf-parse', llamaError);
+      const parser = new PDFParse({ data: buffer });
+      const pdfData = await parser.getText();
+      cleaned = sanitizePdfText(pdfData.text);
+    }
     if (!cleaned) {
       return NextResponse.json({ error: 'Unable to read text from PDF' }, { status: 422 });
     }
 
     const sections = chunkForPrompt(cleaned).slice(0, 6);
-    const docContext = sections.map((chunk, idx) => `Section ${idx + 1}:\n${chunk}`).join('\n\n');
-
     const instructions = [
       'You are ParhaiPlay, a study quiz builder.',
       'Analyze the supplied PDF content and craft a JSON response that matches the provided schema.',
       'Questions should stay faithful to the facts, be concise (<260 chars), and include novel distractors.',
       'Focus on medium/hard difficulty for college-level learners.',
     ].join(' ');
+    const promptPayload = {
+      role: 'ParhaiPlay quiz builder',
+      directives: instructions,
+      source: {
+        name,
+        chunkCount: sections.length,
+        sections: sections.map((chunk, idx) => ({
+          id: idx + 1,
+          text: chunk,
+        })),
+      },
+    };
 
     const model = getGeminiModel('gemini-1.5-flash', {
       generationConfig: {
@@ -125,9 +143,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const result = await model.generateContent(
-      `${instructions}\nSource file: ${name}\n\n${docContext}`
-    );
+    const result = await model.generateContent(JSON.stringify(promptPayload));
 
     const rawText = result.response.text();
     if (!rawText) {
