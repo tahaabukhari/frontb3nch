@@ -1,42 +1,11 @@
 import { NextResponse } from 'next/server';
 import { SchemaType, type Schema } from '@google/generative-ai';
 import { z } from 'zod';
-import { getGeminiModel } from '@/lib/ai';
-import { chunkForPrompt, dataUrlToBuffer, sanitizePdfText } from '@/lib/pdf';
+import { getGeminiKey } from '@/lib/ai';
+import { dataUrlToBuffer } from '@/lib/pdf';
 import type { Question } from '@/lib/questions';
 
 export const runtime = 'nodejs';
-
-type PdfParseFn = (dataBuffer: Buffer) => Promise<{ text: string }>;
-
-type PdfParseModule = {
-  default?: PdfParseFn;
-  PDFParse?: new (options: { data: Buffer }) => { getText: () => Promise<{ text: string }> };
-};
-
-let cachedPdfParseFn: PdfParseFn | null = null;
-const loadPdfParse = async (): Promise<PdfParseFn> => {
-  if (cachedPdfParseFn) return cachedPdfParseFn;
-  const mod = (await import('pdf-parse')) as PdfParseModule | PdfParseFn;
-  if (typeof mod === 'function') {
-    cachedPdfParseFn = mod as PdfParseFn;
-    return cachedPdfParseFn;
-  }
-  if (typeof (mod as PdfParseModule)?.default === 'function') {
-    cachedPdfParseFn = (mod as PdfParseModule).default as PdfParseFn;
-    return cachedPdfParseFn;
-  }
-  if (typeof (mod as PdfParseModule)?.PDFParse === 'function') {
-    cachedPdfParseFn = async (dataBuffer: Buffer) => {
-      const ParserCtor = (mod as PdfParseModule).PDFParse!;
-      const parser = new ParserCtor({ data: dataBuffer });
-      const payload = await parser.getText();
-      return typeof payload === 'string' ? { text: payload } : payload;
-    };
-    return cachedPdfParseFn;
-  }
-  throw new Error('pdf-parse module did not expose a parser entry point');
-};
 
 const requestSchema = z.object({
   dataUrl: z.string().min(1),
@@ -135,58 +104,63 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File exceeds 15MB limit' }, { status: 413 });
     }
 
-    // Simplified approach: Use pdf-parse library only for maximum reliability
-    let cleaned = '';
+    // Use Gemini's native file upload API (Files API) to handle PDF directly
+    let fileUri = '';
 
     try {
-      console.log('[PDF Parse] Loading pdf-parse library...');
-      const pdfParse = await loadPdfParse();
-      console.log('[PDF Parse] Library loaded, parsing PDF...');
+      console.log('[Gemini Files] Uploading PDF to Gemini Files API...');
+      const { GoogleAIFileManager } = await import('@google/generative-ai/server');
 
-      const pdfData = await pdfParse(buffer);
-      console.log('[PDF Parse] Raw extraction complete. Text length:', pdfData.text?.length || 0);
+      const fileManager = new GoogleAIFileManager(getGeminiKey());
 
-      cleaned = sanitizePdfText(pdfData.text);
-      console.log('[PDF Parse] After sanitization:', cleaned.length, 'characters');
+      // Create a temporary file from buffer
+      const { writeFile, unlink } = await import('fs/promises');
+      const { join } = await import('path');
+      const { tmpdir } = await import('os');
 
-      if (!cleaned || cleaned.length < 50) {
-        console.error('[PDF Parse] Extracted text too short:', cleaned.length);
-        return NextResponse.json(
-          {
-            error: 'PDF appears to be empty or unreadable',
-            detail: 'Please ensure your PDF contains extractable text (not just images) and is not corrupted or password-protected.'
-          },
-          { status: 422 }
-        );
-      }
+      const tempPath = join(tmpdir(), `upload-${Date.now()}-${name}`);
+      await writeFile(tempPath, buffer);
 
-    } catch (pdfError) {
-      console.error('[PDF Parse] Failed:', pdfError);
-      const errorMsg = pdfError instanceof Error ? pdfError.message : 'Unknown parsing error';
+      console.log('[Gemini Files] Uploading file:', tempPath);
+      const uploadResult = await fileManager.uploadFile(tempPath, {
+        mimeType: 'application/pdf',
+        displayName: name,
+      });
+
+      fileUri = uploadResult.file.uri;
+      console.log('[Gemini Files] Upload successful. URI:', fileUri);
+
+      // Clean up temp file
+      await unlink(tempPath);
+
+    } catch (uploadError) {
+      console.error('[Gemini Files] Upload failed:', uploadError);
+      const errorMsg = uploadError instanceof Error ? uploadError.message : 'Failed to upload PDF';
       return NextResponse.json(
         {
-          error: 'Failed to extract text from PDF',
+          error: 'Failed to process PDF file',
           detail: errorMsg,
-          hint: 'Please ensure your PDF contains text (not just images) and is not corrupted or password-protected.'
         },
-        { status: 422 }
+        { status: 500 }
       );
     }
 
-    console.log('[Gemini] Preparing content sections...');
-    const sections = chunkForPrompt(cleaned).slice(0, 6);
-    const docContext = sections.map((chunk, idx) => `Section ${idx + 1}:\n${chunk}`).join('\n\n');
+    console.log('[Gemini] Preparing prompt for PDF analysis...');
     const instructions = [
       'You are ParhaiPlay, a study quiz builder.',
       'Analyze the supplied PDF content and craft a JSON response that matches the provided schema.',
       'Questions should stay faithful to the facts, be concise (<260 chars), and include novel distractors.',
       'Focus on medium/hard difficulty for college-level learners.',
+      'Extract key concepts from the PDF and create 8-12 challenging questions.',
     ].join(' ');
 
     console.log('[Gemini] Initializing model gemini-2.5-flash...');
     let model;
     try {
-      model = getGeminiModel('gemini-2.5-flash', {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(getGeminiKey());
+      model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: analysisSchema,
@@ -200,11 +174,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to initialize AI model', detail: msg }, { status: 500 });
     }
 
-    console.log('[Gemini] Sending generation request. Context length:', docContext.length);
+    console.log('[Gemini] Sending generation request with PDF file...');
     let result;
     try {
-      const promptText = `${instructions}\nSource file: ${name}\n\n${docContext}`;
-      result = await model.generateContent(promptText);
+      result = await model.generateContent([
+        {
+          fileData: {
+            mimeType: 'application/pdf',
+            fileUri: fileUri,
+          },
+        },
+        { text: instructions },
+      ]);
       console.log('[Gemini] Content generated successfully');
     } catch (genError) {
       const msg = genError instanceof Error ? genError.message : 'Failed to generate content';
@@ -236,6 +217,9 @@ export async function POST(request: Request) {
       console.error('[Gemini] No questions generated');
       return NextResponse.json({ error: 'AI could not produce any questions' }, { status: 502 });
     }
+
+    // Extract sections from the parsed content for context
+    const sections = aiPayload.sections?.map((s: any) => s.insight || s.title).filter(Boolean) || [];
 
     console.log('[API] Success! Generated', questionSet.length, 'questions');
     return NextResponse.json({
