@@ -10,10 +10,10 @@ import { useStore } from '@/lib/store';
 type PipelineStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 const modes: { key: GameMode; label: string; description: string; detail: string }[] = [
-  { key: 'normal', label: 'Focus Mode', description: 'No countdown, just medium-hard prompts.', detail: 'Perfect for deep work or study groups.' },
+  { key: 'normal', label: 'Normal', description: 'No countdown, just medium-hard prompts.', detail: 'Perfect for deep work or study groups.' },
   {
     key: 'timed',
-    label: 'Blitz Mode',
+    label: 'Timed Quiz',
     description: '45s global timer with streak bonuses.',
     detail: 'Best for quick tournament-style sessions.',
   },
@@ -196,6 +196,36 @@ const DifficultyContent = () => {
                 </button>
               </div>
             )}
+          </div>
+        )}
+        {quizId === 'upload' && upload && builderState.status === 'loading' && (
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <p className="mb-4 text-sm font-semibold text-slate-700">Processing your PDF</p>
+            <div className="space-y-3">
+              {[
+                { step: 'Uploading PDF', icon: '📄', status: 'ready' },
+                { step: 'Parsing content', icon: '📖', status: builderState.status === 'loading' && progressPercent >= 35 ? 'loading' : 'idle' },
+                { step: 'Analyzing with AI', icon: '🤖', status: builderState.status === 'loading' && progressPercent >= 50 ? 'loading' : 'idle' },
+                { step: 'Generating questions', icon: '✨', status: builderState.status === 'loading' && progressPercent >= 70 ? 'loading' : 'idle' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <span className="text-2xl">{item.icon}</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-700">{item.step}</p>
+                    {item.status === 'loading' && (
+                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
+                      </div>
+                    )}
+                  </div>
+                  {item.status === 'ready' && <span className="text-emerald-500">✓</span>}
+                  {item.status === 'loading' && (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-center text-xs text-slate-500">{builderState.message}</p>
           </div>
         )}
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2">

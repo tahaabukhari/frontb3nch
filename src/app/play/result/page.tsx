@@ -179,7 +179,7 @@ const ResultPage = () => {
             {wrongQs.length === 0 ? (
               <p className="mt-4 text-sm text-slate-600 sm:text-base">Flawless victory! No wrong answers recorded.</p>
             ) : (
-              <ul className="mt-4 space-y-4">
+              <ul className="mt-4 max-h-[400px] space-y-4 overflow-y-auto pr-2 scrollbar-thin">
                 {wrongQs.map((item, idx) => (
                   <li key={`${item.q}-${idx}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                     <p className="font-semibold text-slate-800">{item.q}</p>
@@ -198,46 +198,48 @@ const ResultPage = () => {
           </div>
           <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-xl sm:p-8">
             <p className="text-lg font-semibold text-slate-900 sm:text-xl">AI review & insights</p>
-            {coachReview && (
-              <div className="mt-3 space-y-3 text-sm text-slate-600">
-                <p className="text-base font-semibold text-primary">{coachReview.headline}</p>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-500">Strengths</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-4">
-                    {coachReview.strengths.map((item) => (
-                      <li key={`strength-${item}`}>{item}</li>
-                    ))}
-                  </ul>
+            <div className="max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+              {coachReview && (
+                <div className="mt-3 space-y-3 text-sm text-slate-600">
+                  <p className="text-base font-semibold text-primary">{coachReview.headline}</p>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-500">Strengths</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                      {coachReview.strengths.map((item) => (
+                        <li key={`strength-${item}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-500">Focus next</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                      {coachReview.focus.map((item) => (
+                        <li key={`focus-${item}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Next actions</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                      {coachReview.actions.map((item) => (
+                        <li key={`action-${item}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-500">Focus next</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-4">
-                    {coachReview.focus.map((item) => (
-                      <li key={`focus-${item}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Next actions</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-4">
-                    {coachReview.actions.map((item) => (
-                      <li key={`action-${item}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-            {reviewStatus === 'loading' && <p className="mt-4 text-sm text-slate-500">Asking Gemini for coaching tips…</p>}
-            {reviewError && <p className="mt-4 text-sm text-rose-500">{reviewError}</p>}
-            {!coachReview && reviewStatus === 'ready' && !reviewError && (
-              <p className="mt-4 text-sm text-slate-500">No AI insights available yet.</p>
-            )}
-            {summaryForAi && (
-              <details className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-left text-sm text-slate-600">
-                <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">PDF summary</summary>
-                <p className="mt-2">{summaryForAi}</p>
-              </details>
-            )}
+              )}
+              {reviewStatus === 'loading' && <p className="mt-4 text-sm text-slate-500">Asking Gemini for coaching tips…</p>}
+              {reviewError && <p className="mt-4 text-sm text-rose-500">{reviewError}</p>}
+              {!coachReview && reviewStatus === 'ready' && !reviewError && (
+                <p className="mt-4 text-sm text-slate-500">No AI insights available yet.</p>
+              )}
+              {summaryForAi && (
+                <details className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-left text-sm text-slate-600">
+                  <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">PDF summary</summary>
+                  <p className="mt-2">{summaryForAi}</p>
+                </details>
+              )}
+            </div>
           </div>
         </div>
       </div>
