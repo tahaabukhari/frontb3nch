@@ -131,21 +131,32 @@ export async function POST(request: Request) {
     if (buffer.length > 15 * 1024 * 1024) {
       return NextResponse.json({ error: 'File exceeds 15MB limit' }, { status: 413 });
     }
-    // Use pdf-parse as primary (faster, more reliable), LlamaParse as optional enhancement
+    // Use LlamaParse API as primary (best quality for complex PDFs), pdf-parse as fallback
     let cleaned = '';
+    let parseMethod = 'unknown';
+
     try {
-      const pdfParse = await loadPdfParse();
-      const pdfData = await pdfParse(buffer);
-      cleaned = sanitizePdfText(pdfData.text);
-    } catch (pdfError) {
-      console.warn('pdf-parse failed, attempting LlamaParse', pdfError);
+      // First attempt: LlamaParse API (best quality, handles complex layouts)
+      console.log('Attempting LlamaParse API for:', name);
+      const llamaText = await parsePdfWithLlama(buffer, name, { timeoutMs: 45000 });
+      cleaned = sanitizePdfText(llamaText);
+      parseMethod = 'llamaparse';
+      console.log('LlamaParse succeeded, extracted', cleaned.length, 'characters');
+    } catch (llamaError) {
+      console.warn('LlamaParse failed, falling back to pdf-parse library', llamaError);
+
       try {
-        // Try LlamaParse with shorter timeout for faster fallback
-        const llamaText = await parsePdfWithLlama(buffer, name, { timeoutMs: 20000 });
-        cleaned = sanitizePdfText(llamaText);
-      } catch (llamaError) {
-        console.error('Both parsers failed', { pdfError, llamaError });
-        throw new Error('Failed to extract text from PDF with both parsers');
+        // Fallback: pdf-parse JavaScript library (faster, simpler)
+        const pdfParse = await loadPdfParse();
+        const pdfData = await pdfParse(buffer);
+        cleaned = sanitizePdfText(pdfData.text);
+        parseMethod = 'pdf-parse';
+        console.log('pdf-parse succeeded, extracted', cleaned.length, 'characters');
+      } catch (pdfError) {
+        console.error('Both parsers failed', { llamaError, pdfError });
+        const llamaMsg = llamaError instanceof Error ? llamaError.message : 'LlamaParse failed';
+        const pdfMsg = pdfError instanceof Error ? pdfError.message : 'pdf-parse failed';
+        throw new Error(`Failed to extract text from PDF. LlamaParse: ${llamaMsg}. pdf-parse: ${pdfMsg}`);
       }
     }
     if (!cleaned) {

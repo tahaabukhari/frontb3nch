@@ -1,6 +1,6 @@
 const LLAMA_PARSE_BASE_URL = 'https://api.llamaindex.ai/api/v1/llamaparse';
 const DEFAULT_POLL_INTERVAL_MS = 1500;
-const DEFAULT_TIMEOUT_MS = 30000; // Reduced from 90s to 30s for faster fallback
+const DEFAULT_TIMEOUT_MS = 60000; // Increased to 60s for better reliability with complex PDFs
 
 type LlamaParseQueuedResponse = {
   id: string;
