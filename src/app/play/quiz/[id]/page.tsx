@@ -78,7 +78,7 @@ const QuizPage = () => {
       setTimeout(goNext, 900);
     } else {
       setTimeout(() => setRevealCorrect(true), 800);
-      setTimeout(goNext, 1500);
+      setTimeout(goNext, 2100);
     }
   };
 
@@ -93,7 +93,7 @@ const QuizPage = () => {
 
   if (!question) {
     return (
-      <section className="flex min-h-[60vh] items-center justify-center bg-slate-50 px-4 py-10 text-center text-slate-600">
+      <section className="flex min-h-[60vh] items-center justify-center bg-dark-bg px-4 py-10 text-center text-gray-300">
         Loading quiz…
       </section>
     );
