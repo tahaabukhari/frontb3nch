@@ -167,7 +167,7 @@ const DifficultyContent = () => {
 
   return (
     <motion.section
-      className="bg-slate-50 px-4 py-14 sm:px-6 sm:py-16"
+      className="min-h-screen bg-dark-bg px-4 py-14 sm:px-6 sm:py-16"
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
@@ -175,13 +175,13 @@ const DifficultyContent = () => {
       <h1 className="sr-only">Select game mode</h1>
       <div className="mx-auto max-w-5xl space-y-10 text-center">
         <header>
-          <p className="text-3xl font-bold text-slate-900 sm:text-4xl">Choose your mode</p>
-          <p className="mt-3 text-base text-slate-600 sm:text-lg">{subtitle}</p>
+          <p className="text-3xl font-bold text-white sm:text-4xl">Choose your mode</p>
+          <p className="mt-3 text-base text-gray-400 sm:text-lg">{subtitle}</p>
           {!deck && quizId === 'upload' && upload && (
-            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">PDF size: {(upload.size / 1024 / 1024).toFixed(2)} MB</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-gray-500">PDF size: {(upload.size / 1024 / 1024).toFixed(2)} MB</p>
           )}
           {!deck && quizId !== 'upload' && (
-            <p className="mt-1 text-sm text-amber-600">Deck not found. Please head back to the library.</p>
+            <p className="mt-1 text-sm text-amber-400">Deck not found. Please head back to the library.</p>
           )}
         </header>
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
@@ -191,16 +191,15 @@ const DifficultyContent = () => {
               type="button"
               onClick={() => handleSelect(option.key)}
               disabled={disableCustomSelection}
-              className="flex flex-col rounded-3xl border-2 border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:border-accent hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <p className="text-2xl font-bold text-slate-900">{option.label}</p>
-              <p className="mt-3 text-slate-600">{option.description}</p>
-              <span className="mt-6 text-sm font-semibold text-primary">Start →</span>
+              className="flex flex-col rounded-3xl border-2 border-dark-border bg-dark-card p-6 text-left shadow-sm transition hover:-translate-y-1 hover:border-accent hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70">
+              <p className="text-2xl font-bold text-white">{option.label}</p>
+              <p className="mt-3 text-gray-400">{option.description}</p>
+              <span className="mt-6 text-sm font-semibold text-accent">Start →</span>
             </button>
           ))}
         </div>
         {quizId === 'upload' && upload && (
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="rounded-3xl border border-dark-border bg-dark-card p-6 shadow-sm sm:p-8">
             {builderState.status === 'loading' && (
               <div className="space-y-4 text-center">
                 <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />

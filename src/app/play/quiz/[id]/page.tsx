@@ -101,7 +101,7 @@ const QuizPage = () => {
 
   return (
     <motion.section
-      className="bg-slate-50 px-4 py-8 sm:px-6 sm:py-10"
+      className="min-h-screen bg-dark-bg px-4 py-8 sm:px-6 sm:py-10"
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
@@ -111,7 +111,7 @@ const QuizPage = () => {
         {duration ? (
           <TimerBar duration={duration} instanceKey={timerKey} onExpire={handleTimeout} />
         ) : (
-          <div className="rounded-full border border-dashed border-emerald-200 bg-white px-4 py-2 text-center text-sm font-semibold text-emerald-700">
+          <div className="rounded-full border border-dashed border-accent/30 bg-dark-card px-4 py-2 text-center text-sm font-semibold text-accent">
             Free play mode · no countdown
           </div>
         )}

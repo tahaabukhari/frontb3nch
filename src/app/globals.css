@@ -3,28 +3,25 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Summit Gradient: White → Curious Gold → Bezoar Black */
-  --summit-start: #FFFFFF;
-  --summit-mid: #D4AF37;
-  --summit-end: #1A1A1A;
-
-  /* Pasture Gradient: Pasture Green → Cashmere Cream → Alpine Taupe */
-  --pasture-start: #7CB342;
-  --pasture-mid: #F5E6D3;
-  --pasture-end: #8B7355;
-
-  /* Star GOAT Gradient: Mystic Purple → Curious Gold → Pure White */
-  --star-start: #9B59B6;
-  --star-mid: #D4AF37;
-  --star-end: #FFFFFF;
+  /* Simplified color scheme - single color gradients */
+  --bg-dark: #0a0a0a;
+  --bg-card: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --accent-gold: #D4AF37;
+  --accent-green: #7CB342;
+  --accent-purple: #9B59B6;
 }
 
 body {
-  background-color: #f8fafc;
-  min-height: 100vh;
-  font-family: "Comic Neue", cursive;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
 }
 
 .font-school {
@@ -111,6 +108,24 @@ body {
 
 .animate-climb {
   animation: climb 2s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+    transform: scale(1.02);
+  }
 }
 
 .glow-card {

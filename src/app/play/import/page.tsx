@@ -73,14 +73,17 @@ const ImportPage = () => {
 
   return (
     <motion.section
-      className="bg-slate-50 px-4 py-14 sm:px-6 sm:py-16"
+      className="min-h-screen bg-dark-bg px-4 py-14 sm:px-6 sm:py-16"
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <h1 className="sr-only">Import your study PDFs</h1>
-      <div className="mx-auto max-w-4xl space-y-6 rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8">
-        <p className="text-2xl font-bold text-slate-900 sm:text-3xl">Upload your PDF</p>
+      <h1 className="sr-only">Upload PDF for quiz generation</h1>
+      <div className="mx-auto max-w-3xl space-y-8 text-center">
+        <header>
+          <p className="text-3xl font-bold text-white sm:text-4xl">Upload your PDF</p>
+          <p className="mt-3 text-base text-gray-400 sm:text-lg">Upload your PDF</p>
+        </header>
         <label
           htmlFor="uploader"
           onDragOver={(event) => event.preventDefault()}
@@ -107,7 +110,7 @@ const ImportPage = () => {
         <button
           type="button"
           onClick={goToDifficulty}
-          className="min-h-[48px] w-full rounded-2xl bg-gradient-pasture px-6 py-3.5 text-base font-semibold text-white shadow-lg transition hover:opacity-90 sm:text-lg">
+          className="min-h-[48px] w-full rounded-2xl bg-gradient-gold px-6 py-3.5 text-base font-semibold text-dark-bg shadow-lg transition hover:opacity-90 sm:text-lg">
           Continue
         </button>
       </div>

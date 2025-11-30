@@ -15,22 +15,23 @@ const Hero = () => (
       <span className="rounded-full bg-yellow-400/30 px-4 py-1 text-sm font-semibold text-emerald-700">
         AI-powered study prep
       </span>
-      <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl md:text-5xl">
-        Turn any PDF into a quiz with{' '}
-        <span className="text-orange-600">studyGoat</span>
-      </h2>
-      <p className="text-base text-slate-600 sm:text-lg">
-        Upload your notes, pick a subject, and get auto-generated quizzes with playful animations, timers, and instant feedback.
+      <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
+        Master any topic with
+        <br />
+        <span className="text-accent">AI-powered</span> study prep
+      </h1>
+      <p className="mt-4 text-lg text-gray-400 sm:text-xl">
+        Upload PDFs, get instant quizzes. Track progress, improve continuously.
       </p>
       <div className="flex flex-col gap-4 sm:flex-row">
         <Link
           href="/play/import"
-          className="min-h-[48px] rounded-2xl bg-gradient-star px-8 py-3.5 text-center text-base font-semibold text-white shadow-lg shadow-star/40 transition hover:opacity-90 sm:flex-1 sm:text-lg">
+          className="min-h-[48px] animate-pulse-glow rounded-2xl bg-gradient-gold px-8 py-3.5 text-center text-base font-semibold text-dark-bg shadow-lg transition hover:opacity-90 sm:flex-1 sm:text-lg">
           Play
         </Link>
         <Link
           href="/play/library"
-          className="min-h-[48px] rounded-2xl border-2 border-accent bg-white px-8 py-3.5 text-center text-base font-semibold text-accent transition hover:bg-accent/10 sm:flex-1 sm:text-base">
+          className="min-h-[48px] rounded-2xl border-2 border-gray-700 bg-dark-card px-8 py-3.5 text-center text-base font-semibold text-gray-300 transition hover:border-accent hover:text-white sm:flex-1 sm:text-base">
           Browse library
         </Link>
       </div>

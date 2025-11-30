@@ -3,20 +3,20 @@
 import { motion } from 'framer-motion';
 
 const ResultBadge = ({ score }: { score: number }) => {
-  let bgGradient = 'bg-gradient-pasture'; // Default: 60-79%
+  let bgGradient = 'bg-gradient-green'; // Default: 60-79%
   let label = 'Good progress';
   let emoji = '🌿';
 
   if (score >= 90) {
-    bgGradient = 'bg-gradient-star';
+    bgGradient = 'bg-gradient-purple';
     label = 'Star GOAT!';
     emoji = '⭐';
   } else if (score >= 80) {
-    bgGradient = 'bg-gradient-summit';
+    bgGradient = 'bg-gradient-gold';
     label = 'Summit reached!';
     emoji = '🏔️';
   } else if (score < 60) {
-    bgGradient = 'bg-slate-100';
+    bgGradient = 'bg-dark-card border border-dark-border';
     label = 'Keep climbing';
     emoji = '🐐';
   }

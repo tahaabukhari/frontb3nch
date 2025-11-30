@@ -135,7 +135,7 @@ const ResultPage = () => {
 
   return (
     <motion.section
-      className="bg-slate-50 px-4 py-14 sm:px-6 sm:py-16"
+      className="min-h-screen bg-dark-bg px-4 py-14 sm:px-6 sm:py-16"
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
@@ -143,19 +143,19 @@ const ResultPage = () => {
       <h1 className="sr-only">Quiz results summary</h1>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-4 rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-100 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary sm:text-sm">Scoreboard</p>
-            <p className="text-3xl font-bold text-slate-900 sm:text-4xl">{percent}%</p>
-            <p className="text-sm text-slate-600 sm:text-base">
+          <div className="space-y-4 rounded-3xl border border-dark-border bg-dark-card p-6 shadow-xl sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent sm:text-sm">Scoreboard</p>
+            <p className="text-3xl font-bold text-white sm:text-4xl">{percent}%</p>
+            <p className="text-sm text-gray-300 sm:text-base">
               You solved {score} / {questions.length} questions.
             </p>
-            <p className="text-sm text-slate-500">Average response time: {average}</p>
-            <p className="text-sm text-slate-500">Total time: {totalTimeLabel}</p>
+            <p className="text-sm text-gray-400">Average response time: {average}</p>
+            <p className="text-sm text-gray-400">Total time: {totalTimeLabel}</p>
             {quizAttempts.length > 0 && (
-              <div className="rounded-xl border border-pasture-light/30 bg-gradient-pasture p-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-pasture-dark">Attempts: {quizAttempts.length}</p>
+              <div className="rounded-xl border border-accent/30 bg-gradient-gold p-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-dark-bg">Attempts: {quizAttempts.length}</p>
                 {improvementScore !== null && (
-                  <p className="mt-1 text-lg font-bold text-pasture-dark">
+                  <p className="mt-1 text-lg font-bold text-dark-bg">
                     {improvementScore > 0 ? '+' : ''}{improvementScore}% improvement!
                   </p>
                 )}
@@ -171,7 +171,7 @@ const ResultPage = () => {
                   actions.retakeQuiz();
                   router.push(`/play/quiz/${quizId}`);
                 }}
-                className="rounded-full bg-gradient-star px-6 py-3 text-center text-sm font-semibold text-white shadow-lg transition hover:opacity-90 sm:flex-1"
+                className="rounded-full bg-gradient-purple px-6 py-3 text-center text-sm font-semibold text-white shadow-lg transition hover:opacity-90 sm:flex-1"
               >
                 {isRegenerating ? 'Regenerating...' : 'Retake Quiz'}
               </button>

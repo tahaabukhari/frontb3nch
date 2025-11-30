@@ -32,9 +32,9 @@ const TimerBar = ({ duration, instanceKey, onExpire }: TimerBarProps) => {
   }, [duration, instanceKey, onExpire]);
 
   return (
-    <div className="overflow-hidden rounded-full border-2 border-summit/30 bg-white shadow-md">
+    <div className="overflow-hidden rounded-full border-2 border-accent/30 bg-dark-card shadow-md">
       <motion.div
-        className="h-4 bg-gradient-summit"
+        className="h-4 bg-gradient-gold"
         animate={{ width: `${percent}%` }}
         transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
       />
