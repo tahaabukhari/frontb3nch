@@ -4,6 +4,21 @@
 
 :root {
   color-scheme: light;
+
+  /* Summit Gradient: White → Curious Gold → Bezoar Black */
+  --summit-start: #FFFFFF;
+  --summit-mid: #D4AF37;
+  --summit-end: #1A1A1A;
+
+  /* Pasture Gradient: Pasture Green → Cashmere Cream → Alpine Taupe */
+  --pasture-start: #7CB342;
+  --pasture-mid: #F5E6D3;
+  --pasture-end: #8B7355;
+
+  /* Star GOAT Gradient: Mystic Purple → Curious Gold → Pure White */
+  --star-start: #9B59B6;
+  --star-mid: #D4AF37;
+  --star-end: #FFFFFF;
 }
 
 body {
@@ -65,6 +80,20 @@ body {
   50% {
     text-shadow: 0 0 12px rgba(249, 115, 22, 0.8),
       0 0 20px rgba(249, 115, 22, 0.4);
+  }
+}
+
+@keyframes climb {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.05);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
   }
 }
 

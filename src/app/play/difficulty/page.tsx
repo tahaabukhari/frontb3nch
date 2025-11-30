@@ -191,7 +191,7 @@ const DifficultyContent = () => {
               type="button"
               onClick={() => handleSelect(option.key)}
               disabled={disableCustomSelection}
-              className="flex flex-col rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md hover:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex flex-col rounded-3xl border-2 border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:border-accent hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70"
             >
               <p className="text-2xl font-bold text-slate-900">{option.label}</p>
               <p className="mt-3 text-slate-600">{option.description}</p>

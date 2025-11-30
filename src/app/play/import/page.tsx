@@ -107,8 +107,7 @@ const ImportPage = () => {
         <button
           type="button"
           onClick={goToDifficulty}
-          className="min-h-[48px] w-full rounded-2xl bg-primary px-6 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700 sm:text-lg"
-        >
+          className="min-h-[48px] w-full rounded-2xl bg-gradient-pasture px-6 py-3.5 text-base font-semibold text-white shadow-lg transition hover:opacity-90 sm:text-lg">
           Continue
         </button>
       </div>

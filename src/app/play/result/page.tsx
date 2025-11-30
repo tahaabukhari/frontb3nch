@@ -18,7 +18,7 @@ interface CoachReview {
 
 const ResultPage = () => {
   const router = useRouter();
-  const { quizId, score, questions, wrongQs, responseTimes, mode, analysis } = useStore(
+  const { quizId, score, questions, wrongQs, responseTimes, mode, analysis, attemptHistory, currentAttempt, actions } = useStore(
     useShallow((state) => ({
       quizId: state.quizId,
       score: state.score,
@@ -27,6 +27,9 @@ const ResultPage = () => {
       responseTimes: state.responseTimes,
       mode: state.mode,
       analysis: state.analysis,
+      attemptHistory: state.attemptHistory,
+      currentAttempt: state.currentAttempt,
+      actions: state.actions,
     }))
   );
   const [copied, setCopied] = useState(false);
@@ -34,6 +37,7 @@ const ResultPage = () => {
   const [reviewError, setReviewError] = useState('');
   const [coachReview, setCoachReview] = useState<CoachReview | null>(null);
   const [expandedCard, setExpandedCard] = useState<'recap' | 'stumbles' | 'insights' | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const redirectRef = useRef(false);
   useEffect(() => {
@@ -47,6 +51,10 @@ const ResultPage = () => {
   const average = calculateAverage(responseTimes);
   const totalTime = totalDuration(responseTimes);
   const totalTimeLabel = formatDuration(totalTime);
+
+  const quizAttempts = attemptHistory[quizId] || [];
+  const previousAttempt = quizAttempts.length >= 2 ? quizAttempts[quizAttempts.length - 2] : null;
+  const improvementScore = previousAttempt ? percent - previousAttempt.percentage : null;
   const shareText = [
     `studyGoat ${quizId || 'custom deck'} · ${mode ?? 'solo'} mode`,
     `Score: ${percent}% (${score}/${questions.length})`,
@@ -143,13 +151,36 @@ const ResultPage = () => {
             </p>
             <p className="text-sm text-slate-500">Average response time: {average}</p>
             <p className="text-sm text-slate-500">Total time: {totalTimeLabel}</p>
+            {quizAttempts.length > 0 && (
+              <div className="rounded-xl border border-pasture-light/30 bg-gradient-pasture p-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-pasture-dark">Attempts: {quizAttempts.length}</p>
+                {improvementScore !== null && (
+                  <p className="mt-1 text-lg font-bold text-pasture-dark">
+                    {improvementScore > 0 ? '+' : ''}{improvementScore}% improvement!
+                  </p>
+                )}
+              </div>
+            )}
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:pt-4">
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsRegenerating(true);
+                  // Simulate regeneration delay
+                  await new Promise(resolve => setTimeout(resolve, 1500));
+                  actions.retakeQuiz();
+                  router.push(`/play/quiz/${quizId}`);
+                }}
+                className="rounded-full bg-gradient-star px-6 py-3 text-center text-sm font-semibold text-white shadow-lg transition hover:opacity-90 sm:flex-1"
+              >
+                {isRegenerating ? 'Regenerating...' : 'Retake Quiz'}
+              </button>
               <button
                 type="button"
                 onClick={() => router.push('/play/import')}
                 className="rounded-full bg-primary px-6 py-3 text-center text-sm font-semibold text-white shadow-lg sm:flex-1"
               >
-                Play again
+                New Quiz
               </button>
               <button
                 type="button"

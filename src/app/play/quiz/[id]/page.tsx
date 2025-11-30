@@ -52,9 +52,10 @@ const QuizPage = () => {
 
   useEffect(() => {
     if (index >= questions.length && questions.length) {
+      actions.saveAttempt();
       router.push('/play/result');
     }
-  }, [index, questions.length, router]);
+  }, [index, questions.length, router, actions]);
 
   useEffect(() => {
     setSelected(null);

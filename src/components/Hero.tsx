@@ -25,14 +25,12 @@ const Hero = () => (
       <div className="flex flex-col gap-4 sm:flex-row">
         <Link
           href="/play/import"
-          className="min-h-[48px] rounded-2xl bg-emerald-600 px-8 py-3.5 text-center text-base font-semibold text-slate-100 shadow-emerald-600/40 transition hover:bg-emerald-700 sm:flex-1 sm:text-lg"
-        >
+          className="min-h-[48px] rounded-2xl bg-gradient-star px-8 py-3.5 text-center text-base font-semibold text-white shadow-lg shadow-star/40 transition hover:opacity-90 sm:flex-1 sm:text-lg">
           Play
         </Link>
         <Link
           href="/play/library"
-          className="min-h-[48px] rounded-2xl border border-slate-200 px-8 py-3.5 text-center text-base font-semibold text-slate-700 sm:flex-1 sm:text-base"
-        >
+          className="min-h-[48px] rounded-2xl border-2 border-accent bg-white px-8 py-3.5 text-center text-base font-semibold text-accent transition hover:bg-accent/10 sm:flex-1 sm:text-base">
           Browse library
         </Link>
       </div>

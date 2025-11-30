@@ -14,7 +14,7 @@ const Navbar = () => (
       </Link>
       <button
         type="button"
-        className="min-h-[44px] w-full rounded-full border border-emerald-600 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 sm:w-auto">
+        className="min-h-[44px] w-full rounded-full border-2 border-accent bg-white px-5 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/10 sm:w-auto">
         Sign in with Google
       </button>
     </div>
