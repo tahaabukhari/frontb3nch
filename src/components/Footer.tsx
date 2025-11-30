@@ -7,22 +7,25 @@ const links = [
 ];
 
 const Footer = () => (
-  <footer className="bg-slate-900 text-slate-100">
-    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-12 text-center sm:text-left md:grid-cols-3">
-      {links.map((column) => (
-        <div key={column.title}>
-          <p className="text-lg font-semibold">{column.title}</p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-300">
-            {column.items.map((item) => (
-              <li key={item}>
-                <Link href="#" className="transition hover:text-accent">
-                  {item}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+  <footer className="border-t border-dark-border bg-dark-card py-8">
+    <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6">
+      <p className="text-sm text-gray-400">
+        © 2024 <span className="font-semibold text-accent">studyGoat</span>. All rights reserved.
+      </p>
+      <nav className="flex flex-wrap justify-center gap-6">
+        <Link href="/about" className="text-sm text-gray-400 transition hover:text-white">
+          About
+        </Link>
+        <Link href="/privacy" className="text-sm text-gray-400 transition hover:text-white">
+          Privacy
+        </Link>
+        <Link href="/terms" className="text-sm text-gray-400 transition hover:text-white">
+          Terms
+        </Link>
+        <Link href="/contact" className="text-sm text-gray-400 transition hover:text-white">
+          Contact
+        </Link>
+      </nav>
     </div>
   </footer>
 );

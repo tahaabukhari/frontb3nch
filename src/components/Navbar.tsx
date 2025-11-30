@@ -14,18 +14,22 @@ const Navbar = () => (
           study<span className="text-accent animate-glint">Goat</span>
         </span>
       </Link>
-      <nav className="flex items-center gap-3">
+      <nav className="flex items-center gap-4 sm:gap-6">
         <Link
           href="/play/library"
-          className="hidden text-sm font-medium text-gray-400 transition hover:text-white sm:block"
+          className="text-sm font-medium text-gray-400 transition hover:text-white"
         >
           Library
         </Link>
         <button
           type="button"
-          className="min-h-[44px] rounded-full bg-gradient-gold px-5 py-2.5 text-sm font-semibold text-dark-bg transition hover:opacity-90 sm:w-auto"
+          className="flex items-center gap-2 rounded-full border-2 border-gray-700 bg-dark-card px-3 py-2 transition hover:border-accent"
+          title="User Profile"
         >
-          Sign in
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-gold text-sm font-bold text-dark-bg">
+            U
+          </div>
+          <span className="hidden text-sm font-medium text-gray-300 sm:block">Profile</span>
         </button>
       </nav>
     </div>

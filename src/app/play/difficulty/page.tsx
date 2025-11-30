@@ -202,17 +202,22 @@ const DifficultyContent = () => {
           <div className="rounded-3xl border border-dark-border bg-dark-card p-6 shadow-sm sm:p-8">
             {builderState.status === 'loading' && (
               <div className="space-y-4 text-center">
-                <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                <p className="text-base font-semibold text-slate-700">{builderState.message}</p>
+                <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+                <p className="text-base font-semibold text-white sm:text-lg">{builderState.message}</p>
                 <p className="text-sm text-slate-500">Please wait while we process your PDF...</p>
               </div>
             )}
             {builderState.status === 'ready' && analysis && (
-              <div className="text-left space-y-4">
-                <p className="text-lg font-semibold text-slate-900">{analysis.summary}</p>
-                <p className="text-sm text-emerald-700">
-                  ✓ {analysis.questionSet.length} questions ready
-                </p>
+              <div className="space-y-4 text-center">
+                <p className="text-2xl text-emerald-400">✓</p>
+                <p className="text-base font-semibold text-white sm:text-lg">{builderState.message}</p>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/play/quiz/${quizId}`)}
+                  className="mx-auto rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold text-dark-bg shadow-lg transition hover:opacity-90"
+                >
+                  Start Quiz
+                </button>
               </div>
             )}
             {builderState.status === 'error' && (

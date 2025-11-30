@@ -178,31 +178,30 @@ const ResultPage = () => {
               <button
                 type="button"
                 onClick={() => router.push('/play/import')}
-                className="rounded-full bg-primary px-6 py-3 text-center text-sm font-semibold text-white shadow-lg sm:flex-1"
+                className="rounded-full bg-gradient-green px-6 py-3 text-center text-sm font-semibold text-white shadow-lg transition hover:opacity-90 sm:flex-1"
               >
                 New Quiz
               </button>
               <button
                 type="button"
                 onClick={handleShare}
-                className="rounded-full border border-slate-200 px-6 py-3 text-center text-sm font-semibold text-slate-800 sm:flex-1"
+                className="rounded-full border-2 border-gray-700 bg-dark-card px-6 py-3 text-center text-sm font-semibold text-gray-300 transition hover:border-accent hover:text-white sm:flex-1"
               >
                 {copied ? 'Link copied!' : 'Share'}
               </button>
             </div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Deck: {quizId || 'custom upload'}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Deck: {quizId || 'custom upload'}</p>
           </div>
           <ResultBadge score={percent} />
         </div>
         <div className="grid gap-8 lg:grid-cols-3">
           <div
             onClick={() => toggleCard('recap')}
-            className="cursor-pointer rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-left shadow-inner transition hover:shadow-lg sm:p-8 lg:cursor-default lg:hover:shadow-inner"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Shareable recap</p>
+            className="cursor-pointer rounded-3xl border border-dark-border bg-dark-card p-6 shadow-xl transition hover:border-accent sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent sm:text-sm">Shareable recap</p>
             <div className={`lg:block ${expandedCard === 'recap' || !expandedCard ? 'block' : 'hidden lg:block'}`}>
-              <p className="mt-3 text-2xl font-bold text-slate-900">Spent {totalTimeLabel}</p>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-3 text-2xl font-bold text-white">Spent {totalTimeLabel}</p>
+              <p className="mt-2 text-sm text-gray-400">
                 {score} of {questions.length} prompts solved · Mode: {mode ?? 'normal'}
               </p>
               <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-slate-900/90 p-4 text-left text-xs text-slate-100">{shareText}</pre>
@@ -217,39 +216,37 @@ const ResultPage = () => {
           </div>
           <div
             onClick={() => toggleCard('stumbles')}
-            className="cursor-pointer rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-100 transition hover:shadow-2xl sm:p-8 lg:cursor-default lg:hover:shadow-xl">
-            <p className="text-lg font-semibold text-slate-900 sm:text-xl">Review your stumbles</p>
+            className="cursor-pointer rounded-3xl border border-dark-border bg-dark-card p-6 shadow-xl transition hover:border-accent sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent sm:text-sm">Review your stumbles</p>
             <div className={`lg:block ${expandedCard === 'stumbles' || !expandedCard ? 'block' : 'hidden lg:block'}`}>
               {wrongQs.length === 0 ? (
-                <p className="mt-4 text-sm text-slate-600 sm:text-base">Flawless victory! No wrong answers recorded.</p>
+                <p className="mt-4 text-sm text-gray-400 sm:text-base">Perfect score! No mistakes to review.</p>
               ) : (
-                <ul className="mt-4 max-h-[400px] space-y-4 overflow-y-auto pr-2 scrollbar-thin">
-                  {wrongQs.map((item, idx) => (
-                    <li key={`${item.q}-${idx}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                      <p className="font-semibold text-slate-800">{item.q}</p>
-                      {item.user && (
+                <div className="mt-4 max-h-[400px] space-y-4 overflow-y-auto pr-2 scrollbar-thin">
+                  {wrongQs.map((wrong, idx) => (
+                    <div key={idx} className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+                      <p className="text-sm font-semibold text-white">{wrong.q}</p>
+                      {wrong.user && (
                         <p className="text-sm text-rose-500">
-                          Your pick: <span className="font-semibold">{item.user}</span>
+                          Your pick: <span className="font-semibold">{wrong.user}</span>
                         </p>
                       )}
-                      <p className="text-sm text-slate-500">
-                        Correct answer: <span className="font-semibold text-primary">{item.correct}</span>
-                      </p>
-                    </li>
+                      <p className="text-xs text-green-400">Correct: {wrong.correct}</p>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           </div>
           <div
             onClick={() => toggleCard('insights')}
-            className="cursor-pointer rounded-3xl border border-slate-100 bg-white p-6 shadow-xl transition hover:shadow-2xl sm:p-8 lg:cursor-default lg:hover:shadow-xl">
-            <p className="text-lg font-semibold text-slate-900 sm:text-xl">AI review & insights</p>
+            className="cursor-pointer rounded-3xl border border-dark-border bg-dark-card p-6 shadow-xl transition hover:border-accent sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent sm:text-sm">AI review & insights</p>
             <div className={`lg:block ${expandedCard === 'insights' || !expandedCard ? 'block' : 'hidden lg:block'}`}>
               <div className="max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
                 {coachReview && (
-                  <div className="mt-3 space-y-3 text-sm text-slate-600">
-                    <p className="text-base font-semibold text-primary">{coachReview.headline}</p>
+                  <div className="mt-3 space-y-3 text-sm text-gray-300">
+                    <p className="text-base font-semibold text-accent">{coachReview.headline}</p>
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-500">Strengths</p>
                       <ul className="mt-1 list-disc space-y-1 pl-4">
@@ -276,14 +273,14 @@ const ResultPage = () => {
                     </div>
                   </div>
                 )}
-                {reviewStatus === 'loading' && <p className="mt-4 text-sm text-slate-500">Asking Gemini for coaching tips…</p>}
+                {reviewStatus === 'loading' && <p className="mt-4 text-sm text-gray-400">Asking Gemini for coaching tips…</p>}
                 {reviewError && <p className="mt-4 text-sm text-rose-500">{reviewError}</p>}
                 {!coachReview && reviewStatus === 'ready' && !reviewError && (
-                  <p className="mt-4 text-sm text-slate-500">No AI insights available yet.</p>
+                  <p className="mt-4 text-sm text-gray-400">No AI insights available yet.</p>
                 )}
                 {summaryForAi && (
-                  <details className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-left text-sm text-slate-600">
-                    <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">PDF summary</summary>
+                  <details className="mt-6 rounded-2xl border border-dark-border bg-dark-card p-4 text-left text-sm text-gray-300">
+                    <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.3em] text-accent">PDF summary</summary>
                     <p className="mt-2">{summaryForAi}</p>
                   </details>
                 )}
@@ -297,3 +294,4 @@ const ResultPage = () => {
 };
 
 export default ResultPage;
+```

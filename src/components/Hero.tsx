@@ -1,20 +1,16 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 const Hero = () => (
-  <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 py-12 text-center sm:gap-12 sm:px-6 sm:py-14 md:flex-row md:py-20 md:text-left">
+  <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 bg-dark-bg px-4 py-12 text-center sm:gap-12 sm:px-6 sm:py-14 md:flex-row md:py-20 md:text-left">
     <motion.div
       className="flex-1 space-y-6"
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <span className="rounded-full bg-yellow-400/30 px-4 py-1 text-sm font-semibold text-emerald-700">
-        AI-powered study prep
-      </span>
       <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
         Master any topic with
         <br />
@@ -36,9 +32,14 @@ const Hero = () => (
         </Link>
       </div>
     </motion.div>
-    <motion.div className="flex-1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
-      <div className="glow-card rounded-3xl bg-white p-6">
-        <Image src="/hero-illustration.svg" alt="Student writing on tablet" width={500} height={400} className="w-full" priority />
+    <motion.div
+      className="w-full max-w-md md:w-1/2"
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+    >
+      <div className="flex aspect-square items-center justify-center rounded-3xl border border-dark-border bg-dark-card p-8 shadow-2xl">
+        <span className="text-9xl">🐐</span>
       </div>
     </motion.div>
   </section>
