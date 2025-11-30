@@ -8,7 +8,7 @@ import PageTransition from '@/components/PageTransition';
 
 const comic = Comic_Neue({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-school' });
 
-export const metadata: Metadata = { title: 'studyGoat' };
+export const metadata: Metadata = { title: 'parhaiGoat' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

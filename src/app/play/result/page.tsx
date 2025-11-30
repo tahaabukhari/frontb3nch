@@ -56,7 +56,7 @@ const ResultPage = () => {
   const previousAttempt = quizAttempts.length >= 2 ? quizAttempts[quizAttempts.length - 2] : null;
   const improvementScore = previousAttempt ? percent - previousAttempt.percentage : null;
   const shareText = [
-    `studyGoat ${quizId || 'custom deck'} · ${mode ?? 'solo'} mode`,
+    `parhaiGoat ${quizId || 'custom deck'} · ${mode ?? 'solo'} mode`,
     `Score: ${percent}% (${score}/${questions.length})`,
     `Time: ${totalTimeLabel}`,
     wrongQs.length ? `Missed: ${wrongQs.map((w) => w.correct).join(', ')}` : 'Flawless run!',
@@ -115,7 +115,7 @@ const ResultPage = () => {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'studyGoat results',
+          title: 'parhaiGoat results',
           text: shareText,
           url: window.location.origin,
         });

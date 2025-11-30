@@ -190,7 +190,7 @@ export async function POST(request: Request) {
           sendSSE(controller, { stage: 'generating', progress: 70, message: 'Generating quiz questions...' });
 
           const instructions = [
-            'You are studyGoat, a study quiz builder.',
+            'You are parhaiGoat, a study quiz builder.',
             'Analyze the supplied PDF content and craft a JSON response that matches the provided schema.',
             'Questions should stay faithful to the facts, be concise (<260 chars), and include novel distractors.',
             'Focus on medium/hard difficulty for college-level learners.',
@@ -349,7 +349,7 @@ export async function POST(request: Request) {
 
     console.log('[Gemini] Preparing prompt for PDF analysis...');
     const instructions = [
-      'You are studyGoat, a study quiz builder.',
+      'You are parhaiGoat, a study quiz builder.',
       'Analyze the supplied PDF content and craft a JSON response that matches the provided schema.',
       'Questions should stay faithful to the facts, be concise (<260 chars), and include novel distractors.',
       'Focus on medium/hard difficulty for college-level learners.',
