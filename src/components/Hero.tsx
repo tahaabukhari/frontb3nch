@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 const Hero = () => (
-  <section className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 py-14 text-center sm:px-6 md:flex-row md:py-20 md:text-left">
+  <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 py-12 text-center sm:gap-12 sm:px-6 sm:py-14 md:flex-row md:py-20 md:text-left">
     <motion.div
       className="flex-1 space-y-6"
       initial={{ opacity: 0, y: 40 }}
@@ -13,24 +13,25 @@ const Hero = () => (
       transition={{ duration: 0.6 }}
     >
       <span className="rounded-full bg-yellow-400/30 px-4 py-1 text-sm font-semibold text-emerald-700">
-        AI-powered school prep
+        AI-powered study prep
       </span>
       <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl md:text-5xl">
-        Turn any PDF into a quiz
+        Turn any PDF into a quiz with{' '}
+        <span className="text-orange-600">studyGoat</span>
       </h2>
       <p className="text-base text-slate-600 sm:text-lg">
-        Upload notes, pick a subject, and get auto-generated quizzes with playful animations, timers, and instant feedback.
+        Upload your notes, pick a subject, and get auto-generated quizzes with playful animations, timers, and instant feedback.
       </p>
       <div className="flex flex-col gap-4 sm:flex-row">
         <Link
           href="/play/import"
-          className="rounded-2xl bg-emerald-600 px-8 py-4 text-center text-lg font-semibold text-slate-100 shadow-emerald-600/40 transition hover:bg-emerald-700 sm:flex-1"
+          className="min-h-[48px] rounded-2xl bg-emerald-600 px-8 py-3.5 text-center text-base font-semibold text-slate-100 shadow-emerald-600/40 transition hover:bg-emerald-700 sm:flex-1 sm:text-lg"
         >
           Play
         </Link>
         <Link
           href="/play/library"
-          className="rounded-2xl border border-slate-200 px-8 py-4 text-center font-semibold text-slate-700 sm:flex-1"
+          className="min-h-[48px] rounded-2xl border border-slate-200 px-8 py-3.5 text-center text-base font-semibold text-slate-700 sm:flex-1 sm:text-base"
         >
           Browse library
         </Link>

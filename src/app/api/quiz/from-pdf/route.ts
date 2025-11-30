@@ -87,7 +87,212 @@ const buildQuestion = (item: { question: string; answer: string; distractors: st
   };
 };
 
+// Helper to send SSE message
+function sendSSE(controller: ReadableStreamDefaultController, data: { stage: string; progress: number; message: string }) {
+  const message = `data: ${JSON.stringify(data)}\n\n`;
+  controller.enqueue(new TextEncoder().encode(message));
+}
+
 export async function POST(request: Request) {
+  // Check if client wants SSE
+  const acceptHeader = request.headers.get('accept') || '';
+  const wantsSSE = acceptHeader.includes('text/event-stream');
+
+  if (wantsSSE) {
+    // Return SSE stream
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          console.log('[API SSE] Starting PDF processing stream');
+          const json = await request.json();
+          const parsed = requestSchema.safeParse(json);
+
+          if (!parsed.success) {
+            sendSSE(controller, { stage: 'error', progress: 0, message: 'Invalid request payload' });
+            controller.close();
+            return;
+          }
+
+          const { dataUrl, name } = parsed.data;
+
+          sendSSE(controller, { stage: 'uploading', progress: 10, message: `Preparing ${name}...` });
+
+          const buffer = dataUrlToBuffer(dataUrl);
+          console.log('[API SSE] PDF loaded:', name, 'Size:', (buffer.length / 1024 / 1024).toFixed(2), 'MB');
+
+          if (buffer.length > 15 * 1024 * 1024) {
+            sendSSE(controller, { stage: 'error', progress: 0, message: 'File exceeds 15MB limit' });
+            controller.close();
+            return;
+          }
+
+          sendSSE(controller, { stage: 'parsing', progress: 25, message: 'Uploading to Gemini Files API...' });
+
+          // Upload to Gemini Files API
+          let fileUri = '';
+          try {
+            const { GoogleAIFileManager } = await import('@google/generative-ai/server');
+            const fileManager = new GoogleAIFileManager(getGeminiKey());
+            const { writeFile, unlink } = await import('fs/promises');
+            const { join } = await import('path');
+            const { tmpdir } = await import('os');
+
+            const tempPath = join(tmpdir(), `upload-${Date.now()}-${name}`);
+            await writeFile(tempPath, buffer);
+
+            sendSSE(controller, { stage: 'parsing', progress: 35, message: 'Parsing PDF content...' });
+
+            const uploadResult = await fileManager.uploadFile(tempPath, {
+              mimeType: 'application/pdf',
+              displayName: name,
+            });
+
+            fileUri = uploadResult.file.uri;
+            console.log('[API SSE] Upload successful. URI:', fileUri);
+            await unlink(tempPath);
+
+          } catch (uploadError) {
+            console.error('[API SSE] Upload failed:', uploadError);
+            sendSSE(controller, {
+              stage: 'error',
+              progress: 0,
+              message: uploadError instanceof Error ? uploadError.message : 'Failed to upload PDF'
+            });
+            controller.close();
+            return;
+          }
+
+          sendSSE(controller, { stage: 'analyzing', progress: 50, message: 'Analyzing content with AI...' });
+
+          // Initialize Gemini
+          let model;
+          try {
+            const { GoogleGenerativeAI } = await import('@google/generative-ai');
+            const genAI = new GoogleGenerativeAI(getGeminiKey());
+            model = genAI.getGenerativeModel({
+              model: 'gemini-2.5-flash',
+              generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: analysisSchema,
+                temperature: 0.5,
+              },
+            });
+          } catch (modelError) {
+            sendSSE(controller, {
+              stage: 'error',
+              progress: 0,
+              message: modelError instanceof Error ? modelError.message : 'Failed to initialize AI model'
+            });
+            controller.close();
+            return;
+          }
+
+          sendSSE(controller, { stage: 'generating', progress: 70, message: 'Generating quiz questions...' });
+
+          const instructions = [
+            'You are studyGoat, a study quiz builder.',
+            'Analyze the supplied PDF content and craft a JSON response that matches the provided schema.',
+            'Questions should stay faithful to the facts, be concise (<260 chars), and include novel distractors.',
+            'Focus on medium/hard difficulty for college-level learners.',
+            'Extract key concepts from the PDF and create 8-12 challenging questions.',
+          ].join(' ');
+
+          let result;
+          try {
+            result = await model.generateContent([
+              {
+                fileData: {
+                  mimeType: 'application/pdf',
+                  fileUri: fileUri,
+                },
+              },
+              { text: instructions },
+            ]);
+          } catch (genError) {
+            sendSSE(controller, {
+              stage: 'error',
+              progress: 0,
+              message: genError instanceof Error ? genError.message : 'Failed to generate quiz'
+            });
+            controller.close();
+            return;
+          }
+
+          sendSSE(controller, { stage: 'generating', progress: 90, message: 'Finalizing questions...' });
+
+          const rawText = result.response.text();
+          if (!rawText) {
+            sendSSE(controller, { stage: 'error', progress: 0, message: 'AI returned empty response' });
+            controller.close();
+            return;
+          }
+
+          let aiPayload;
+          try {
+            aiPayload = JSON.parse(rawText);
+          } catch (parseError) {
+            sendSSE(controller, { stage: 'error', progress: 0, message: 'Failed to parse AI response' });
+            controller.close();
+            return;
+          }
+
+          const questionSet = (Array.isArray(aiPayload?.quiz?.questions) ? aiPayload.quiz.questions : [])
+            .map(buildQuestion)
+            .filter(Boolean) as Question[];
+
+          if (!questionSet.length) {
+            sendSSE(controller, { stage: 'error', progress: 0, message: 'No questions generated' });
+            controller.close();
+            return;
+          }
+
+          const sections = aiPayload.sections?.map((s: any) => s.insight || s.title).filter(Boolean) || [];
+
+          sendSSE(controller, {
+            stage: 'complete',
+            progress: 100,
+            message: `Created ${questionSet.length} questions!`
+          });
+
+          // Send final result
+          const finalData = {
+            analysis: {
+              summary: aiPayload.summary,
+              highlights: aiPayload.highlights ?? [],
+              sections: aiPayload.sections ?? [],
+              recommendations: aiPayload.recommendations ?? [],
+              context: aiPayload.teaching_notes ?? sections.join('\n'),
+              sourceName: name,
+              questionSet,
+              generatedAt: Date.now(),
+            },
+          };
+
+          controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ stage: 'result', data: finalData })}\n\n`));
+          controller.close();
+
+        } catch (error) {
+          console.error('[API SSE] Error:', error);
+          sendSSE(controller, {
+            stage: 'error',
+            progress: 0,
+            message: error instanceof Error ? error.message : 'Unknown error'
+          });
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  }
+
+  // Fallback to original non-streaming endpoint
   try {
     console.log('[API] Received PDF quiz generation request');
     const json = await request.json();
@@ -104,7 +309,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File exceeds 15MB limit' }, { status: 413 });
     }
 
-    // Use Gemini's native file upload API (Files API) to handle PDF directly
     let fileUri = '';
 
     try {
@@ -113,7 +317,6 @@ export async function POST(request: Request) {
 
       const fileManager = new GoogleAIFileManager(getGeminiKey());
 
-      // Create a temporary file from buffer
       const { writeFile, unlink } = await import('fs/promises');
       const { join } = await import('path');
       const { tmpdir } = await import('os');
@@ -130,7 +333,6 @@ export async function POST(request: Request) {
       fileUri = uploadResult.file.uri;
       console.log('[Gemini Files] Upload successful. URI:', fileUri);
 
-      // Clean up temp file
       await unlink(tempPath);
 
     } catch (uploadError) {
@@ -147,7 +349,7 @@ export async function POST(request: Request) {
 
     console.log('[Gemini] Preparing prompt for PDF analysis...');
     const instructions = [
-      'You are ParhaiPlay, a study quiz builder.',
+      'You are studyGoat, a study quiz builder.',
       'Analyze the supplied PDF content and craft a JSON response that matches the provided schema.',
       'Questions should stay faithful to the facts, be concise (<260 chars), and include novel distractors.',
       'Focus on medium/hard difficulty for college-level learners.',
@@ -218,7 +420,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'AI could not produce any questions' }, { status: 502 });
     }
 
-    // Extract sections from the parsed content for context
     const sections = aiPayload.sections?.map((s: any) => s.insight || s.title).filter(Boolean) || [];
 
     console.log('[API] Success! Generated', questionSet.length, 'questions');

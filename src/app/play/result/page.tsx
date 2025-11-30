@@ -47,7 +47,7 @@ const ResultPage = () => {
   const totalTime = totalDuration(responseTimes);
   const totalTimeLabel = formatDuration(totalTime);
   const shareText = [
-    `ParhaiPlay ${quizId || 'custom deck'} · ${mode ?? 'solo'} mode`,
+    `studyGoat ${quizId || 'custom deck'} · ${mode ?? 'solo'} mode`,
     `Score: ${percent}% (${score}/${questions.length})`,
     `Time: ${totalTimeLabel}`,
     wrongQs.length ? `Missed: ${wrongQs.map((w) => w.correct).join(', ')}` : 'Flawless run!',
@@ -106,7 +106,7 @@ const ResultPage = () => {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'ParhaiPlay results',
+          title: 'studyGoat results',
           text: shareText,
           url: window.location.origin,
         });

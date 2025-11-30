@@ -46,41 +46,79 @@ const DifficultyContent = () => {
   const triggerPipeline = useCallback(async () => {
     if (!upload) return;
     setBuilderError('');
-    setBuilderState({ status: 'loading', message: 'Crunching PDF pages and drafting prompts…' });
+    setBuilderState({ status: 'loading', message: 'Starting PDF processing...' });
+
     try {
       const response = await fetch('/api/quiz/from-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+        },
         body: JSON.stringify({ dataUrl: upload.dataUrl, name: upload.name, size: upload.size }),
       });
-      const contentType = response.headers.get('content-type') ?? '';
-      let payload: any = null;
-      let fallbackText = '';
-      if (contentType.includes('application/json')) {
-        payload = await response.json();
-      } else {
-        fallbackText = await response.text();
-      }
+
       if (!response.ok) {
-        throw new Error((payload?.error ?? fallbackText) || `Request failed (${response.status})`);
+        throw new Error(`Request failed (${response.status})`);
       }
-      if (!payload) {
-        if (fallbackText) {
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response stream available');
+      }
+
+      let buffer = '';
+      let finalAnalysis: any = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data: ')) continue;
+
           try {
-            payload = JSON.parse(fallbackText);
-          } catch {
-            throw new Error('Quiz builder returned an unexpected payload format');
+            const data = JSON.parse(line.substring(6));
+
+            if (data.stage === 'error') {
+              throw new Error(data.message || 'Processing failed');
+            }
+
+            if (data.stage === 'result') {
+              finalAnalysis = data.data.analysis;
+              continue;
+            }
+
+            // Update progress message based on stage
+            setBuilderState({
+              status: 'loading',
+              message: data.message || 'Processing...',
+            });
+
+          } catch (parseError) {
+            console.error('Failed to parse SSE message:', parseError);
           }
-        } else {
-          throw new Error('Quiz builder returned an empty response');
         }
       }
-      actions.setAnalysis(payload.analysis);
-      setBuilderState({
-        status: 'ready',
-        message: `Built ${payload.analysis?.questionSet?.length ?? 0} tailored questions`,
-      });
+
+      if (finalAnalysis) {
+        actions.setAnalysis(finalAnalysis);
+        setBuilderState({
+          status: 'ready',
+          message: `Built ${finalAnalysis.questionSet?.length ?? 0} tailored questions`,
+        });
+      } else {
+        throw new Error('No analysis data received');
+      }
+
     } catch (error) {
+      console.error('Pipeline error:', error);
       setBuilderState({ status: 'error', message: 'AI pipeline failed. Please try again.' });
       setBuilderError(error instanceof Error ? error.message : 'Unknown error');
     }
@@ -126,23 +164,6 @@ const DifficultyContent = () => {
   };
 
   const disableCustomSelection = quizId === 'upload' && builderState.status !== 'ready';
-  const pipelineSteps: { label: string; status: PipelineStatus }[] = [
-    { label: 'Upload', status: upload ? 'ready' : 'idle' },
-    { label: 'Analyze', status: builderState.status === 'loading' ? 'loading' : builderState.status },
-    { label: 'Quiz ready', status: analysis?.questionSet?.length ? 'ready' : builderState.status },
-  ];
-  const progressPercent =
-    builderState.status === 'ready'
-      ? 100
-      : builderState.status === 'loading'
-        ? 70
-        : builderState.status === 'error'
-          ? 100
-          : upload
-            ? 35
-            : 0;
-  const progressBarColor =
-    builderState.status === 'error' ? 'bg-rose-500' : builderState.status === 'ready' ? 'bg-emerald-500' : 'bg-primary';
 
   return (
     <motion.section
@@ -166,21 +187,17 @@ const DifficultyContent = () => {
         {quizId === 'upload' && upload && (
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             {builderState.status === 'loading' && (
-              <div className="space-y-3">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                  <div
-                    className="bg-primary h-full rounded-full transition-all duration-500 animate-pulse"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-                <p className="text-sm text-slate-600">{builderState.message}</p>
+              <div className="space-y-4 text-center">
+                <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="text-base font-semibold text-slate-700">{builderState.message}</p>
+                <p className="text-sm text-slate-500">Please wait while we process your PDF...</p>
               </div>
             )}
             {builderState.status === 'ready' && analysis && (
               <div className="text-left space-y-4">
                 <p className="text-lg font-semibold text-slate-900">{analysis.summary}</p>
                 <p className="text-sm text-emerald-700">
-                  {analysis.questionSet.length} questions ready
+                  ✓ {analysis.questionSet.length} questions ready
                 </p>
               </div>
             )}
@@ -196,36 +213,6 @@ const DifficultyContent = () => {
                 </button>
               </div>
             )}
-          </div>
-        )}
-        {quizId === 'upload' && upload && builderState.status === 'loading' && (
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <p className="mb-4 text-sm font-semibold text-slate-700">Processing your PDF</p>
-            <div className="space-y-3">
-              {[
-                { step: 'Uploading PDF', icon: '📄', status: 'ready' },
-                { step: 'Parsing content', icon: '📖', status: builderState.status === 'loading' && progressPercent >= 35 ? 'loading' : 'idle' },
-                { step: 'Analyzing with AI', icon: '🤖', status: builderState.status === 'loading' && progressPercent >= 50 ? 'loading' : 'idle' },
-                { step: 'Generating questions', icon: '✨', status: builderState.status === 'loading' && progressPercent >= 70 ? 'loading' : 'idle' },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <span className="text-2xl">{item.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">{item.step}</p>
-                    {item.status === 'loading' && (
-                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-200">
-                        <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
-                      </div>
-                    )}
-                  </div>
-                  {item.status === 'ready' && <span className="text-emerald-500">✓</span>}
-                  {item.status === 'loading' && (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  )}
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 text-center text-xs text-slate-500">{builderState.message}</p>
           </div>
         )}
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
