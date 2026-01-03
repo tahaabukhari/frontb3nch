@@ -122,7 +122,7 @@ const ResultPage = () => {
 
   return (
     <motion.section
-      className="bg-slate-50 px-4 py-14 sm:px-6 sm:py-16"
+      className="bg-dark-bg px-4 py-14 sm:px-6 sm:py-16"
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
@@ -130,65 +130,65 @@ const ResultPage = () => {
       <h1 className="sr-only">Quiz results summary</h1>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-4 rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-100 sm:p-8">
+          <div className="space-y-4 rounded-3xl bg-dark-card p-6 shadow-xl border border-dark-border sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary sm:text-sm">Scoreboard</p>
-            <p className="text-3xl font-bold text-slate-900 sm:text-4xl">{percent}%</p>
-            <p className="text-sm text-slate-600 sm:text-base">
+            <p className="text-3xl font-bold text-white sm:text-4xl">{percent}%</p>
+            <p className="text-sm text-gray-400 sm:text-base">
               You solved {score} / {questions.length} questions.
             </p>
-            <p className="text-sm text-slate-500">Average response time: {average}</p>
-            <p className="text-sm text-slate-500">Total time: {totalTimeLabel}</p>
+            <p className="text-sm text-gray-500">Average response time: {average}</p>
+            <p className="text-sm text-gray-500">Total time: {totalTimeLabel}</p>
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:pt-4">
               <button
                 type="button"
                 onClick={() => router.push('/play/import')}
-                className="rounded-full bg-primary px-6 py-3 text-center text-sm font-semibold text-white shadow-lg sm:flex-1"
+                className="rounded-full bg-white px-6 py-3 text-center text-sm font-bold text-black shadow-lg sm:flex-1 hover:bg-gray-200 transition-colors"
               >
                 Play again
               </button>
               <button
                 type="button"
                 onClick={handleShare}
-                className="rounded-full border border-slate-200 px-6 py-3 text-center text-sm font-semibold text-slate-800 sm:flex-1"
+                className="rounded-full border border-gray-700 px-6 py-3 text-center text-sm font-semibold text-gray-300 sm:flex-1 hover:text-white hover:border-gray-500 transition-colors"
               >
                 {copied ? 'Link copied!' : 'Share'}
               </button>
             </div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Deck: {quizId || 'custom upload'}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-600">Deck: {quizId || 'custom upload'}</p>
           </div>
           <ResultBadge score={percent} />
         </div>
         <div className="grid gap-8 lg:grid-cols-3">
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-left shadow-inner sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Shareable recap</p>
-            <p className="mt-3 text-2xl font-bold text-slate-900">Spent {totalTimeLabel}</p>
-            <p className="mt-2 text-sm text-slate-600">
+          <div className="rounded-3xl border border-dashed border-dark-border bg-dark-card/50 p-6 text-left shadow-inner sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Shareable recap</p>
+            <p className="mt-3 text-2xl font-bold text-white">Spent {totalTimeLabel}</p>
+            <p className="mt-2 text-sm text-gray-400">
               {score} of {questions.length} prompts solved · Mode: {mode ?? 'normal'}
             </p>
-            <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-slate-900/90 p-4 text-left text-xs text-slate-100">{shareText}</pre>
+            <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-black/50 border border-dark-border p-4 text-left text-xs text-gray-300">{shareText}</pre>
             <button
               type="button"
               onClick={handleShare}
-              className="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
+              className="mt-4 w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-black shadow-lg transition hover:bg-gray-200"
             >
               {copied ? 'Copied!' : 'Share snapshot'}
             </button>
           </div>
-          <div className="rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-100 sm:p-8">
-            <p className="text-lg font-semibold text-slate-900 sm:text-xl">Review your stumbles</p>
+          <div className="rounded-3xl bg-dark-card p-6 shadow-xl border border-dark-border sm:p-8">
+            <p className="text-lg font-semibold text-white sm:text-xl">Review your stumbles</p>
             {wrongQs.length === 0 ? (
-              <p className="mt-4 text-sm text-slate-600 sm:text-base">Flawless victory! No wrong answers recorded.</p>
+              <p className="mt-4 text-sm text-gray-400 sm:text-base">Flawless victory! No wrong answers recorded.</p>
             ) : (
               <ul className="mt-4 space-y-4">
                 {wrongQs.map((item, idx) => (
-                  <li key={`${item.q}-${idx}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                    <p className="font-semibold text-slate-800">{item.q}</p>
+                  <li key={`${item.q}-${idx}`} className="rounded-2xl border border-dark-border bg-dark-bg/50 p-4">
+                    <p className="font-semibold text-gray-200">{item.q}</p>
                     {item.user && (
-                      <p className="text-sm text-rose-500">
+                      <p className="text-sm text-red-400">
                         Your pick: <span className="font-semibold">{item.user}</span>
                       </p>
                     )}
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-gray-500">
                       Correct answer: <span className="font-semibold text-primary">{item.correct}</span>
                     </p>
                   </li>
@@ -196,13 +196,13 @@ const ResultPage = () => {
               </ul>
             )}
           </div>
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-xl sm:p-8">
-            <p className="text-lg font-semibold text-slate-900 sm:text-xl">AI review & insights</p>
+          <div className="rounded-3xl border border-dark-border bg-dark-card p-6 shadow-xl sm:p-8">
+            <p className="text-lg font-semibold text-white sm:text-xl">AI review & insights</p>
             {coachReview && (
-              <div className="mt-3 space-y-3 text-sm text-slate-600">
+              <div className="mt-3 space-y-3 text-sm text-gray-400">
                 <p className="text-base font-semibold text-primary">{coachReview.headline}</p>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-500">Strengths</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Strengths</p>
                   <ul className="mt-1 list-disc space-y-1 pl-4">
                     {coachReview.strengths.map((item) => (
                       <li key={`strength-${item}`}>{item}</li>
@@ -218,7 +218,7 @@ const ResultPage = () => {
                   </ul>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Next actions</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Next actions</p>
                   <ul className="mt-1 list-disc space-y-1 pl-4">
                     {coachReview.actions.map((item) => (
                       <li key={`action-${item}`}>{item}</li>
@@ -227,14 +227,14 @@ const ResultPage = () => {
                 </div>
               </div>
             )}
-            {reviewStatus === 'loading' && <p className="mt-4 text-sm text-slate-500">Asking Gemini for coaching tips…</p>}
-            {reviewError && <p className="mt-4 text-sm text-rose-500">{reviewError}</p>}
+            {reviewStatus === 'loading' && <p className="mt-4 text-sm text-gray-500">Asking Gemini for coaching tips…</p>}
+            {reviewError && <p className="mt-4 text-sm text-red-400">{reviewError}</p>}
             {!coachReview && reviewStatus === 'ready' && !reviewError && (
-              <p className="mt-4 text-sm text-slate-500">No AI insights available yet.</p>
+              <p className="mt-4 text-sm text-gray-500">No AI insights available yet.</p>
             )}
             {summaryForAi && (
-              <details className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-left text-sm text-slate-600">
-                <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">PDF summary</summary>
+              <details className="mt-6 rounded-2xl border border-dark-border bg-dark-bg/30 p-4 text-left text-sm text-gray-400">
+                <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">PDF summary</summary>
                 <p className="mt-2">{summaryForAi}</p>
               </details>
             )}

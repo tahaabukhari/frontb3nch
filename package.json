@@ -10,10 +10,10 @@
     "@google/generative-ai": "^0.24.1",
     "framer-motion": "^11.0.0",
     "lottie-react": "^2.4.0",
-    "next": "15.0.3",
+    "next": "^16.1.1",
     "pdf-parse": "^2.4.5",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "zod": "^4.1.12",
     "zustand": "^5.0.0"
   },

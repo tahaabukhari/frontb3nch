@@ -88,16 +88,16 @@ const ImportPage = () => {
           htmlFor="uploader"
           onDragOver={(event) => event.preventDefault()}
           onDrop={handleDrop}
-          className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-slate-600 transition hover:border-primary hover:bg-white cursor-pointer sm:px-8 sm:py-16"
+          className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-dark-border bg-dark-card px-6 py-12 text-gray-400 transition hover:border-white hover:bg-dark-card/80 cursor-pointer sm:px-8 sm:py-16"
         >
-          <span className="text-lg font-semibold text-slate-800">
+          <span className="text-lg font-semibold text-white">
             {fileName || 'Drag & drop or click to browse'}
           </span>
           {status === 'ready' && upload && (
-            <span className="text-sm text-emerald-700">✓ Ready to continue</span>
+            <span className="text-sm text-primary">✓ Ready to continue</span>
           )}
-          {status === 'reading' && <span className="text-sm text-slate-500">Reading file...</span>}
-          {error && <span className="text-sm text-rose-600">{error}</span>}
+          {status === 'reading' && <span className="text-sm text-gray-500">Reading file...</span>}
+          {error && <span className="text-sm text-red-500">{error}</span>}
           <input
             id="uploader"
             ref={inputRef}

@@ -146,7 +146,7 @@ const DifficultyContent = () => {
 
   return (
     <motion.section
-      className="bg-slate-50 px-4 py-14 sm:px-6 sm:py-16"
+      className="bg-dark-bg px-4 py-14 sm:px-6 sm:py-16"
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
@@ -155,65 +155,64 @@ const DifficultyContent = () => {
       <div className="mx-auto max-w-5xl space-y-10 text-center">
         <header>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary sm:text-sm">Choose mode</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">How do you want to play?</p>
-          <p className="mt-3 text-base text-slate-600 sm:text-lg">{subtitle}</p>
+          <p className="mt-2 text-3xl font-bold text-white sm:text-4xl">How do you want to play?</p>
+          <p className="mt-3 text-base text-gray-400 sm:text-lg">{subtitle}</p>
           {!deck && quizId === 'upload' && upload && (
-            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">PDF size: {(upload.size / 1024 / 1024).toFixed(2)} MB</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-gray-500">PDF size: {(upload.size / 1024 / 1024).toFixed(2)} MB</p>
           )}
           {!deck && quizId !== 'upload' && (
-            <p className="mt-1 text-sm text-amber-600">Deck not found. Please head back to the library.</p>
+            <p className="mt-1 text-sm text-amber-500">Deck not found. Please head back to the library.</p>
           )}
         </header>
         {quizId === 'upload' && upload && (
-          <div className="grid gap-4 rounded-3xl border border-dashed border-slate-200 bg-white/80 p-6 text-left shadow-inner sm:grid-cols-2 sm:p-8">
+          <div className="grid gap-4 rounded-3xl border border-dashed border-dark-border bg-dark-card/50 p-6 text-left shadow-inner sm:grid-cols-2 sm:p-8">
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">PDF pipeline</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">PDF pipeline</p>
               <div className="grid gap-3 sm:grid-cols-3">
                 {pipelineSteps.map((step) => (
                   <div
                     key={step.label}
-                    className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
-                      step.status === 'ready'
-                        ? 'border-emerald-100 bg-emerald-50 text-emerald-800'
-                        : step.status === 'loading'
-                          ? 'border-amber-100 bg-amber-50 text-amber-800 animate-pulse'
-                          : 'border-slate-200 text-slate-500'
-                    }`}
+                    className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${step.status === 'ready'
+                      ? 'border-primary/20 bg-primary/10 text-primary'
+                      : step.status === 'loading'
+                        ? 'border-amber-500/20 bg-amber-500/10 text-amber-500 animate-pulse'
+                        : 'border-dark-border text-gray-500'
+                      }`}
                   >
                     {step.label}
                   </div>
                 ))}
               </div>
               <div className="mt-2">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-dark-border">
                   <div
                     className={`${progressBarColor} h-full rounded-full transition-all duration-500`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
               </div>
-              <p className="text-sm text-slate-600">{builderState.message}</p>
-              {builderError && <p className="text-sm text-rose-500">{builderError}</p>}
+              <p className="text-sm text-gray-400">{builderState.message}</p>
+              {builderError && <p className="text-sm text-red-400">{builderError}</p>}
               <button
                 type="button"
                 onClick={() => triggerPipeline()}
                 disabled={builderState.status === 'loading'}
-                className="inline-flex items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center rounded-full border border-gray-600 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-white hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {builderState.status === 'loading' ? 'Generating…' : 'Regenerate quiz'}
               </button>
             </div>
-            <div className="rounded-2xl bg-slate-900/90 p-5 text-white shadow-lg">
-              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-emerald-200">AI brief</p>
+            <div className="rounded-2xl bg-black/40 border border-dark-border p-5 text-white shadow-lg">
+              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">AI brief</p>
               <p className="mt-3 text-lg font-semibold">{analysis?.summary ?? 'We are prepping a study brief based on your PDF.'}</p>
               {analysis?.highlights && (
-                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-emerald-100">
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-gray-300">
                   {analysis.highlights.slice(0, 3).map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
               )}
-              <p className="mt-4 text-xs text-emerald-200">
+              <p className="mt-4 text-xs text-gray-400">
                 {analysis?.questionSet?.length
                   ? `${analysis.questionSet.length} custom questions ready`
                   : 'We will auto-build 8+ questions once analysis finishes.'}
@@ -228,12 +227,12 @@ const DifficultyContent = () => {
               type="button"
               onClick={() => handleSelect(option.key)}
               disabled={disableCustomSelection}
-              className="flex flex-col rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-lg transition hover:-translate-y-1 hover:border-primary disabled:cursor-not-allowed disabled:opacity-70 sm:p-6"
+              className="flex flex-col rounded-3xl border border-dark-border bg-dark-card p-5 text-left shadow-lg transition hover:-translate-y-1 hover:border-white disabled:cursor-not-allowed disabled:opacity-70 sm:p-6 group"
             >
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">{option.label}</p>
-              <p className="mt-3 text-2xl font-bold text-slate-900 sm:mt-4 sm:text-3xl">{option.description}</p>
-              <p className="mt-2 flex-1 text-slate-600 sm:mt-3">{option.detail}</p>
-              <span className="mt-4 text-sm font-semibold text-primary sm:mt-6">Select →</span>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500 group-hover:text-primary transition-colors">{option.label}</p>
+              <p className="mt-3 text-2xl font-bold text-white sm:mt-4 sm:text-3xl">{option.description}</p>
+              <p className="mt-2 flex-1 text-gray-400 sm:mt-3">{option.detail}</p>
+              <span className="mt-4 text-sm font-semibold text-white sm:mt-6">Select →</span>
             </button>
           ))}
         </div>
@@ -245,13 +244,13 @@ const DifficultyContent = () => {
 const DifficultyPage = () => (
   <Suspense
     fallback={
-      <section className="bg-slate-50 px-4 py-14 sm:px-6 sm:py-16">
+      <section className="bg-dark-bg px-4 py-14 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-5xl animate-pulse space-y-4">
-          <div className="h-6 w-32 rounded-full bg-slate-200" />
-          <div className="h-10 w-2/3 rounded-full bg-slate-200" />
+          <div className="h-6 w-32 rounded-full bg-dark-card" />
+          <div className="h-10 w-2/3 rounded-full bg-dark-card" />
           <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
             {[...Array(3)].map((_, idx) => (
-              <div key={`skeleton-${idx}`} className="h-32 rounded-3xl bg-white shadow-inner sm:h-40" />
+              <div key={`skeleton-${idx}`} className="h-32 rounded-3xl bg-dark-card shadow-inner sm:h-40" />
             ))}
           </div>
         </div>
