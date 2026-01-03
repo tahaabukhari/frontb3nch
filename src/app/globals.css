@@ -27,37 +27,7 @@ body {
   position: relative;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg,
-      #0a0a0a 0%,
-      #1a1a1a 25%,
-      #222222 50%,
-      #1a1a1a 75%,
-      #0a0a0a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
-  z-index: -1;
-  pointer-events: none;
-}
-
-@keyframes gradientShift {
-
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
+/* body::before gradient removed for StarBackground */
 .glow-card {
   box-shadow: 0 10px 40px rgba(255, 255, 255, 0.05);
 }
