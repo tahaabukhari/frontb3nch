@@ -93,7 +93,7 @@ const QuizPage = () => {
 
   if (!question) {
     return (
-      <section className="flex min-h-[60vh] items-center justify-center bg-dark-bg px-4 py-10 text-center text-gray-300">
+      <section className="flex min-h-[60vh] items-center justify-center px-4 py-10 text-center text-gray-300">
         Loading quiz…
       </section>
     );
@@ -101,7 +101,7 @@ const QuizPage = () => {
 
   return (
     <motion.section
-      className="min-h-screen bg-dark-bg px-4 py-8 sm:px-6 sm:py-10"
+      className="min-h-screen px-4 py-8 sm:px-6 sm:py-10"
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
