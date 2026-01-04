@@ -23,16 +23,13 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Nav Items */}
-        <div className="hidden items-center gap-2 sm:flex">
-          <Link
-            href="/play/library"
-            className="rounded-full px-5 py-2 text-sm font-medium text-gray-300 transition hover:bg-white/10 hover:text-white"
-          >
-            Library
-          </Link>
+        <div className="hidden items-center gap-1 sm:flex">
+          <NavLink href="/dashboard">Learning</NavLink>
+          <NavLink href="/play/library">Library</NavLink>
+          <NavLink href="/about">About</NavLink>
 
           {/* Profile Button */}
-          <div className="relative">
+          <div className="relative ml-2">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={`flex items-center gap-3 rounded-full border border-white/10 bg-zinc-900/50 pl-1 pr-4 py-1 transition hover:bg-zinc-800 hover:border-white/20 ${isMenuOpen ? 'bg-zinc-800 border-white/20' : ''}`}
@@ -40,7 +37,7 @@ const Navbar = () => {
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold text-white shadow-lg border border-white/10">
                 U
               </div>
-              <span className="text-sm font-medium text-gray-300">Profile</span>
+              <span className="text-sm font-medium text-gray-300">Account</span>
               {/* Chevron Icon */}
               <svg className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -62,8 +59,9 @@ const Navbar = () => {
                     <p className="text-xs text-gray-500 mt-0.5 truncate">guest@frontb3nch.app</p>
                   </div>
                   <div className="flex flex-col gap-1">
+                    <DropdownItem href="/dashboard" icon="📊">Dashboard</DropdownItem>
                     <DropdownItem href="/play/profile" icon="👤">My Profile</DropdownItem>
-                    <DropdownItem href="/play/records" icon="📊">My Records</DropdownItem>
+                    <div className="my-1 border-b border-white/5" />
                     <DropdownItem href="/play/settings" icon="⚙️">Settings</DropdownItem>
                     <DropdownItem href="/play/funzone" icon="🎮">Funzone</DropdownItem>
                   </div>
@@ -103,9 +101,13 @@ const Navbar = () => {
                 </div>
 
                 <div className="space-y-1">
+                  <DropdownItem href="/dashboard" icon="📊" onClick={() => setIsMenuOpen(false)}>Dashboard</DropdownItem>
                   <DropdownItem href="/play/profile" icon="👤" onClick={() => setIsMenuOpen(false)}>My Profile</DropdownItem>
+                  <div className="my-1 border-b border-white/5" />
+                  <DropdownItem href="/dashboard" icon="🤖" onClick={() => setIsMenuOpen(false)}>Learning</DropdownItem>
                   <DropdownItem href="/play/library" icon="📚" onClick={() => setIsMenuOpen(false)}>Library</DropdownItem>
-                  <DropdownItem href="/play/records" icon="📊" onClick={() => setIsMenuOpen(false)}>My Records</DropdownItem>
+                  <DropdownItem href="/about" icon="ℹ️" onClick={() => setIsMenuOpen(false)}>About</DropdownItem>
+                  <div className="my-1 border-b border-white/5" />
                   <DropdownItem href="/play/settings" icon="⚙️" onClick={() => setIsMenuOpen(false)}>Settings</DropdownItem>
                   <DropdownItem href="/play/funzone" icon="🎮" onClick={() => setIsMenuOpen(false)}>Funzone</DropdownItem>
                 </div>
@@ -124,6 +126,15 @@ const Navbar = () => {
     </header>
   );
 };
+
+const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
+  <Link
+    href={href}
+    className="rounded-full px-5 py-2 text-sm font-medium text-gray-300 transition hover:bg-white/10 hover:text-white"
+  >
+    {children}
+  </Link>
+);
 
 const DropdownItem = ({ children, href, icon, onClick }: { children: React.ReactNode; href: string; icon: string; onClick?: () => void }) => (
   <Link
