@@ -2,31 +2,23 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import dynamic from 'next/dynamic';
 
-const Spline = dynamic(() => import('@splinetool/react-spline'), {
-  loading: () => <div className="flex h-full w-full items-center justify-center text-gray-400">Loading 3D...</div>,
-  ssr: false,
-});
-
-// Manual alignment configuration for the Head (Spline) and Body (Image)
-// Adjust these values to perfectly align the 3D head with the static body
+// Manual alignment configuration for the Body (Image)
+// Adjust these values to perfectly align the static body
 const ALIGNMENT = {
   mobile: {
     // Mobile-specific adjustments
     image: { x: -110, y: 80, scale: 1 }, // Lowered Y for mobile
-    spline: { x: 0, y: 0, scale: 1 }
   },
   desktop: {
     // Desktop-specific adjustments
     image: { x: -110, y: -10, scale: 1 },
-    spline: { x: 0, y: 0, scale: 1 }
   }
 };
 
 const Hero = () => (
   <>
-    {/* Fullscreen 3D Background - Bottom Layer (z-[-10]) */}
+    {/* Fullscreen Background - Bottom Layer (z-[-10]) */}
     {/* Changed from fixed to absolute so it scrolls with the page */}
     {/* Shifted right using left and width utility classes */}
     <div className="absolute top-0 left-0 w-full h-[120vh] overflow-hidden pointer-events-none z-[-10]">
@@ -46,16 +38,6 @@ const Hero = () => (
             alt="Hero Background"
             className="h-full w-full object-cover"
           />
-        </div>
-
-        {/* Layer 2: Spline 3D Model (Head) */}
-        <div
-          className={`absolute inset-0 h-full w-full 
-            [transform:translate(${ALIGNMENT.mobile.spline.x}px,${ALIGNMENT.mobile.spline.y}px)_scale(${ALIGNMENT.mobile.spline.scale})]
-            md:[transform:translate(${ALIGNMENT.desktop.spline.x}px,${ALIGNMENT.desktop.spline.y}px)_scale(${ALIGNMENT.desktop.spline.scale})]
-          `}
-        >
-          <Spline className="w-full h-full" scene="/desktop-hero.splinecode" />
         </div>
 
       </div>
