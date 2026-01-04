@@ -12,7 +12,7 @@ const ALIGNMENT = {
   },
   desktop: {
     // Desktop-specific adjustments
-    image: { x: 300, y: 0, scale: 0.85 },
+    image: { x: 380, y: 0, scale: 0.85 },
   }
 };
 
