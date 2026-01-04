@@ -7,7 +7,8 @@
 
   /* Monochrome color scheme */
   --bg-dark: #0a0a0a;
-  --bg-card: #1a1a1a;
+  --bg-card: rgba(26, 26, 26, 0.6);
+  /* Semi-transparent for glass effect */
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
 

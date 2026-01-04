@@ -15,7 +15,8 @@ const Hero = () => (
     {/* Changed from fixed to absolute so it scrolls with the page */}
     {/* Shifted right using left and width utility classes */}
     <div className="absolute top-0 left-0 w-full h-[120vh] overflow-hidden pointer-events-none z-[-10]">
-      <div className="absolute top-0 left-[20%] w-[120%] h-full pointer-events-auto">
+      {/* Mobile: Centered/Cover. Desktop: Shifted slightly right (10%) */}
+      <div className="absolute top-0 left-0 w-full h-full md:left-[10%] md:w-[120%] pointer-events-auto">
         <Spline className="w-full h-full" scene="/desktop-hero.splinecode" />
       </div>
     </div>

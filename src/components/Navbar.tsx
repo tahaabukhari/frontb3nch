@@ -55,7 +55,7 @@ const Navbar = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-[#0f0f0f] p-2 shadow-2xl origin-top-right overflow-hidden backdrop-blur-3xl"
+                  className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-black/80 p-2 shadow-2xl origin-top-right overflow-hidden backdrop-blur-3xl"
                 >
                   <div className="px-4 py-3 border-b border-white/5 mb-2">
                     <p className="text-sm font-bold text-white">My Account</p>
@@ -90,7 +90,7 @@ const Navbar = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-[#121212] p-2 shadow-2xl origin-top-right overflow-hidden backdrop-blur-3xl z-50"
+                className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-black/80 p-2 shadow-2xl origin-top-right overflow-hidden backdrop-blur-3xl z-50"
               >
                 <div className="px-4 py-3 border-b border-white/5 mb-2">
                   <div className="flex items-center gap-3">
