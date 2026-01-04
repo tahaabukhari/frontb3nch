@@ -12,17 +12,15 @@ const Spline = dynamic(() => import('@splinetool/react-spline'), {
 // Manual alignment configuration for the Head (Spline) and Body (Image)
 // Adjust these values to perfectly align the 3D head with the static body
 const ALIGNMENT = {
-  // Static Background Image (The Body)
-  image: {
-    x: -110,      // Horizontal offset in pixels
-    y: -10,      // Vertical offset in pixels
-    scale: 1,  // Scale factor (1 = 100%)
+  mobile: {
+    // Mobile-specific adjustments
+    image: { x: -110, y: 80, scale: 1 }, // Lowered Y for mobile
+    spline: { x: 0, y: 0, scale: 1 }
   },
-  // Spline 3D Scene (The Head)
-  spline: {
-    x: 0,     // Horizontal offset in pixels
-    y: 0,     // Vertical offset in pixels
-    scale: 1, // Scale factor
+  desktop: {
+    // Desktop-specific adjustments
+    image: { x: -110, y: -10, scale: 1 },
+    spline: { x: 0, y: 0, scale: 1 }
   }
 };
 
@@ -36,11 +34,12 @@ const Hero = () => (
       <div className="absolute top-0 left-0 w-full h-full md:left-[10%] md:w-[120%] pointer-events-auto">
 
         {/* Layer 1: Static Background Image (Body) */}
+        {/* Using Tailwind arbitrary values for responsive transforms based on config */}
         <div
-          className="absolute inset-0 h-full w-full"
-          style={{
-            transform: `translate(${ALIGNMENT.image.x}px, ${ALIGNMENT.image.y}px) scale(${ALIGNMENT.image.scale})`,
-          }}
+          className={`absolute inset-0 h-full w-full 
+            [transform:translate(${ALIGNMENT.mobile.image.x}px,${ALIGNMENT.mobile.image.y}px)_scale(${ALIGNMENT.mobile.image.scale})]
+            md:[transform:translate(${ALIGNMENT.desktop.image.x}px,${ALIGNMENT.desktop.image.y}px)_scale(${ALIGNMENT.desktop.image.scale})]
+          `}
         >
           <img
             src="/desktop-herobg.png"
@@ -51,10 +50,10 @@ const Hero = () => (
 
         {/* Layer 2: Spline 3D Model (Head) */}
         <div
-          className="absolute inset-0 h-full w-full"
-          style={{
-            transform: `translate(${ALIGNMENT.spline.x}px, ${ALIGNMENT.spline.y}px) scale(${ALIGNMENT.spline.scale})`,
-          }}
+          className={`absolute inset-0 h-full w-full 
+            [transform:translate(${ALIGNMENT.mobile.spline.x}px,${ALIGNMENT.mobile.spline.y}px)_scale(${ALIGNMENT.mobile.spline.scale})]
+            md:[transform:translate(${ALIGNMENT.desktop.spline.x}px,${ALIGNMENT.desktop.spline.y}px)_scale(${ALIGNMENT.desktop.spline.scale})]
+          `}
         >
           <Spline className="w-full h-full" scene="/desktop-hero.splinecode" />
         </div>
