@@ -11,13 +11,16 @@ const Spline = dynamic(() => import('@splinetool/react-spline'), {
 
 const Hero = () => (
   <>
-    {/* Fullscreen 3D Background - Middle Layer (z-[-10]) */}
-    <div className="fixed inset-0 z-[-10] w-full h-full pointer-events-auto">
-      <Spline className="w-full h-full" scene="/desktop-hero.splinecode" />
+    {/* Fullscreen 3D Background - Bottom Layer (z-[-10]) */}
+    {/* Changed from fixed to absolute so it scrolls with the page */}
+    {/* Shifted right using left and width utility classes */}
+    <div className="absolute top-0 left-0 w-full h-[120vh] overflow-hidden pointer-events-none z-[-10]">
+      <div className="absolute top-0 left-[20%] w-[120%] h-full pointer-events-auto">
+        <Spline className="w-full h-full" scene="/desktop-hero.splinecode" />
+      </div>
     </div>
 
     {/* Hero Content - Top Layer (z-10) */}
-    {/* pointer-events-none on container allows clicking through to Spline in empty areas */}
     <section className="relative z-10 mx-auto flex min-h-[80vh] max-w-6xl flex-col justify-center gap-8 px-4 py-12 text-center pointer-events-none sm:gap-12 sm:px-6 sm:py-14 md:flex-row md:py-20 md:text-left">
       <motion.div
         className="flex-1 space-y-6 pointer-events-auto"
@@ -36,13 +39,13 @@ const Hero = () => (
         <div className="flex flex-col gap-4 sm:flex-row justify-center md:justify-start">
           <Link
             href="/play/import"
-            className="min-h-[48px] rounded-full bg-white px-8 py-3.5 text-center text-base font-bold text-black shadow-lg hover:bg-gray-200 transition-all sm:flex-1 sm:text-lg">
+            className="rounded-full bg-white px-8 py-4 text-center text-lg font-bold text-black shadow-lg hover:bg-gray-200 transition-all sm:min-w-[160px]">
             Start Playing
           </Link>
           <Link
             href="/play/library"
-            className="relative h-48 w-full overflow-hidden rounded-3xl bg-zinc-900 border border-white/5 text-base font-semibold text-gray-400 hover:text-white hover:border-gray-600 transition-all sm:flex-1 sm:text-base">
-            Browse library
+            className="rounded-full border border-white/20 bg-white/5 px-8 py-4 text-center text-lg font-semibold text-white hover:bg-white/10 hover:border-white/40 transition-all sm:min-w-[160px]">
+            Browse Library
           </Link>
         </div>
       </motion.div>

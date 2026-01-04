@@ -10,7 +10,7 @@ const Navbar = () => {
   return (
     <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
       {/* Container - Enable pointer events for the navbar itself */}
-      <nav className="pointer-events-auto relative flex w-full max-w-5xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/80 p-2 pl-6 shadow-2xl backdrop-blur-xl transition-all sm:pr-2">
+      <nav className="pointer-events-auto relative z-50 flex w-full max-w-5xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/80 p-2 pl-6 shadow-2xl backdrop-blur-xl transition-all sm:pr-2">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
