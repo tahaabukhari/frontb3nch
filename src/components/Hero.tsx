@@ -8,11 +8,11 @@ import { motion } from 'framer-motion';
 const ALIGNMENT = {
   mobile: {
     // Mobile-specific adjustments
-    image: { x: -70, y: 80, scale: 0.8 }, // Lowered Y for mobile
+    image: { x: -20, y: 80, scale: 0.85 },
   },
   desktop: {
     // Desktop-specific adjustments
-    image: { x: -70, y: -10, scale: 0.8 },
+    image: { x: -40, y: 0, scale: 0.85 },
   }
 };
 
@@ -22,8 +22,8 @@ const Hero = () => (
     {/* Changed from fixed to absolute so it scrolls with the page */}
     {/* Shifted right using left and width utility classes */}
     <div className="absolute top-0 left-0 w-full h-[120vh] overflow-hidden pointer-events-none z-[-10]">
-      {/* Mobile: Centered/Cover. Desktop: Shifted slightly right (10%) */}
-      <div className="absolute top-0 left-0 w-full h-full md:left-[10%] md:w-[120%] pointer-events-auto">
+      {/* Container for the image */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-auto">
 
         {/* Layer 1: Static Background Image (Body) */}
         {/* Using Tailwind arbitrary values for responsive transforms based on config */}
