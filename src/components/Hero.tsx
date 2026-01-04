@@ -54,8 +54,7 @@ const Hero = () => (
         <Spline scene="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode" />
       </div>
 
-      {/* Decorative gradient behind the 3D element */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-blue-500/0 blur-[100px] -z-10 rounded-full opacity-50" />
+
     </motion.div>
   </section>
 );

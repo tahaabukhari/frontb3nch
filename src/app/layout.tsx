@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <StarBackground />
         <Navbar />
         <PageTransition>
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pt-24 sm:pt-28">{children}</main>
           <Footer />
         </PageTransition>
       </body>
