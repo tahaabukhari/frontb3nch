@@ -11,7 +11,12 @@ export default function GlobalLayoutWrapper({ children }: { children: React.Reac
   const isDashboard = pathname?.startsWith('/dashboard');
 
   if (isDashboard) {
-    return <main>{children}</main>;
+    return (
+      <>
+        <Navbar isDashboard={true} />
+        <main>{children}</main>
+      </>
+    );
   }
 
   return (

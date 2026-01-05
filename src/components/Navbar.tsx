@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Navbar = () => {
+const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -14,19 +14,25 @@ const Navbar = () => {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-2xl border border-white/10 group-hover:scale-105 transition-transform">
-            🔰
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 border border-white/10 group-hover:scale-105 transition-transform overflow-hidden">
+            <img src="/logo.png" alt="frontb3nch" className="w-full h-full object-cover" />
           </div>
-          <span className="text-lg font-bold text-white sm:text-xl tracking-tight group-hover:text-gray-200 transition-colors">
-            frontb3nch
-          </span>
+          {!isDashboard && (
+            <span className="text-lg font-bold text-white sm:text-xl tracking-tight group-hover:text-gray-200 transition-colors">
+              frontb3nch
+            </span>
+          )}
         </Link>
 
         {/* Desktop Nav Items */}
         <div className="hidden items-center gap-1 sm:flex">
-          <NavLink href="/dashboard">Learning</NavLink>
-          <NavLink href="/play/library">Library</NavLink>
-          <NavLink href="/about">About</NavLink>
+          {!isDashboard && (
+            <>
+              <NavLink href="/dashboard">Learning</NavLink>
+              <NavLink href="/play/library">Library</NavLink>
+              <NavLink href="/about">About</NavLink>
+            </>
+          )}
 
           {/* Profile Button */}
           <div className="relative ml-2">
@@ -103,10 +109,14 @@ const Navbar = () => {
                 <div className="space-y-1">
                   <DropdownItem href="/dashboard" icon="📊" onClick={() => setIsMenuOpen(false)}>Dashboard</DropdownItem>
                   <DropdownItem href="/play/profile" icon="👤" onClick={() => setIsMenuOpen(false)}>My Profile</DropdownItem>
-                  <div className="my-1 border-b border-white/5" />
-                  <DropdownItem href="/dashboard" icon="🤖" onClick={() => setIsMenuOpen(false)}>Learning</DropdownItem>
-                  <DropdownItem href="/play/library" icon="📚" onClick={() => setIsMenuOpen(false)}>Library</DropdownItem>
-                  <DropdownItem href="/about" icon="ℹ️" onClick={() => setIsMenuOpen(false)}>About</DropdownItem>
+                  {!isDashboard && (
+                    <>
+                      <div className="my-1 border-b border-white/5" />
+                      <DropdownItem href="/dashboard" icon="🤖" onClick={() => setIsMenuOpen(false)}>Learning</DropdownItem>
+                      <DropdownItem href="/play/library" icon="📚" onClick={() => setIsMenuOpen(false)}>Library</DropdownItem>
+                      <DropdownItem href="/about" icon="ℹ️" onClick={() => setIsMenuOpen(false)}>About</DropdownItem>
+                    </>
+                  )}
                   <div className="my-1 border-b border-white/5" />
                   <DropdownItem href="/play/settings" icon="⚙️" onClick={() => setIsMenuOpen(false)}>Settings</DropdownItem>
                   <DropdownItem href="/play/funzone" icon="🎮" onClick={() => setIsMenuOpen(false)}>Funzone</DropdownItem>
