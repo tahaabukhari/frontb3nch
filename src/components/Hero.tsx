@@ -12,7 +12,7 @@ const ALIGNMENT = {
   },
   desktop: {
     // Desktop-specific adjustments
-    image: { x: 310, y: 0, scale: 0.85 },
+    image: { x: 240, y: 0, scale: 0.85 },
   }
 };
 
@@ -52,13 +52,8 @@ const Hero = () => (
     </div>
 
     {/* Hero Content - Top Layer (z-10) */}
-    <section className="relative z-10 mx-auto flex min-h-[80vh] max-w-6xl flex-col justify-center gap-8 px-4 py-12 text-center pointer-events-none sm:gap-12 sm:px-6 sm:py-14 md:flex-row md:py-20 md:text-left">
-      <motion.div
-        className="flex-1 space-y-6 pointer-events-auto"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
+    <section className="relative z-10 mx-auto flex min-h-[80vh] max-w-6xl flex-col justify-center gap-8 px-4 py-12 text-center pointer-events-none sm:gap-12 sm:px-6 sm:py-14 md:flex-row md:py-20 md:text-left md:-translate-x-[70px]">
+      <div className="flex-1 space-y-6 pointer-events-auto">
         <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl tracking-tight">
           Master any topic with
           <br />
@@ -79,7 +74,7 @@ const Hero = () => (
             Browse Library
           </Link>
         </div>
-      </motion.div>
+      </div>
 
       {/* Spacer for Right Side - keeps the text to the left on desktop */}
       <div className="hidden md:block md:w-1/2" />
