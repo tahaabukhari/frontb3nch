@@ -81,9 +81,105 @@ const Hero = () => (
       <div className="hidden md:block md:w-1/2" />
     </section>
 
+    {/* Section 2: AI Tutoring & Mock Exams */}
+    <SectionTwo />
+
+    {/* Section 3: Funzone */}
+    <SectionThree />
+
     {/* Daily Streak FAB */}
     <DailyStreakFab />
   </>
 );
+
+const SectionTwo = () => {
+  // Determine login status by checking if name is Guest or specific flag. 
+  // Ideally useUser would expose isLoggedIn boolean. 
+  // For now, assuming default 'Guest User' means not logged in.
+  // In a real app, `user` object would likely be null or have `isAuthenticated` flag.
+  return (
+    <section className="relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-32">
+      <div className="flex flex-col-reverse gap-12 md:flex-row md:items-center">
+        {/* Left Side - Visual Placeholder */}
+        <div className="flex-1 flex justify-center md:justify-start">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative h-64 w-64 flex items-center justify-center rounded-3xl bg-zinc-900/50 border border-white/10 shadow-2xl skew-y-3"
+          >
+            <span className="text-9xl filter drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">📓</span>
+            {/* Decorative Elements */}
+            <div className="absolute -top-4 -right-4 h-12 w-12 rounded-full bg-blue-500/20 blur-xl" />
+            <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-purple-500/20 blur-xl" />
+          </motion.div>
+        </div>
+
+        {/* Right Side - Content */}
+        <div className="flex-1 text-center md:text-right space-y-6">
+          <h2 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+            AI-Powered Tutoring &
+            <br />
+            <span className="text-blue-400">Mock Exam Tools</span>
+          </h2>
+          <p className="text-gray-400 text-lg sm:text-xl leading-relaxed">
+            Prepare smarter with personalized AI guidance. Generate mock exams, get instant feedback, and master your subjects with a tutor that never sleeps.
+          </p>
+          <div className="flex justify-center md:justify-end">
+            <Link
+              href="/dashboard"
+              className="rounded-full bg-blue-600 px-8 py-3 text-lg font-bold text-white shadow-lg hover:bg-blue-500 transition-all shadow-blue-500/20"
+            >
+              Go to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const SectionThree = () => {
+  return (
+    <section className="relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-32">
+      <div className="flex flex-col gap-12 md:flex-row md:items-center">
+        {/* Left Side - Content */}
+        <div className="flex-1 text-center md:text-left space-y-6">
+          <h2 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+            Learning redefined for
+            <br />
+            <span className="text-purple-400">Gamers, by Gamers</span>
+          </h2>
+          <p className="text-gray-400 text-lg sm:text-xl leading-relaxed">
+            Level up your knowledge with our learning-oriented webgames! Experience education that feels like play, designed to keep you engaged and addicted to learning.
+          </p>
+          <div className="flex justify-center md:justify-start">
+            <Link
+              href="/play/funzone"
+              className="rounded-full bg-purple-600 px-8 py-3 text-lg font-bold text-white shadow-lg hover:bg-purple-500 transition-all shadow-purple-500/20"
+            >
+              Enter Funzone
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Side - Visual Placeholder */}
+        <div className="flex-1 flex justify-center md:justify-end">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative h-64 w-64 flex items-center justify-center rounded-3xl bg-zinc-900/50 border border-white/10 shadow-2xl -skew-y-3"
+          >
+            <span className="text-9xl filter drop-shadow-[0_0_30px_rgba(168,85,247,0.3)]">🎮</span>
+            {/* Decorative Elements */}
+            <div className="absolute -top-4 -left-4 h-12 w-12 rounded-full bg-purple-500/20 blur-xl" />
+            <div className="absolute -bottom-4 -right-4 h-16 w-16 rounded-full bg-pink-500/20 blur-xl" />
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default Hero;
