@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI, type GenerativeModel, type ModelParams } from '@google/generative-ai';
 
 export const getGeminiKey = () => {
-  return process.env.GEMINI_API_KEY ?? 'AIzaSyB4YYWjGYw62x_D0l9-JcQtPmhUybCeIbM';
+  return process.env.GEMINI_API_KEY || '';
 };
 
 export const getGeminiModel = (model = 'gemini-2.5-flash', options?: Omit<ModelParams, 'model'>): GenerativeModel => {
