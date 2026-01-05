@@ -14,8 +14,8 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 border border-white/10 group-hover:scale-105 transition-transform overflow-hidden">
-            <img src="/logo.png" alt="frontb3nch" className="w-full h-full object-cover" />
+          <div className="flex h-10 w-10 items-center justify-center group-hover:scale-105 transition-transform">
+            <img src="/logo.png" alt="frontb3nch" className="w-full h-full object-contain" />
           </div>
           {!isDashboard && (
             <span className="text-lg font-bold text-white sm:text-xl tracking-tight group-hover:text-gray-200 transition-colors">
