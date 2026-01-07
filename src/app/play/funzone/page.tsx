@@ -7,11 +7,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 const TOP_GAMES = [
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     { id: 1, title: 'Neon Racer', color: 'from-blue-500 to-purple-600', description: 'High speed futuristic racing.' },
     { id: 2, title: 'Cosmic Blast', color: 'from-red-500 to-orange-600', description: 'Defend your base from aliens.' },
     { id: 3, title: 'Cyber Puzzle', color: 'from-green-500 to-emerald-600', description: 'Hack into the mainframe.' },
     { id: 4, title: 'Void Walker', color: 'from-indigo-500 to-violet-600', description: 'Explore the unknown void.' },
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     {
@@ -47,6 +50,9 @@ const TOP_GAMES = [
         tags: ['Adventure', 'Exploration', 'Rpg']
     },
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -62,6 +68,9 @@ const ALL_GAMES = Array.from({ length: 12 }).map((_, i) => ({
     color: 'from-gray-800 to-gray-900',
     tags: ['Casual', 'Fun']
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -85,6 +94,7 @@ export default function FunzonePage() {
     const [activeFilter, setActiveFilter] = useState('All');
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
     // Moves the top card to the bottom
@@ -130,6 +140,53 @@ export default function FunzonePage() {
         setDirection(1);
         setCurrentIndex((prev) => (prev + 1) % TOP_GAMES.length);
     };
+=======
+    const nextSlide = () => {
+        setDirection(1);
+        setCurrentIndex((prev) => (prev + 1) % TOP_GAMES.length);
+    };
+
+    const prevSlide = () => {
+        setDirection(-1);
+        setCurrentIndex((prev) => (prev - 1 + TOP_GAMES.length) % TOP_GAMES.length);
+    };
+
+    const goToSlide = (index: number) => {
+        setDirection(index > currentIndex ? 1 : -1);
+        setCurrentIndex(index);
+    };
+
+    const variants = {
+        enter: (direction: number) => ({
+            x: direction > 0 ? 1000 : -1000,
+            opacity: 0,
+            scale: 0.95
+        }),
+        center: {
+            zIndex: 1,
+            x: 0,
+            opacity: 1,
+            scale: 1
+        },
+        exit: (direction: number) => ({
+            zIndex: 0,
+            x: direction < 0 ? 1000 : -1000,
+            opacity: 0,
+            scale: 0.95
+        })
+    };
+
+    return (
+        <div className="min-h-screen bg-[#0a0f1c] text-white overflow-x-hidden pb-20 relative font-sans selection:bg-blue-500 selection:text-white">
+
+            {/* Background Ambience */}
+            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[150px]" />
+                <div className="absolute top-[20%] right-[-10%] w-[40%] h-[60%] bg-purple-900/10 rounded-full blur-[150px]" />
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8">
+>>>>>>> Stashed changes
 
     const prevSlide = () => {
         setDirection(-1);
@@ -224,6 +281,7 @@ export default function FunzonePage() {
                     </div>
                 </header>
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
                 {/* --- Top Games: Card Stack Section --- */}
@@ -395,6 +453,50 @@ export default function FunzonePage() {
                                 </div>
 
 >>>>>>> Stashed changes
+=======
+                {/* --- Steam-style Carousel --- */}
+                <section className="mb-16 relative group">
+                    {/* Main Banner Area */}
+                    <div className="relative h-[400px] md:h-[450px] w-full overflow-hidden rounded-2xl bg-[#161b2e] shadow-2xl border border-white/5">
+
+                        <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                            <motion.div
+                                key={currentIndex}
+                                custom={direction}
+                                variants={variants}
+                                initial="enter"
+                                animate="center"
+                                exit="exit"
+                                transition={{
+                                    x: { type: "spring", stiffness: 300, damping: 30 },
+                                    opacity: { duration: 0.2 }
+                                }}
+                                className="absolute inset-0 w-full h-full flex flex-col md:flex-row cursor-pointer"
+                                onClick={() => setSelectedGame(TOP_GAMES[currentIndex])}
+                            >
+                                {/* Left Content */}
+                                <div className={`w-full md:w-2/3 h-full p-8 md:p-12 flex flex-col justify-center relative overflow-hidden bg-gradient-to-br ${TOP_GAMES[currentIndex].color}`}>
+                                    {/* Abstract Pattern overlay */}
+                                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay"></div>
+
+                                    <div className="relative z-10 space-y-4">
+                                        <h2 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tighter">
+                                            {TOP_GAMES[currentIndex].title}
+                                        </h2>
+                                        <p className="text-lg md:text-xl text-white/90 max-w-xl font-medium leading-relaxed drop-shadow-md">
+                                            {TOP_GAMES[currentIndex].description}
+                                        </p>
+                                        <div className="flex flex-wrap gap-2 mt-4">
+                                            {TOP_GAMES[currentIndex].tags.map(tag => (
+                                                <span key={tag} className="px-3 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-sm font-semibold border border-white/10">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+>>>>>>> Stashed changes
                                 {/* Right Content (Art/Emoji) */}
                                 <div className="w-full md:w-1/3 h-full bg-[#1e2337] flex items-center justify-center relative overflow-hidden border-l border-white/5">
                                     <div className="absolute inset-0 bg-gradient-to-br from-black/0 to-black/40"></div>
@@ -406,6 +508,9 @@ export default function FunzonePage() {
                                     >
                                         {TOP_GAMES[currentIndex].emoji}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -435,6 +540,7 @@ export default function FunzonePage() {
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     {/* Shuffle / Next Button */}
                     <div className="mt-8 flex justify-center">
                         <button 
@@ -452,6 +558,8 @@ export default function FunzonePage() {
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
                     {/* Dot Indicators */}
                     <div className="flex justify-center gap-3 mt-6">
                         {TOP_GAMES.map((_, index) => (
@@ -463,6 +571,9 @@ export default function FunzonePage() {
                             />
                         ))}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -470,6 +581,7 @@ export default function FunzonePage() {
                 </section>
 
                 {/* --- Search & Filters --- */}
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
                 <section className="mb-8 space-y-6">
@@ -507,6 +619,8 @@ export default function FunzonePage() {
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
                 <section className="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between sticky top-2 z-20 bg-[#0a0f1c]/80 backdrop-blur-xl py-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:bg-transparent sm:relative sm:top-0">
                     {/* Filter Pills */}
                     <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto">
@@ -538,6 +652,9 @@ export default function FunzonePage() {
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -550,6 +667,7 @@ export default function FunzonePage() {
                         {ALL_GAMES.filter(g => activeFilter === 'All' || g.category === activeFilter).map((game) => (
                             <motion.div
                                 key={game.id}
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -590,6 +708,15 @@ export default function FunzonePage() {
                                 className="group bg-[#161b2e] hover:bg-[#1f263d] rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-blue-900/10 transition-all border border-white/5"
                             >
 >>>>>>> Stashed changes
+=======
+                                onClick={() => setSelectedGame(game)}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ y: -5 }}
+                                transition={{ duration: 0.2 }}
+                                className="group bg-[#161b2e] hover:bg-[#1f263d] rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-blue-900/10 transition-all border border-white/5"
+                            >
+>>>>>>> Stashed changes
                                 {/* Aspect Ratio Box for Image */}
                                 <div className="aspect-[16/9] w-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center relative overflow-hidden group-hover:brightness-110 transition-all">
                                     <span className="text-5xl group-hover:scale-125 transition-transform duration-300 drop-shadow-lg">{game.emoji}</span>
@@ -608,6 +735,9 @@ export default function FunzonePage() {
                                         {/* Fake Price or Status */}
                                         <span className="text-xs text-green-400 font-medium">Free</span>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
