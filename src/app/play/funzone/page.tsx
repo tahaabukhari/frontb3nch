@@ -40,15 +40,26 @@ const TOP_GAMES = [
     },
 ];
 
-const ALL_GAMES = Array.from({ length: 8 }).map((_, i) => ({
-    id: i + 10,
-    title: `Coming Soon`,
-    category: 'Upcoming',
-    description: 'This title is currently under development.',
-    color: 'from-gray-800 to-gray-900',
-    tags: ['TBA'],
-    emoji: '🔒'
-}));
+const ALL_GAMES = [
+    {
+        id: 1, // Same ID as in TOP_GAMES
+        title: 'Flappy Goat',
+        category: 'Casual',
+        description: 'Navigate the skies! Tap to jump.',
+        color: 'from-blue-600 to-indigo-700',
+        tags: ['Casual', 'Endless'],
+        emoji: '🐐'
+    },
+    ...Array.from({ length: 7 }).map((_, i) => ({
+        id: i + 10,
+        title: `Coming Soon`,
+        category: 'Upcoming',
+        description: 'This title is currently under development.',
+        color: 'from-gray-800 to-gray-900',
+        tags: ['TBA'],
+        emoji: '🔒'
+    }))
+];
 
 const FILTERS = ['All', 'Action', 'Puzzle', 'Strategy', 'Multiplayer'];
 
