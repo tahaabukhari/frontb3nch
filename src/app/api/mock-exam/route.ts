@@ -6,36 +6,36 @@ import { getGeminiModel } from '@/lib/ai';
 export const maxDuration = 60; // Allow longer timeout for parsing + generation
 
 export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
+    const configStr = formData.get('config') as string;
+
+    if (!file || !configStr) {
+      return NextResponse.json({ error: 'Missing file or config' }, { status: 400 });
+    }
+
+    const config = JSON.parse(configStr);
+
+    // 1. Parse PDF
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // We try llama parse first
+    let parsedText = '';
     try {
-        const formData = await req.formData();
-        const file = formData.get('file') as File;
-        const configStr = formData.get('config') as string;
+      parsedText = await parsePdfWithLlama(buffer, file.name);
+    } catch (e) {
+      console.error("LlamaParse failed", e);
+      return NextResponse.json({ error: 'Failed to parse PDF content. Please try again.' }, { status: 500 });
+    }
 
-        if (!file || !configStr) {
-            return NextResponse.json({ error: 'Missing file or config' }, { status: 400 });
-        }
+    if (!parsedText) {
+      return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 500 });
+    }
 
-        const config = JSON.parse(configStr);
-
-        // 1. Parse PDF
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        // We try llama parse first
-        let parsedText = '';
-        try {
-            parsedText = await parsePdfWithLlama(buffer, file.name);
-        } catch (e) {
-            console.error("LlamaParse failed", e);
-            return NextResponse.json({ error: 'Failed to parse PDF content. Please try again.' }, { status: 500 });
-        }
-
-        if (!parsedText) {
-            return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 500 });
-        }
-
-        // 2. Generate Eaxm
-        const prompt = `
+    // 2. Generate Eaxm
+    const prompt = `
       You are an expert exam setter. Create a '${config.examType}' exam based on the provided content.
       
       Context Material:
@@ -79,18 +79,19 @@ export async function POST(req: NextRequest) {
       }
     `;
 
-        const model = getGeminiModel('gemini-1.5-flash', {
-            generationConfig: { responseMimeType: "application/json" }
-        });
+    const model = getGeminiModel('gemini-2.5-flash', {
+      generationConfig: { responseMimeType: "application/json" }
+    });
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-        const examData = JSON.parse(responseText);
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const examData = JSON.parse(responseText);
 
-        return NextResponse.json(examData);
+    return NextResponse.json(examData);
 
-    } catch (error: any) {
-        console.error('Mock Exam API Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
-    }
+  } catch (error: any) {
+    console.error('Mock Exam API Error Detailed:', error);
+    console.error('Mock Exam API Stack:', error.stack);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+  }
 }
