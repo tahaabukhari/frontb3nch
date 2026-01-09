@@ -13,15 +13,20 @@ interface GameState {
     isGameOver: boolean;
     score: number;
     highScore: number;
+    expEarned: number;
 }
+// Import User Context
+import { useUser } from '@/context/UserContext';
 
 export default function FlappyBird({ onBack }: FlappyBirdProps) {
+    const { addExp } = useUser();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [gameState, setGameState] = useState<GameState>({
         isPlaying: false,
         isGameOver: false,
         score: 0,
-        highScore: 0
+        highScore: 0,
+        expEarned: 0
     });
 
     // Physics constants
@@ -50,7 +55,7 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
     }, []);
 
     const startGame = () => {
-        setGameState(prev => ({ ...prev, isPlaying: true, isGameOver: false, score: 0 }));
+        setGameState(prev => ({ ...prev, isPlaying: true, isGameOver: false, score: 0, expEarned: 0 }));
         birdY.current = 300;
         birdVelocity.current = 0;
         pipes.current = [];
@@ -85,11 +90,19 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
 
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('touchstart', handleTouch, { passive: false });
-        // Mouse click handled by container onClick
+
+        // Handle right click and left click globally better here to prevent context menu
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+            jump();
+        };
+
+        window.addEventListener('contextmenu', handleContextMenu);
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('touchstart', handleTouch);
+            window.removeEventListener('contextmenu', handleContextMenu);
         };
     }, [jump, gameState.isPlaying]);
 
@@ -99,11 +112,18 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
         setGameState(prev => {
             const newHighScore = Math.max(prev.score, prev.highScore);
             localStorage.setItem('flappy_highscore', newHighScore.toString());
+
+            // Reward XP (1 XP per score)
+            if (prev.score > 0) {
+                addExp(prev.score);
+            }
+
             return {
                 ...prev,
                 isPlaying: false,
                 isGameOver: true,
-                highScore: newHighScore
+                highScore: newHighScore,
+                expEarned: prev.score
             };
         });
     };
@@ -313,6 +333,16 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
                                     <span className="text-gray-400 text-sm uppercase tracking-wider">Best</span>
                                     <span className="text-2xl font-mono text-yellow-500 font-bold">{gameState.highScore}</span>
                                 </div>
+
+                                {gameState.expEarned > 0 && (
+                                    <div className="bg-green-500/20 p-3 rounded-xl border border-green-500/30 flex items-center justify-between">
+                                        <span className="text-green-400 font-bold flex items-center gap-2">
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                            XP Earned
+                                        </span>
+                                        <span className="text-white font-mono font-bold">+{gameState.expEarned}</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
