@@ -7,14 +7,17 @@ const LearningPage = () => {
     return (
         <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-24">
 
+            {/* Top Gradient from Navbar */}
+            <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-primary/20 to-transparent pointer-events-none z-[-1]" />
+
             {/* Hero Section */}
             <section className="text-center space-y-6 pt-10">
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-5xl md:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 tracking-tight"
+                    className="text-5xl md:text-7xl font-extrabold text-white tracking-tight"
                 >
-                    Learning, Evolved.
+                    Learning, <span className="text-primary">Evolved.</span>
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}
@@ -22,7 +25,7 @@ const LearningPage = () => {
                     transition={{ delay: 0.1 }}
                     className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed"
                 >
-                    Experience a revolutionary way to study that combines <span className="text-white font-semibold">AI-driven acceleration</span> with engaging <span className="text-white font-semibold">gamification</span>.
+                    Experience a revolutionary way to study that combines <span className="text-primary font-semibold">AI-driven acceleration</span> with engaging <span className="text-primary font-semibold">gamification</span>.
                 </motion.p>
             </section>
 
@@ -34,9 +37,9 @@ const LearningPage = () => {
                     initial={{ opacity: 0, x: -50 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    className="p-8 rounded-3xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-white/10 backdrop-blur-xl hover:border-purple-500/30 transition-all group"
+                    className="p-8 rounded-3xl bg-zinc-900/50 border border-white/10 backdrop-blur-sm hover:border-primary/50 transition-all group"
                 >
-                    <div className="h-16 w-16 mb-6 rounded-2xl bg-purple-500/20 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
+                    <div className="h-16 w-16 mb-6 rounded-2xl bg-primary/20 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
                         🎮
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-4">Gamified Progression</h2>
@@ -45,13 +48,13 @@ const LearningPage = () => {
                     </p>
                     <ul className="mt-6 space-y-3">
                         <li className="flex items-center gap-3 text-gray-300">
-                            <span className="text-purple-400">⚡</span> Daily Streaks & Rewards
+                            <span className="text-primary">⚡</span> Daily Streaks & Rewards
                         </li>
                         <li className="flex items-center gap-3 text-gray-300">
-                            <span className="text-purple-400">🏆</span> Global Leaderboards
+                            <span className="text-primary">🏆</span> Global Leaderboards
                         </li>
                         <li className="flex items-center gap-3 text-gray-300">
-                            <span className="text-purple-400">🎯</span> Skill Tiers & Badges
+                            <span className="text-primary">🎯</span> Skill Tiers & Badges
                         </li>
                     </ul>
                 </motion.div>
@@ -61,9 +64,9 @@ const LearningPage = () => {
                     initial={{ opacity: 0, x: 50 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    className="p-8 rounded-3xl bg-gradient-to-br from-emerald-900/20 to-teal-900/20 border border-white/10 backdrop-blur-xl hover:border-emerald-500/30 transition-all group"
+                    className="p-8 rounded-3xl bg-zinc-900/50 border border-white/10 backdrop-blur-sm hover:border-primary/50 transition-all group"
                 >
-                    <div className="h-16 w-16 mb-6 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
+                    <div className="h-16 w-16 mb-6 rounded-2xl bg-primary/20 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
                         🚀
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-4">Accelerated Learning</h2>
@@ -72,13 +75,13 @@ const LearningPage = () => {
                     </p>
                     <ul className="mt-6 space-y-3">
                         <li className="flex items-center gap-3 text-gray-300">
-                            <span className="text-emerald-400">🤖</span> Smart AI Tutors
+                            <span className="text-primary">🤖</span> Smart AI Tutors
                         </li>
                         <li className="flex items-center gap-3 text-gray-300">
-                            <span className="text-emerald-400">🧠</span> Spaced Repetition
+                            <span className="text-primary">🧠</span> Spaced Repetition
                         </li>
                         <li className="flex items-center gap-3 text-gray-300">
-                            <span className="text-emerald-400">📊</span> Instant Performance Analytics
+                            <span className="text-primary">📊</span> Instant Performance Analytics
                         </li>
                     </ul>
                 </motion.div>
@@ -89,9 +92,9 @@ const LearningPage = () => {
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="relative p-10 rounded-[2.5rem] bg-black/40 border border-white/10 overflow-hidden"
+                className="relative p-10 rounded-[2.5rem] bg-zinc-900/80 border border-white/10 overflow-hidden"
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
 
                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
                     <div className="flex-1 space-y-6">
@@ -121,7 +124,7 @@ const LearningPage = () => {
 
                     <div className="flex-1 w-full max-w-md">
                         {/* Visual representation of library structure */}
-                        <div className="relative aspect-square rounded-2xl bg-zinc-900 border border-white/10 p-6 flex flex-col gap-4 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <div className="relative aspect-square rounded-2xl bg-zinc-800 border border-white/10 p-6 flex flex-col gap-4 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
                             <div className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5">
                                 <div className="h-10 w-10 rounded-lg bg-blue-500/20 flex items-center justify-center">📚</div>
                                 <div className="flex-1">
@@ -136,8 +139,8 @@ const LearningPage = () => {
                                     <div className="h-2 w-12 bg-white/10 rounded"></div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 ml-8 border-l-4 border-l-green-500">
-                                <div className="h-10 w-10 rounded-lg bg-green-500/20 flex items-center justify-center">⚗️</div>
+                            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 ml-8 border-l-4 border-l-primary">
+                                <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">⚗️</div>
                                 <div className="flex-1">
                                     <div className="h-2 w-28 bg-white/20 rounded mb-2"></div>
                                     <div className="h-2 w-20 bg-white/10 rounded"></div>
@@ -156,7 +159,7 @@ const LearningPage = () => {
                 className="text-center py-20"
             >
                 <h2 className="text-4xl font-bold text-white mb-8">Ready to transform your grades?</h2>
-                <Link href="/dashboard" className="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-full hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:scale-105">
+                <Link href="/dashboard" className="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-primary rounded-full hover:shadow-lg hover:shadow-primary/30 transition-all hover:scale-105">
                     Get Started for Free
                 </Link>
             </motion.section>

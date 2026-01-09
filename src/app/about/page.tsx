@@ -5,6 +5,9 @@ import { motion } from 'framer-motion';
 export default function AboutPage() {
     return (
         <main className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-white">
+            {/* Top Gradient */}
+            <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-primary/20 to-transparent pointer-events-none z-[-1]" />
+
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -12,8 +15,8 @@ export default function AboutPage() {
                 className="space-y-8"
             >
                 <div className="text-center space-y-4">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                        About frontb3nch
+                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
+                        About <span className="text-primary">frontb3nch</span>
                     </h1>
                     <p className="text-lg text-gray-400 max-w-2xl mx-auto">
                         Redefining how you learn with AI-powered personalized study tools.
