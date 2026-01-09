@@ -53,40 +53,51 @@ const DashboardHome = ({ user }: { user: any }) => (
     </div>
 );
 
-const MockExams = () => (
-    <div className="space-y-6">
-        <div className="flex justify-between items-center bg-indigo-900/20 p-6 rounded-3xl border border-indigo-500/20">
-            <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Mock Exam Simulator</h2>
-                <p className="text-indigo-200 text-sm">Generate full-length exams based on your syllabus.</p>
-            </div>
-            <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all">
-                + Create New Exam
-            </button>
-        </div>
+import { CreateExamModal } from '@/components/CreateExamModal';
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
-                <h3 className="text-lg font-bold text-white border-b border-white/5 pb-2">Active Exams</h3>
-                <div className="text-center py-8 text-gray-500 text-sm">
-                    No active exams. Start one now!
+const MockExams = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    return (
+        <div className="space-y-6">
+            <CreateExamModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+            <div className="flex justify-between items-center bg-indigo-900/20 p-6 rounded-3xl border border-indigo-500/20">
+                <div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Mock Exam Simulator</h2>
+                    <p className="text-indigo-200 text-sm">Generate full-length exams based on your syllabus.</p>
                 </div>
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all"
+                >
+                    + Create New Exam
+                </button>
             </div>
-            <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
-                <h3 className="text-lg font-bold text-white border-b border-white/5 pb-2">Past Results</h3>
-                <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                        <div>
-                            <p className="font-bold text-white">Physics Mid-Term</p>
-                            <p className="text-xs text-gray-500">Dec 12, 2025</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
+                    <h3 className="text-lg font-bold text-white border-b border-white/5 pb-2">Active Exams</h3>
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                        No active exams. Start one now!
+                    </div>
+                </div>
+                <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
+                    <h3 className="text-lg font-bold text-white border-b border-white/5 pb-2">Past Results</h3>
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                            <div>
+                                <p className="font-bold text-white">Physics Mid-Term</p>
+                                <p className="text-xs text-gray-500">Dec 12, 2025</p>
+                            </div>
+                            <div className="text-green-400 font-bold">92%</div>
                         </div>
-                        <div className="text-green-400 font-bold">92%</div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const DashboardSettings = () => {
     const { user, updateProfile } = useUser();
@@ -265,8 +276,8 @@ export default function DashboardPage() {
                             key={item.name}
                             onClick={() => setActiveTab(item.name)}
                             className={`flex items-center gap-4 p-3 rounded-2xl transition-all overflow-hidden whitespace-nowrap group ${activeTab === item.name
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                                : 'text-gray-400 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             <span className="text-2xl min-w-[32px] flex justify-center">{item.icon}</span>
