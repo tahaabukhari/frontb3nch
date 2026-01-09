@@ -102,13 +102,7 @@ export default function FunzonePage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0f1c] text-white overflow-x-hidden pb-20 relative font-sans selection:bg-blue-500 selection:text-white">
-
-            {/* Background Ambience */}
-            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[150px]" />
-                <div className="absolute top-[20%] right-[-10%] w-[40%] h-[60%] bg-purple-900/10 rounded-full blur-[150px]" />
-            </div>
+        <div className="min-h-screen bg-transparent text-white overflow-x-hidden pb-20 relative font-sans selection:bg-blue-500 selection:text-white">
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8">
 
@@ -178,21 +172,23 @@ export default function FunzonePage() {
                             </motion.div>
                         </AnimatePresence>
 
-                        {/* Navigation Buttons (Hover only) */}
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Navigation Buttons */}
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-4">
                             <button
                                 onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-                                className="p-3 rounded-full bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all transform hover:scale-110 border border-white/10"
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all transform hover:scale-110 border border-white/10 shadow-lg"
+                                aria-label="Previous Slide"
                             >
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                             </button>
                         </div>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                             <button
                                 onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-                                className="p-3 rounded-full bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all transform hover:scale-110 border border-white/10"
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all transform hover:scale-110 border border-white/10 shadow-lg"
+                                aria-label="Next Slide"
                             >
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                             </button>
                         </div>
                     </div>
