@@ -5,7 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '@/context/UserContext';
 import Link from 'next/link';
 
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+
 // --- Sub-components for Content ---
+
+const MOCK_HOME_DATA = [
+    { day: 'Mon', score: 40 },
+    { day: 'Tue', score: 55 },
+    { day: 'Wed', score: 45 },
+    { day: 'Thu', score: 70 },
+    { day: 'Fri', score: 65 },
+    { day: 'Sat', score: 85 },
+    { day: 'Sun', score: 90 },
+];
+
 
 const DashboardHome = ({ user }: { user: any }) => (
     <div className="space-y-8">
@@ -28,26 +41,61 @@ const DashboardHome = ({ user }: { user: any }) => (
                 color="bg-blue-500/10 border-blue-500/20 text-blue-400"
                 progress={(user.currentExp / user.maxExp) * 100}
             />
-            <StatCard
-                title="Quizzes Taken"
-                value="12"
-                subtext="Top 10% of learners"
-                color="bg-green-500/10 border-green-500/20 text-green-400"
-            />
-            <StatCard
-                title="Study Time"
-                value="4h 20m"
-                subtext="This week"
-                color="bg-orange-500/10 border-orange-500/20 text-orange-400"
-            />
+            {/* Study Activity Graph */}
+            <div className="md:col-span-2 rounded-3xl bg-zinc-900 border border-zinc-800 p-6 relative overflow-hidden">
+                <div className="flex justify-between items-center mb-4 relative z-10">
+                    <div>
+                        <h3 className="text-sm font-medium opacity-80 text-white">Learning Velocity</h3>
+                        <p className="text-xs text-gray-500">Points earned over last 7 days</p>
+                    </div>
+                    <div className="text-2xl font-bold text-primary">+450 XP</div>
+                </div>
+                <div className="h-[120px] w-full relative z-10">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={MOCK_HOME_DATA}>
+                            <defs>
+                                <linearGradient id="colorScoreHome" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#7CB342" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#7CB342" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', fontSize: '12px' }}
+                                itemStyle={{ color: '#fff' }}
+                                cursor={{ stroke: '#ffffff20' }}
+                            />
+                            <Area type="monotone" dataKey="score" stroke="#7CB342" strokeWidth={3} fillOpacity={1} fill="url(#colorScoreHome)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="rounded-3xl bg-zinc-900 border border-zinc-800 p-6">
-            <h3 className="text-xl font-bold text-white mb-4">Continue Learning</h3>
-            <div className="space-y-3">
-                <ActivityItem title="Advanced Calculus: Limits" type="Quiz" time="2 hours ago" status="Completed (85%)" />
-                <ActivityItem title="History of Art: Renaissance" type="Flashcards" time="Yesterday" status="In Progress" />
+        {/* Recent Activity & Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                    <StatCard
+                        title="Quizzes Taken"
+                        value="12"
+                        subtext="Top 10% of learners"
+                        color="bg-green-500/10 border-green-500/20 text-green-400"
+                    />
+                    <StatCard
+                        title="Study Time"
+                        value="4h 20m"
+                        subtext="This week"
+                        color="bg-orange-500/10 border-orange-500/20 text-orange-400"
+                    />
+                </div>
+            </div>
+
+            <div className="rounded-3xl bg-zinc-900 border border-zinc-800 p-6 h-full">
+                <h3 className="text-xl font-bold text-white mb-4">Continue Learning</h3>
+                <div className="space-y-3">
+                    <ActivityItem title="Advanced Calculus: Limits" type="Quiz" time="2 hours ago" status="Completed (85%)" />
+                    <ActivityItem title="History of Art: Renaissance" type="Flashcards" time="Yesterday" status="In Progress" />
+                </div>
             </div>
         </div>
     </div>
@@ -55,7 +103,7 @@ const DashboardHome = ({ user }: { user: any }) => (
 
 import { CreateExamModal } from '@/components/CreateExamModal';
 import { NotesSection } from '@/components/dashboard/NotesSection';
-import { LeaderboardSection } from '@/components/dashboard/LeaderboardSection';
+import { UserManagement } from '@/components/dashboard/UserManagement';
 
 const MockExams = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -263,6 +311,7 @@ export default function DashboardPage() {
     const [activeTab, setActiveTab] = useState('Home');
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
     // Dynamic Background Styles
     const bgStyle = user.dashboardConfig?.bgImage
@@ -271,7 +320,6 @@ export default function DashboardPage() {
 
     const menuItems = [
         { name: 'Home', icon: '🏠', component: <DashboardHome user={user} /> },
-        { name: 'Leaderboard', icon: '🏆', component: <LeaderboardSection /> },
         { name: 'Mock Exams', icon: '📝', component: <MockExams /> },
         { name: 'AI Learning', icon: '🤖', component: <div className="text-gray-400">AI Learning Content Coming Soon</div> }, // Placeholder
         { name: 'Notes', icon: '📓', component: <NotesSection /> },
@@ -304,16 +352,23 @@ export default function DashboardPage() {
             </div>
 
             {/* User Mini Profile at bottom of sidebar */}
+            {/* User Mini Profile at bottom of sidebar */}
             <div className="mt-auto px-4 w-full">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900 border border-zinc-800">
+                <button
+                    onClick={() => setIsUserMenuOpen(true)}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900 border border-zinc-800 w-full hover:bg-zinc-800 transition-colors text-left"
+                >
                     <div className="h-10 w-10 rounded-full bg-zinc-700 shrink-0 flex items-center justify-center text-sm font-bold border border-zinc-600">
                         {user.avatar ? <img src={user.avatar} className="h-full w-full rounded-full object-cover" /> : user.name[0]}
                     </div>
                     <div className="flex flex-col truncate">
                         <span className="text-sm font-bold text-white truncate">{user.name}</span>
-                        <span className="text-xs text-gray-500 truncate">Pro Account</span>
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-primary truncate">Lvl {user.level}</span>
+                            <span className="text-[10px] text-gray-500">• View Profile</span>
+                        </div>
                     </div>
-                </div>
+                </button>
             </div>
         </>
     );
@@ -324,6 +379,8 @@ export default function DashboardPage() {
             {user.dashboardConfig?.bgImage && (
                 <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] z-0 pointer-events-none" />
             )}
+
+            <UserManagement isOpen={isUserMenuOpen} onClose={() => setIsUserMenuOpen(false)} />
 
             {/* Mobile Header */}
             <div className="md:hidden flex items-center justify-between p-4 bg-zinc-950/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">

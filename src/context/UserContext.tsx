@@ -3,7 +3,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface UserProfile {
+    uid: string;
     name: string;
+    description?: string; // Added description field
     email: string;
     avatar: string | null; // Data URL or path
     banner: string | null; // Data URL or path
@@ -28,7 +30,9 @@ interface UserContextType {
 }
 
 const defaultUser: UserProfile = {
+    uid: '8493-2104-9921',
     name: 'Guest User',
+    description: 'Learning enthusiast ready to conquer the leaderboards!',
     email: 'guest@frontb3nch.app',
     avatar: null,
     banner: null,
