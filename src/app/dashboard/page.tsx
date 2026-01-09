@@ -54,6 +54,7 @@ const DashboardHome = ({ user }: { user: any }) => (
 );
 
 import { CreateExamModal } from '@/components/CreateExamModal';
+import { NotesSection } from '@/components/dashboard/NotesSection';
 
 const MockExams = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -244,7 +245,7 @@ export default function DashboardPage() {
         { name: 'Home', icon: '🏠', component: <DashboardHome user={user} /> },
         { name: 'Mock Exams', icon: '📝', component: <MockExams /> },
         { name: 'AI Learning', icon: '🤖', component: <div className="text-gray-400">AI Learning Content Coming Soon</div> }, // Placeholder
-        { name: 'Notes', icon: '📓', component: <div className="text-gray-400">Notes Content Coming Soon</div> },
+        { name: 'Notes', icon: '📓', component: <NotesSection /> },
         { name: 'Settings', icon: '⚙️', component: <DashboardSettings /> },
     ];
 
