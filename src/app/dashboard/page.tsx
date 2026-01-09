@@ -84,14 +84,8 @@ const MockExams = () => {
                 </div>
                 <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
                     <h3 className="text-lg font-bold text-white border-b border-white/5 pb-2">Past Results</h3>
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                            <div>
-                                <p className="font-bold text-white">Physics Mid-Term</p>
-                                <p className="text-xs text-gray-500">Dec 12, 2025</p>
-                            </div>
-                            <div className="text-green-400 font-bold">92%</div>
-                        </div>
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                        Exam history coming soon.
                     </div>
                 </div>
             </div>
