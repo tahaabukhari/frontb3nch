@@ -163,7 +163,8 @@ export const LeaderboardSection = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    {/* Desktop Table */}
+                    <table className="w-full text-left hidden md:table">
                         <thead className="bg-zinc-950/50 text-gray-500 text-xs uppercase tracking-wider">
                             <tr>
                                 <th className="p-4 font-medium">Rank</th>
@@ -173,7 +174,7 @@ export const LeaderboardSection = () => {
                                         sortBy === 'level' ? 'Level' :
                                             sortBy === 'accuracy' ? 'Accuracy' : 'Library %'}
                                 </th>
-                                <th className="p-4 font-medium text-right hidden md:table-cell">Badge</th>
+                                <th className="p-4 font-medium text-right hidden lg:table-cell">Badge</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800">
@@ -210,7 +211,7 @@ export const LeaderboardSection = () => {
                                         {sortBy === 'accuracy' && `${player.accuracy}%`}
                                         {sortBy === 'library' && `${player.library}%`}
                                     </td>
-                                    <td className="p-4 text-right hidden md:table-cell">
+                                    <td className="p-4 text-right hidden lg:table-cell">
                                         <span className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-800 text-gray-400 border border-zinc-700">
                                             {index < 3 ? 'Elite Scholar' : 'Student'}
                                         </span>
@@ -219,6 +220,52 @@ export const LeaderboardSection = () => {
                             ))}
                         </tbody>
                     </table>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-2 p-4">
+                        {sortedLeaderboard.map((player, index) => (
+                            <div
+                                key={player.id}
+                                className={`flex items-center gap-4 p-4 rounded-2xl border ${player.isCurrentUser
+                                        ? 'bg-primary/10 border-primary/30'
+                                        : 'bg-zinc-800/30 border-zinc-700/50'
+                                    }`}
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0
+                                    ${index === 0 ? 'bg-yellow-500/20 text-yellow-500' :
+                                        index === 1 ? 'bg-gray-400/20 text-gray-300' :
+                                            index === 2 ? 'bg-orange-500/20 text-orange-400' : 'text-gray-500'}
+                                `}>
+                                    #{index + 1}
+                                </div>
+
+                                <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 shrink-0">
+                                    <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <div className={`font-bold truncate ${player.isCurrentUser ? 'text-primary' : 'text-white'}`}>
+                                        {player.name}
+                                    </div>
+                                    <div className="text-xs text-gray-500">Lvl {player.level}</div>
+                                </div>
+
+                                <div className="text-right">
+                                    <div className="font-mono font-bold text-white">
+                                        {sortBy === 'score' && player.score.toLocaleString()}
+                                        {sortBy === 'level' && player.level}
+                                        {sortBy === 'accuracy' && `${player.accuracy}%`}
+                                        {sortBy === 'library' && `${player.library}%`}
+                                    </div>
+                                    <div className="text-[10px] text-gray-500 uppercase">
+                                        {sortBy === 'score' ? 'Score' :
+                                            sortBy === 'level' ? 'Level' :
+                                                sortBy === 'accuracy' ? 'Acc' : 'Lib'}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
