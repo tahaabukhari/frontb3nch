@@ -16,38 +16,38 @@ const TOP_GAMES = [
     },
     {
         id: 2,
-        title: 'Cosmic Blast',
-        color: 'from-red-600 to-orange-700',
-        emoji: '🚀',
-        description: 'Defend your starbase from endless waves of alien invaders. How long can you survive the cosmic onslaught?',
-        tags: ['Action', 'Survival', 'Space']
+        title: 'Coming Soon',
+        color: 'from-gray-800 to-gray-900',
+        emoji: '🔒',
+        description: 'A new exciting game is currently in development. Stay tuned for updates!',
+        tags: ['Upcoming']
     },
     {
         id: 3,
-        title: 'Cyber Puzzle',
-        color: 'from-emerald-600 to-teal-700',
-        emoji: '🧩',
-        description: 'Hack into the mainframe by solving complex logic puzzles before the security system traces you.',
-        tags: ['Puzzle', 'Strategy', 'Brain']
+        title: 'Coming Soon',
+        color: 'from-gray-800 to-gray-900',
+        emoji: '🔒',
+        description: 'We are working hard to bring you more fun content. Check back later!',
+        tags: ['Upcoming']
     },
     {
         id: 4,
-        title: 'Void Walker',
-        color: 'from-indigo-600 to-violet-700',
-        emoji: '👻',
-        description: 'Explore the unknown void, gather resources, and build your shelter in this atmospheric survival game.',
-        tags: ['Adventure', 'Exploration', 'Rpg']
+        title: 'Coming Soon',
+        color: 'from-gray-800 to-gray-900',
+        emoji: '🔒',
+        description: 'Another amazing title is on its way to the Funzone.',
+        tags: ['Upcoming']
     },
 ];
 
-const ALL_GAMES = Array.from({ length: 12 }).map((_, i) => ({
+const ALL_GAMES = Array.from({ length: 8 }).map((_, i) => ({
     id: i + 10,
-    title: `Game Title ${i + 1}`,
-    category: ['Action', 'Puzzle', 'Strategy'][i % 3],
-    description: 'A fun and engaging game to test your skills.',
+    title: `Coming Soon`,
+    category: 'Upcoming',
+    description: 'This title is currently under development.',
     color: 'from-gray-800 to-gray-900',
-    tags: ['Casual', 'Fun'],
-    emoji: ['🎮', '🎲', '♟️'][i % 3]
+    tags: ['TBA'],
+    emoji: '🔒'
 }));
 
 const FILTERS = ['All', 'Action', 'Puzzle', 'Strategy', 'Multiplayer'];
@@ -199,23 +199,23 @@ export default function FunzonePage() {
                             </motion.div>
                         </AnimatePresence>
 
-                        {/* Navigation Buttons */}
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                        {/* Navigation Buttons - Around the sides */}
+                        <div className="absolute top-1/2 -left-4 md:-left-12 transform -translate-y-1/2 z-20">
                             <button
                                 onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-                                className="w-12 h-12 flex items-center justify-center rounded-full bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all transform hover:scale-110 border border-white/10 shadow-lg"
+                                className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)] transition-all transform hover:scale-110 border border-white/20"
                                 aria-label="Previous Slide"
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                             </button>
                         </div>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                        <div className="absolute top-1/2 -right-4 md:-right-12 transform -translate-y-1/2 z-20">
                             <button
                                 onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-                                className="w-12 h-12 flex items-center justify-center rounded-full bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all transform hover:scale-110 border border-white/10 shadow-lg"
+                                className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)] transition-all transform hover:scale-110 border border-white/20"
                                 aria-label="Next Slide"
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                             </button>
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export default function FunzonePage() {
 
                 {/* --- Games Grid --- */}
                 <section>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                         {ALL_GAMES.filter(g => (activeFilter === 'All' || g.category === activeFilter) && g.title.toLowerCase().includes(searchQuery.toLowerCase())).map((game) => (
                             <motion.div
                                 key={game.id}
