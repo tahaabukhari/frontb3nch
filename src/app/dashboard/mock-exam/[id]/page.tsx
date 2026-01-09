@@ -2,11 +2,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 
-export default function MockExamPage({ params }: { params: { id: string } }) {
+export default function MockExamPage() {
     const router = useRouter();
+    const params = useParams();
     const [exam, setExam] = useState<any>(null);
     const [answers, setAnswers] = useState<Record<string, any>>({});
     const [timeLeft, setTimeLeft] = useState(0);
@@ -15,7 +16,11 @@ export default function MockExamPage({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         // Load exam from local storage
+        if (!params?.id) return;
+
         const stored = localStorage.getItem(`mock-exam-${params.id}`);
+        console.log("Checking storage for key:", `mock-exam-${params.id}`, "Found:", !!stored); // Debug logging
+
         if (!stored) {
             alert("Exam not found!");
             router.push('/dashboard');
@@ -24,7 +29,7 @@ export default function MockExamPage({ params }: { params: { id: string } }) {
         const data = JSON.parse(stored);
         setExam(data);
         setTimeLeft(data.timeLimit * 60); // minutes to seconds
-    }, [params.id, router]);
+    }, [params?.id, router]);
 
     useEffect(() => {
         if (!exam || submitted || timeLeft <= 0) return;
@@ -142,8 +147,8 @@ export default function MockExamPage({ params }: { params: { id: string } }) {
                                                 key={optIdx}
                                                 onClick={() => handleAnswerChange(q.id, optIdx)}
                                                 className={`w-full text-left p-3 rounded-xl border transition-all ${answers[q.id] === optIdx
-                                                        ? 'bg-indigo-600/20 border-indigo-500 text-white'
-                                                        : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
+                                                    ? 'bg-indigo-600/20 border-indigo-500 text-white'
+                                                    : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
                                                     }`}
                                             >
                                                 <span className="font-bold mr-3 opacity-50">{String.fromCharCode(65 + optIdx)}.</span>
