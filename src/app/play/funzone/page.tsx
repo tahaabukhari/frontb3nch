@@ -2,16 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import FlappyBird from '@/components/games/FlappyBird';
 
 // --- Mock Data ---
 const TOP_GAMES = [
     {
         id: 1,
-        title: 'Neon Racer',
-        color: 'from-blue-600 to-purple-700',
-        emoji: '🏎️',
-        description: 'Experience high-octane racing in a futuristic neon city. Upgrade your vehicle and dominate the leaderboards.',
-        tags: ['Racing', 'Multiplayer', 'Competitive']
+        title: 'Flappy Goat',
+        color: 'from-blue-600 to-indigo-700',
+        emoji: '🐐',
+        description: 'Navigate the skies! Tap to jump and avoid obstacles in this endless runner. sleek, smooth, and addictive.',
+        tags: ['Casual', 'Endless', 'Singleplayer']
     },
     {
         id: 2,
@@ -64,7 +65,19 @@ export default function FunzonePage() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
+
     const [selectedGame, setSelectedGame] = useState<typeof TOP_GAMES[0] | any>(null);
+    const [activeGameId, setActiveGameId] = useState<number | null>(null);
+
+    // Game Launcher
+    const handlePlayGame = (gameId: number) => {
+        if (gameId === 1) { // Flappy Goat ID
+            setActiveGameId(gameId);
+            setSelectedGame(null); // Close modal
+        } else {
+            alert("This game is currently a placeholder! Try 'Flappy Goat'.");
+        }
+    };
 
     const nextSlide = () => {
         setDirection(1);
@@ -103,6 +116,20 @@ export default function FunzonePage() {
 
     return (
         <div className="min-h-screen bg-transparent text-white overflow-x-hidden pb-20 relative font-sans selection:bg-blue-500 selection:text-white">
+
+            {/* Active Game Overlay */}
+            <AnimatePresence>
+                {activeGameId === 1 && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200]"
+                    >
+                        <FlappyBird onBack={() => setActiveGameId(null)} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8">
 
@@ -323,7 +350,10 @@ export default function FunzonePage() {
                                 <p className="text-gray-300 mb-8 leading-relaxed text-lg">{selectedGame.description || "Join the fun and compete with friends in this amazing game."}</p>
 
                                 <div className="flex gap-4">
-                                    <button className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-xl text-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all flex items-center justify-center gap-2 transform active:scale-95">
+                                    <button
+                                        onClick={() => handlePlayGame(selectedGame.id)}
+                                        className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-xl text-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all flex items-center justify-center gap-2 transform active:scale-95"
+                                    >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z" /></svg>
                                         Play Now
                                     </button>
