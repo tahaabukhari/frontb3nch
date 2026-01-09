@@ -1,26 +1,10 @@
 'use client';
 
-<<<<<<< HEAD
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-=======
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Mock Data ---
 const TOP_GAMES = [
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    { id: 1, title: 'Neon Racer', color: 'from-blue-500 to-purple-600', description: 'High speed futuristic racing.' },
-    { id: 2, title: 'Cosmic Blast', color: 'from-red-500 to-orange-600', description: 'Defend your base from aliens.' },
-    { id: 3, title: 'Cyber Puzzle', color: 'from-green-500 to-emerald-600', description: 'Hack into the mainframe.' },
-    { id: 4, title: 'Void Walker', color: 'from-indigo-500 to-violet-600', description: 'Explore the unknown void.' },
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     {
         id: 1,
         title: 'Neon Racer',
@@ -53,124 +37,23 @@ const TOP_GAMES = [
         description: 'Explore the unknown void, gather resources, and build your shelter in this atmospheric survival game.',
         tags: ['Adventure', 'Exploration', 'Rpg']
     },
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 ];
 
 const ALL_GAMES = Array.from({ length: 12 }).map((_, i) => ({
     id: i + 10,
     title: `Game Title ${i + 1}`,
     category: ['Action', 'Puzzle', 'Strategy'][i % 3],
-<<<<<<< Updated upstream
-=======
     description: 'A fun and engaging game to test your skills.',
     color: 'from-gray-800 to-gray-900',
-    tags: ['Casual', 'Fun']
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+    tags: ['Casual', 'Fun'],
+    emoji: ['🎮', '🎲', '♟️'][i % 3]
 }));
 
 const FILTERS = ['All', 'Action', 'Puzzle', 'Strategy', 'Multiplayer'];
->>>>>>> b6eefc70a14dda683f05034acf1c79b636d5bdad
-
-const GAMES = [
-    { id: 1, title: 'Math Blitz', description: 'Quick-fire math challenges.', color: 'bg-emerald-500/20 text-emerald-500' },
-    { id: 2, title: 'Word Scramble', description: 'Unscramble letters to find the word.', color: 'bg-blue-500/20 text-blue-500' },
-    { id: 3, title: 'Memory Match', description: 'Test your memory patterns.', color: 'bg-purple-500/20 text-purple-500' },
-    { id: 4, title: 'Geo Guesser', description: 'Identify locations around the world.', color: 'bg-yellow-500/20 text-yellow-500' },
-    { id: 5, title: 'Logic Puzzle', description: 'Brain teasers to test your IQ.', color: 'bg-pink-500/20 text-pink-500' },
-    { id: 6, title: 'Speed Typer', description: 'How fast can you type?', color: 'bg-orange-500/20 text-orange-500' },
-];
 
 export default function FunzonePage() {
-<<<<<<< HEAD
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const filteredGames = GAMES.filter((game) =>
-        game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        game.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return (
-        <div className="min-h-screen pt-4 pb-20 px-4 sm:px-6">
-            <div className="mx-auto max-w-6xl space-y-8">
-                <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-white">Funzone</h1>
-                        <p className="text-gray-400 mt-2">Explore a collection of mini‑games and interactive quizzes.</p>
-                    </div>
-                    <div className="relative w-full md:w-72">
-                        <input
-                            type="text"
-                            placeholder="Search games..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-xl border border-white/10 bg-[#0a0a0a] px-4 py-3 pl-10 text-sm text-white placeholder-gray-500 transition-all focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
-                        />
-                        <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                </header>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                >
-                    {filteredGames.length > 0 ? (
-                        filteredGames.map((game) => (
-                            <div
-                                key={game.id}
-                                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] p-6 transition-all hover:border-white/20 hover:bg-white/5"
-                            >
-                                <div>
-                                    <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${game.color}`}>
-                                        <div className="h-6 w-6 rounded-full bg-current opacity-50" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white group-hover:text-accent transition-colors">{game.title}</h3>
-                                    <p className="mt-2 text-sm text-gray-400">{game.description}</p>
-                                </div>
-                                <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
-                                    <span className="text-xs font-medium uppercase tracking-wider text-gray-500">Mini Game</span>
-                                    <button className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20">
-                                        Play Now
-                                    </button>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="col-span-full py-20 text-center">
-                            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <p className="text-lg font-medium text-white">No games found</p>
-                            <p className="text-gray-400">Try searching for something else</p>
-                        </div>
-                    )}
-                </motion.div>
-=======
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(0); // -1 for left, 1 for right
-
     // Auto-rotate carousel
     useEffect(() => {
         const timer = setInterval(() => {
@@ -181,55 +64,8 @@ export default function FunzonePage() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
-    const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+    const [selectedGame, setSelectedGame] = useState<typeof TOP_GAMES[0] | any>(null);
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    // Moves the top card to the bottom
-    const handleShuffle = () => {
-        setExpandedCardId(null);
-        setTopGames((prev) => {
-            const newOrder = [...prev];
-            const first = newOrder.shift();
-            if (first) newOrder.push(first);
-            return newOrder;
-        });
-    };
-
-    const handleCardClick = (id: number) => {
-        // If it's the top card (index 0), toggle details
-        if (topGames[0].id === id) {
-            setExpandedCardId(expandedCardId === id ? null : id);
-        } else {
-            // If clicking a card behind, shuffle until it's front? 
-            // Or just do nothing? Let's just shuffle for better UX if they click the stack pile visually
-            handleShuffle();
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-[#050505] text-white overflow-hidden pb-20 relative font-sans selection:bg-purple-500 selection:text-white">
-            
-            {/* Background Ambience */}
-            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
-                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/20 rounded-full blur-[120px]" />
-                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px]" />
-            </div>
-
-            <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-8">
-                
-=======
-    const nextSlide = () => {
-        setDirection(1);
-        setCurrentIndex((prev) => (prev + 1) % TOP_GAMES.length);
-    };
-=======
-    const nextSlide = () => {
-        setDirection(1);
-        setCurrentIndex((prev) => (prev + 1) % TOP_GAMES.length);
-    };
-=======
     const nextSlide = () => {
         setDirection(1);
         setCurrentIndex((prev) => (prev + 1) % TOP_GAMES.length);
@@ -275,92 +111,7 @@ export default function FunzonePage() {
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8">
->>>>>>> Stashed changes
 
-    const prevSlide = () => {
-        setDirection(-1);
-        setCurrentIndex((prev) => (prev - 1 + TOP_GAMES.length) % TOP_GAMES.length);
-    };
-
-    const goToSlide = (index: number) => {
-        setDirection(index > currentIndex ? 1 : -1);
-        setCurrentIndex(index);
-    };
-
-    const variants = {
-        enter: (direction: number) => ({
-            x: direction > 0 ? 1000 : -1000,
-            opacity: 0,
-            scale: 0.95
-        }),
-        center: {
-            zIndex: 1,
-            x: 0,
-            opacity: 1,
-            scale: 1
-        },
-        exit: (direction: number) => ({
-            zIndex: 0,
-            x: direction < 0 ? 1000 : -1000,
-            opacity: 0,
-            scale: 0.95
-        })
-    };
-
-    return (
-        <div className="min-h-screen bg-[#0a0f1c] text-white overflow-x-hidden pb-20 relative font-sans selection:bg-blue-500 selection:text-white">
-
-            {/* Background Ambience */}
-            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[150px]" />
-                <div className="absolute top-[20%] right-[-10%] w-[40%] h-[60%] bg-purple-900/10 rounded-full blur-[150px]" />
-            </div>
-
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8">
->>>>>>> Stashed changes
-
-    const prevSlide = () => {
-        setDirection(-1);
-        setCurrentIndex((prev) => (prev - 1 + TOP_GAMES.length) % TOP_GAMES.length);
-    };
-
-    const goToSlide = (index: number) => {
-        setDirection(index > currentIndex ? 1 : -1);
-        setCurrentIndex(index);
-    };
-
-    const variants = {
-        enter: (direction: number) => ({
-            x: direction > 0 ? 1000 : -1000,
-            opacity: 0,
-            scale: 0.95
-        }),
-        center: {
-            zIndex: 1,
-            x: 0,
-            opacity: 1,
-            scale: 1
-        },
-        exit: (direction: number) => ({
-            zIndex: 0,
-            x: direction < 0 ? 1000 : -1000,
-            opacity: 0,
-            scale: 0.95
-        })
-    };
-
-    return (
-        <div className="min-h-screen bg-[#0a0f1c] text-white overflow-x-hidden pb-20 relative font-sans selection:bg-blue-500 selection:text-white">
-
-            {/* Background Ambience */}
-            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[150px]" />
-                <div className="absolute top-[20%] right-[-10%] w-[40%] h-[60%] bg-purple-900/10 rounded-full blur-[150px]" />
-            </div>
-
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-8">
-
->>>>>>> Stashed changes
                 {/* Header */}
                 <header className="mb-8 flex items-end justify-between">
                     <div>
@@ -370,135 +121,6 @@ export default function FunzonePage() {
                     </div>
                 </header>
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                {/* --- Top Games: Card Stack Section --- */}
-                <section className="mb-20 relative min-h-[400px] flex flex-col items-center justify-center">
-                    <div className="relative w-full max-w-md h-[350px]">
-                        <AnimatePresence mode='popLayout'>
-                            {topGames.map((game, index) => {
-                                const isTop = index === 0;
-                                return (
-                                    <motion.div
-                                        key={game.id}
-                                        layoutId={`card-${game.id}`}
-                                        onClick={() => handleCardClick(game.id)}
-                                        initial={false}
-                                        animate={{
-                                            scale: 1 - index * 0.05,
-                                            y: index * 15,
-                                            zIndex: 100 - index,
-                                            opacity: 1 - index * 0.2, // Fade out back cards
-                                            rotate: index % 2 === 0 ? index * 2 : index * -2, // Slight random rotation
-                                        }}
-                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                        className={`absolute top-0 inset-x-0 mx-auto w-full h-full rounded-3xl p-6 cursor-pointer shadow-2xl border border-white/10
-                                            bg-gradient-to-br ${game.color} overflow-hidden backdrop-blur-md flex flex-col justify-between
-                                            ${isTop ? 'hover:scale-[1.02] active:scale-[0.98]' : 'pointer-events-none'}`}
-                                        style={{ transformOrigin: 'top center' }}
-                                    >
-                                        
-                                        {/* Card Decoration */}
-                                        <div className="absolute top-0 right-0 p-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-
-                                        {/* Card Content */}
-                                        <div className="relative z-10">
-                                            <div className="flex items-start justify-between">
-                                                <h3 className="text-3xl font-bold text-white drop-shadow-md">{game.title}</h3>
-                                                {isTop && (
-                                                    <span className="px-3 py-1 bg-black/20 rounded-full text-xs font-medium border border-white/10">
-                                                        #{index + 1} Trending
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="mt-2 text-white/90 font-medium">{game.description}</p>
-=======
-                {/* --- Steam-style Carousel --- */}
-                <section className="mb-16 relative group">
-                    {/* Main Banner Area */}
-                    <div className="relative h-[400px] md:h-[450px] w-full overflow-hidden rounded-2xl bg-[#161b2e] shadow-2xl border border-white/5">
-
-                        <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                            <motion.div
-                                key={currentIndex}
-                                custom={direction}
-                                variants={variants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                                transition={{
-                                    x: { type: "spring", stiffness: 300, damping: 30 },
-                                    opacity: { duration: 0.2 }
-                                }}
-                                className="absolute inset-0 w-full h-full flex flex-col md:flex-row cursor-pointer"
-                                onClick={() => setSelectedGame(TOP_GAMES[currentIndex])}
-                            >
-                                {/* Left Content */}
-                                <div className={`w-full md:w-2/3 h-full p-8 md:p-12 flex flex-col justify-center relative overflow-hidden bg-gradient-to-br ${TOP_GAMES[currentIndex].color}`}>
-                                    {/* Abstract Pattern overlay */}
-                                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay"></div>
-
-                                    <div className="relative z-10 space-y-4">
-                                        <h2 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tighter">
-                                            {TOP_GAMES[currentIndex].title}
-                                        </h2>
-                                        <p className="text-lg md:text-xl text-white/90 max-w-xl font-medium leading-relaxed drop-shadow-md">
-                                            {TOP_GAMES[currentIndex].description}
-                                        </p>
-                                        <div className="flex flex-wrap gap-2 mt-4">
-                                            {TOP_GAMES[currentIndex].tags.map(tag => (
-                                                <span key={tag} className="px-3 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-sm font-semibold border border-white/10">
-                                                    {tag}
-                                                </span>
-                                            ))}
->>>>>>> Stashed changes
-                                        </div>
-                                    </div>
-                                </div>
-
-<<<<<<< Updated upstream
-                                        {/* Expandable Details (Only for Top Card) */}
-                                        <AnimatePresence>
-                                            {isTop && expandedCardId === game.id && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    className="mt-auto pt-4 space-y-3"
-                                                >
-                                                    <button className="w-full py-3 bg-white text-black font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                                            <path d="M8 5v14l11-7z" />
-                                                        </svg>
-                                                        Play Now
-                                                    </button>
-                                                    <div className="flex gap-2">
-                                                         <button className="flex-1 py-3 bg-black/30 backdrop-blur-md border border-white/20 text-white font-semibold rounded-xl hover:bg-black/50 transition-colors flex items-center justify-center gap-2">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                                                <circle cx="9" cy="7" r="4"></circle>
-                                                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                                            </svg>
-                                                            Create Lobby
-                                                        </button>
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                            {(!isTop || expandedCardId !== game.id) && (
-                                                <motion.div 
-                                                    initial={{opacity: 0}} 
-                                                    animate={{opacity: 1}}
-                                                    className="mt-auto text-white/60 text-sm flex items-center gap-1"
-                                                >
-                                                    Tap to reveal details
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-=======
-=======
                 {/* --- Steam-style Carousel --- */}
                 <section className="mb-16 relative group">
                     {/* Main Banner Area */}
@@ -541,51 +163,6 @@ export default function FunzonePage() {
                                     </div>
                                 </div>
 
->>>>>>> Stashed changes
-=======
-                {/* --- Steam-style Carousel --- */}
-                <section className="mb-16 relative group">
-                    {/* Main Banner Area */}
-                    <div className="relative h-[400px] md:h-[450px] w-full overflow-hidden rounded-2xl bg-[#161b2e] shadow-2xl border border-white/5">
-
-                        <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                            <motion.div
-                                key={currentIndex}
-                                custom={direction}
-                                variants={variants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                                transition={{
-                                    x: { type: "spring", stiffness: 300, damping: 30 },
-                                    opacity: { duration: 0.2 }
-                                }}
-                                className="absolute inset-0 w-full h-full flex flex-col md:flex-row cursor-pointer"
-                                onClick={() => setSelectedGame(TOP_GAMES[currentIndex])}
-                            >
-                                {/* Left Content */}
-                                <div className={`w-full md:w-2/3 h-full p-8 md:p-12 flex flex-col justify-center relative overflow-hidden bg-gradient-to-br ${TOP_GAMES[currentIndex].color}`}>
-                                    {/* Abstract Pattern overlay */}
-                                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay"></div>
-
-                                    <div className="relative z-10 space-y-4">
-                                        <h2 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tighter">
-                                            {TOP_GAMES[currentIndex].title}
-                                        </h2>
-                                        <p className="text-lg md:text-xl text-white/90 max-w-xl font-medium leading-relaxed drop-shadow-md">
-                                            {TOP_GAMES[currentIndex].description}
-                                        </p>
-                                        <div className="flex flex-wrap gap-2 mt-4">
-                                            {TOP_GAMES[currentIndex].tags.map(tag => (
-                                                <span key={tag} className="px-3 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-sm font-semibold border border-white/10">
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
->>>>>>> Stashed changes
                                 {/* Right Content (Art/Emoji) */}
                                 <div className="w-full md:w-1/3 h-full bg-[#1e2337] flex items-center justify-center relative overflow-hidden border-l border-white/5">
                                     <div className="absolute inset-0 bg-gradient-to-br from-black/0 to-black/40"></div>
@@ -596,13 +173,6 @@ export default function FunzonePage() {
                                         className="text-[120px] md:text-[160px] relative z-10 filter drop-shadow-2xl"
                                     >
                                         {TOP_GAMES[currentIndex].emoji}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                                     </motion.div>
                                 </div>
                             </motion.div>
@@ -627,28 +197,6 @@ export default function FunzonePage() {
                         </div>
                     </div>
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                    {/* Shuffle / Next Button */}
-                    <div className="mt-8 flex justify-center">
-                        <button 
-                            onClick={handleShuffle}
-                            className="group flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all hover:scale-105 active:scale-95"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-180 transition-transform duration-500">
-                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                                <path d="M3 3v5h5" />
-                                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                                <path d="M16 21h5v-5" />
-                            </svg>
-                            Shuffle Deck
-                        </button>
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     {/* Dot Indicators */}
                     <div className="flex justify-center gap-3 mt-6">
                         {TOP_GAMES.map((_, index) => (
@@ -659,57 +207,10 @@ export default function FunzonePage() {
                                     }`}
                             />
                         ))}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     </div>
                 </section>
 
                 {/* --- Search & Filters --- */}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                <section className="mb-8 space-y-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        {/* Search Bar */}
-                        <div className="relative flex-1">
-                            <input 
-                                type="text" 
-                                placeholder="Search games..." 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 text-white rounded-2xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all placeholder-gray-500"
-                            />
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </div>
-                        
-                        {/* Filter Scroll */}
-                        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                            {FILTERS.map(filter => (
-                                <button
-                                    key={filter}
-                                    onClick={() => setActiveFilter(filter)}
-                                    className={`px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border
-                                        ${activeFilter === filter 
-                                            ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-900/50' 
-                                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'}`}
-                                >
-                                    {filter}
-                                </button>
-                            ))}
-                        </div>
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 <section className="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between sticky top-2 z-20 bg-[#0a0f1c]/80 backdrop-blur-xl py-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:bg-transparent sm:relative sm:top-0">
                     {/* Filter Pills */}
                     <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-auto">
@@ -740,72 +241,22 @@ export default function FunzonePage() {
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     </div>
                 </section>
 
                 {/* --- Games Grid --- */}
                 <section>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                        {ALL_GAMES.filter(g => activeFilter === 'All' || g.category === activeFilter).map((game) => (
+                        {ALL_GAMES.filter(g => (activeFilter === 'All' || g.category === activeFilter) && g.title.toLowerCase().includes(searchQuery.toLowerCase())).map((game) => (
                             <motion.div
                                 key={game.id}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.3 }}
-                                className="group relative aspect-square rounded-2xl bg-white/5 border border-white/10 overflow-hidden cursor-pointer hover:border-purple-500/50 transition-colors"
-                            >
-                                {/* Placeholder Image Gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
-                                
-                                {/* Hover Effect */}
-                                <div className="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                                <div className="absolute bottom-4 left-4 right-4">
-                                    <h4 className="text-white font-bold truncate">{game.title}</h4>
-                                    <p className="text-xs text-gray-400">{game.category}</p>
-                                </div>
-
-                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
-                                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                            <path d="M8 5v14l11-7z" />
-                                        </svg>
-=======
-                                onClick={() => setSelectedGame(game)}
+                                onClick={() => setSelectedGame(game as any)}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 whileHover={{ y: -5 }}
                                 transition={{ duration: 0.2 }}
                                 className="group bg-[#161b2e] hover:bg-[#1f263d] rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-blue-900/10 transition-all border border-white/5"
                             >
-=======
-                                onClick={() => setSelectedGame(game)}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.2 }}
-                                className="group bg-[#161b2e] hover:bg-[#1f263d] rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-blue-900/10 transition-all border border-white/5"
-                            >
->>>>>>> Stashed changes
-=======
-                                onClick={() => setSelectedGame(game)}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.2 }}
-                                className="group bg-[#161b2e] hover:bg-[#1f263d] rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-blue-900/10 transition-all border border-white/5"
-                            >
->>>>>>> Stashed changes
                                 {/* Aspect Ratio Box for Image */}
                                 <div className="aspect-[16/9] w-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center relative overflow-hidden group-hover:brightness-110 transition-all">
                                     <span className="text-5xl group-hover:scale-125 transition-transform duration-300 drop-shadow-lg">{game.emoji}</span>
@@ -821,15 +272,7 @@ export default function FunzonePage() {
                                     <h4 className="text-gray-200 font-bold truncate group-hover:text-white transition-colors">{game.title}</h4>
                                     <div className="flex items-center justify-between mt-2">
                                         <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded">{game.category}</span>
-                                        {/* Fake Price or Status */}
                                         <span className="text-xs text-green-400 font-medium">Free</span>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                                     </div>
                                 </div>
                             </motion.div>
@@ -837,10 +280,7 @@ export default function FunzonePage() {
                     </div>
                 </section>
 
->>>>>>> b6eefc70a14dda683f05034acf1c79b636d5bdad
             </div>
-<<<<<<< Updated upstream
-=======
 
             {/* --- Game Detail Modal --- */}
             <AnimatePresence>
@@ -901,7 +341,6 @@ export default function FunzonePage() {
                     </div>
                 )}
             </AnimatePresence>
->>>>>>> Stashed changes
         </div>
     );
 }
