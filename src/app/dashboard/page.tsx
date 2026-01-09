@@ -144,7 +144,7 @@ const DashboardSettings = () => {
                         <div className="flex items-center gap-4">
                             <input
                                 type="color"
-                                value={user.dashboardConfig?.primaryColor || '#4ade80'}
+                                value={user.dashboardConfig?.primaryColor || '#7CB342'}
                                 onChange={(e) => handleColorChange('primaryColor', e.target.value)}
                                 className="h-10 w-20 rounded cursor-pointer bg-transparent border border-white/20"
                             />
@@ -157,7 +157,7 @@ const DashboardSettings = () => {
                         <div className="flex items-center gap-4">
                             <input
                                 type="color"
-                                value={user.dashboardConfig?.accentColor || '#86efac'}
+                                value={user.dashboardConfig?.accentColor || '#ffffff'}
                                 onChange={(e) => handleColorChange('accentColor', e.target.value)}
                                 className="h-10 w-20 rounded cursor-pointer bg-transparent border border-white/20"
                             />
@@ -377,8 +377,8 @@ export default function DashboardPage() {
                 {/* CSS Variables Injection */}
                 <style jsx global>{`
                     :root {
-                        --color-primary: ${user.dashboardConfig?.primaryColor || '#4ade80'};
-                        --color-accent: ${user.dashboardConfig?.accentColor || '#86efac'};
+                        --color-primary: ${user.dashboardConfig?.primaryColor || '#7CB342'};
+                        --color-accent: ${user.dashboardConfig?.accentColor || '#ffffff'};
                     }
                 `}</style>
                 <div className="max-w-7xl mx-auto pt-4 md:pt-20">

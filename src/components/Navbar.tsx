@@ -10,20 +10,18 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
   const { user } = useUser();
 
   return (
-    <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+    <header className="fixed top-4 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
       {/* Container - Enable pointer events for the navbar itself */}
-      <nav className="pointer-events-auto relative z-50 flex w-full max-w-7xl items-center justify-between gap-4 rounded-full border border-white/10 bg-zinc-900 p-2 pl-6 shadow-2xl transition-all sm:pr-2">
+      <nav className="pointer-events-auto relative z-[100] flex w-full max-w-7xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/95 p-2 pl-6 shadow-2xl transition-all sm:pr-2">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="flex h-10 w-10 items-center justify-center group-hover:scale-105 transition-transform">
             <img src="/logo.png" alt="frontb3nch" className="w-full h-full object-contain" />
           </div>
-          {!isDashboard && (
-            <span className="text-lg font-bold text-white sm:text-xl tracking-tight group-hover:text-gray-200 transition-colors">
-              frontb3nch
-            </span>
-          )}
+          <span className="text-lg font-bold text-white sm:text-xl tracking-tight group-hover:text-gray-200 transition-colors">
+            frontb3nch
+          </span>
         </Link>
         {/* Desktop Nav Items */}
         <div className="hidden items-center gap-1 sm:flex">

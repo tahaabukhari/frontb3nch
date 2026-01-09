@@ -40,8 +40,8 @@ const defaultUser: UserProfile = {
     dashboardConfig: {
         bgColor: '#000000', // Default black
         bgImage: null,
-        primaryColor: '#4ade80',
-        accentColor: '#86efac'
+        primaryColor: '#7CB342',
+        accentColor: '#ffffff'
     },
 };
 

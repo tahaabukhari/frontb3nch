@@ -14,6 +14,7 @@ export default function GlobalLayoutWrapper({ children }: { children: React.Reac
   if (isDashboard) {
     return (
       <UserProvider>
+        <Navbar isDashboard={true} />
         <main>{children}</main>
       </UserProvider>
     );
