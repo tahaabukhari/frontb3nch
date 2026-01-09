@@ -12,7 +12,7 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
   return (
     <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
       {/* Container - Enable pointer events for the navbar itself */}
-      <nav className="pointer-events-auto relative z-50 flex w-full max-w-7xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/95 p-2 pl-6 shadow-2xl backdrop-blur-xl transition-all sm:pr-2">
+      <nav className="pointer-events-auto relative z-50 flex w-full max-w-7xl items-center justify-between gap-4 rounded-full border border-white/10 bg-zinc-900 p-2 pl-6 shadow-2xl transition-all sm:pr-2">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -25,7 +25,6 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
             </span>
           )}
         </Link>
-
         {/* Desktop Nav Items */}
         <div className="hidden items-center gap-1 sm:flex">
           {!isDashboard && (
@@ -40,7 +39,7 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
           <div className="relative ml-2">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`flex items-center gap-3 rounded-full border border-white/10 bg-zinc-900/50 pl-1 pr-4 py-1 transition hover:bg-zinc-800 hover:border-white/20 ${isMenuOpen ? 'bg-zinc-800 border-white/20' : ''}`}
+              className={`flex items-center gap-3 rounded-full border border-white/10 bg-zinc-900 pl-1 pr-4 py-1 transition hover:bg-zinc-800 hover:border-white/20 ${isMenuOpen ? 'bg-zinc-800 border-white/20' : ''}`}
             >
 
               {user.avatar ? (
@@ -69,7 +68,7 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-black/80 p-2 shadow-2xl origin-top-right overflow-hidden backdrop-blur-3xl"
+                  className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-zinc-900 p-2 shadow-2xl origin-top-right overflow-hidden"
                 >
                   <div className="px-4 py-3 border-b border-white/5 mb-2">
                     <p className="text-sm font-bold text-white">{user.name}</p>
@@ -83,7 +82,7 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
                       </div>
                       <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
+                          className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
                           style={{ width: `${(user.currentExp / user.maxExp) * 100}%` }}
                         />
                       </div>
@@ -130,7 +129,7 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-black/80 p-2 shadow-2xl origin-top-right overflow-hidden backdrop-blur-3xl z-50"
+                className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-zinc-900 p-2 shadow-2xl origin-top-right overflow-hidden z-50"
               >
 
                 <div className="px-4 py-3 border-b border-white/5 mb-2">

@@ -10,13 +10,13 @@ import Link from 'next/link';
 const DashboardHome = ({ user }: { user: any }) => (
     <div className="space-y-8">
         {/* Welcome Banner */}
-        <div className="rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-600 p-8 shadow-2xl relative overflow-hidden">
+        <div className="rounded-3xl bg-primary p-8 shadow-2xl relative overflow-hidden transition-colors duration-300">
             <div className="relative z-10">
                 <h2 className="text-3xl font-bold text-white mb-2">Welcome back, {user.name.split(' ')[0]}! 👋</h2>
-                <p className="text-indigo-100">You're on a {user.streak} day streak. Keep it up!</p>
+                <p className="text-white/80">You're on a {user.streak} day streak. Keep it up!</p>
             </div>
-            <div className="absolute top-0 right-0 -mr-8 -mt-8 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 h-32 w-32 rounded-full bg-black/20 blur-2xl"></div>
+            {/* Subtle Texture/Pattern instead of gradient */}
+            <div className="absolute inset-0 opacity-10 bg-[url('/grid-pattern.png')]"></div>
         </div>
 
         {/* Stats Grid */}
@@ -43,7 +43,7 @@ const DashboardHome = ({ user }: { user: any }) => (
         </div>
 
         {/* Recent Activity */}
-        <div className="rounded-3xl bg-black/40 border border-white/5 p-6 backdrop-blur-sm">
+        <div className="rounded-3xl bg-zinc-900 border border-zinc-800 p-6">
             <h3 className="text-xl font-bold text-white mb-4">Continue Learning</h3>
             <div className="space-y-3">
                 <ActivityItem title="Advanced Calculus: Limits" type="Quiz" time="2 hours ago" status="Completed (85%)" />
@@ -63,7 +63,7 @@ const MockExams = () => {
         <div className="space-y-6">
             <CreateExamModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-            <div className="flex justify-between items-center bg-indigo-900/20 p-6 rounded-3xl border border-indigo-500/20">
+            <div className="flex justify-between items-center bg-zinc-900 p-6 rounded-3xl border border-zinc-800">
                 <div>
                     <h2 className="text-2xl font-bold text-white mb-2">Mock Exam Simulator</h2>
                     <p className="text-indigo-200 text-sm">Generate full-length exams based on your syllabus.</p>
@@ -77,14 +77,14 @@ const MockExams = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
-                    <h3 className="text-lg font-bold text-white border-b border-white/5 pb-2">Active Exams</h3>
+                <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
+                    <h3 className="text-lg font-bold text-white border-b border-zinc-800 pb-2">Active Exams</h3>
                     <div className="text-center py-8 text-gray-500 text-sm">
                         No active exams. Start one now!
                     </div>
                 </div>
-                <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
-                    <h3 className="text-lg font-bold text-white border-b border-white/5 pb-2">Past Results</h3>
+                <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
+                    <h3 className="text-lg font-bold text-white border-b border-zinc-800 pb-2">Past Results</h3>
                     <div className="text-center py-8 text-gray-500 text-sm">
                         Exam history coming soon.
                     </div>
@@ -98,11 +98,11 @@ const DashboardSettings = () => {
     const { user, updateProfile } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleColorChange = (key: string, value: string) => {
         updateProfile({
             dashboardConfig: {
                 ...user.dashboardConfig,
-                bgColor: e.target.value
+                [key]: value
             }
         });
     };
@@ -135,17 +135,43 @@ const DashboardSettings = () => {
 
     return (
         <div className="max-w-2xl space-y-8">
-            <div className="p-8 rounded-3xl bg-black/40 border border-white/5 backdrop-blur-sm">
+            <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800">
                 <h3 className="text-2xl font-bold text-white mb-6">Appearance</h3>
 
                 <div className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Primary Color (Brand)</label>
+                        <div className="flex items-center gap-4">
+                            <input
+                                type="color"
+                                value={user.dashboardConfig?.primaryColor || '#4ade80'}
+                                onChange={(e) => handleColorChange('primaryColor', e.target.value)}
+                                className="h-10 w-20 rounded cursor-pointer bg-transparent border border-white/20"
+                            />
+                            <span className="text-sm text-gray-500">{user.dashboardConfig?.primaryColor}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Accent Color (Highlights)</label>
+                        <div className="flex items-center gap-4">
+                            <input
+                                type="color"
+                                value={user.dashboardConfig?.accentColor || '#86efac'}
+                                onChange={(e) => handleColorChange('accentColor', e.target.value)}
+                                className="h-10 w-20 rounded cursor-pointer bg-transparent border border-white/20"
+                            />
+                            <span className="text-sm text-gray-500">{user.dashboardConfig?.accentColor}</span>
+                        </div>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-2">Dashboard Background Color</label>
                         <div className="flex items-center gap-4">
                             <input
                                 type="color"
                                 value={user.dashboardConfig?.bgColor || '#000000'}
-                                onChange={handleColorChange}
+                                onChange={(e) => handleColorChange('bgColor', e.target.value)}
                                 className="h-10 w-20 rounded cursor-pointer bg-transparent border border-white/20"
                             />
                             <span className="text-sm text-gray-500">{user.dashboardConfig?.bgColor}</span>
@@ -202,7 +228,7 @@ const DashboardSettings = () => {
 // --- Helper Components ---
 
 const StatCard = ({ title, value, subtext, color, progress }: any) => (
-    <div className={`p-6 rounded-3xl border transition-all ${color} bg-opacity-10 backdrop-blur-md`}>
+    <div className={`p-6 rounded-3xl border transition-all ${color ? color.replace('bg-opacity-10', '').replace('backdrop-blur-md', '') : 'border-zinc-800'} bg-zinc-900`}>
         <h3 className="text-sm font-medium opacity-80 mb-1">{title}</h3>
         <div className="text-3xl font-bold mb-1">{value}</div>
         <div className="text-xs opacity-60">{subtext}</div>
@@ -215,7 +241,7 @@ const StatCard = ({ title, value, subtext, color, progress }: any) => (
 );
 
 const ActivityItem = ({ title, type, time, status }: any) => (
-    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+    <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer group border border-zinc-800">
         <div className="flex items-center gap-4">
             <div className={`h-10 w-10 rounded-full flex items-center justify-center text-lg ${type === 'Quiz' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>
                 {type === 'Quiz' ? '🧩' : '📑'}
@@ -235,6 +261,7 @@ export default function DashboardPage() {
     const { user } = useUser();
     const [activeTab, setActiveTab] = useState('Home');
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Dynamic Background Styles
     const bgStyle = user.dashboardConfig?.bgImage
@@ -249,65 +276,112 @@ export default function DashboardPage() {
         { name: 'Settings', icon: '⚙️', component: <DashboardSettings /> },
     ];
 
+    const SidebarContent = () => (
+        <>
+            <div className="flex flex-col gap-2 px-4 w-full flex-1">
+                {menuItems.map((item) => (
+                    <button
+                        key={item.name}
+                        onClick={() => {
+                            setActiveTab(item.name);
+                            setIsMobileMenuOpen(false);
+                        }}
+                        className={`flex items-center gap-4 p-3 rounded-xl transition-all overflow-hidden whitespace-nowrap group text-left ${activeTab === item.name
+                            ? 'bg-primary text-white shadow-md'
+                            : 'text-gray-400 hover:bg-zinc-800 hover:text-white'
+                            }`}
+                    >
+                        <span className="text-xl min-w-[24px] flex justify-center">{item.icon}</span>
+
+                        {/* Text label */}
+                        <span className="font-semibold text-sm">
+                            {item.name}
+                        </span>
+                    </button>
+                ))}
+            </div>
+
+            {/* User Mini Profile at bottom of sidebar */}
+            <div className="mt-auto px-4 w-full">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900 border border-zinc-800">
+                    <div className="h-10 w-10 rounded-full bg-zinc-700 shrink-0 flex items-center justify-center text-sm font-bold border border-zinc-600">
+                        {user.avatar ? <img src={user.avatar} className="h-full w-full rounded-full object-cover" /> : user.name[0]}
+                    </div>
+                    <div className="flex flex-col truncate">
+                        <span className="text-sm font-bold text-white truncate">{user.name}</span>
+                        <span className="text-xs text-gray-500 truncate">Pro Account</span>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+
     return (
-        <div className="flex min-h-screen text-white transition-colors duration-500" style={bgStyle}>
+        <div className="flex min-h-screen text-white transition-colors duration-500 flex-col md:flex-row" style={bgStyle}>
             {/* Overlay for readability if image is present */}
             {user.dashboardConfig?.bgImage && (
                 <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] z-0 pointer-events-none" />
             )}
 
-            {/* Sidebar */}
+            {/* Mobile Header */}
+            <div className="md:hidden flex items-center justify-between p-4 bg-zinc-950/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
+                <div className="font-bold text-lg">frontb3nch</div>
+                <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="p-2 rounded-lg bg-white/10"
+                >
+                    <span className="text-xl">☰</span>
+                </button>
+            </div>
+
+            {/* Mobile Drawer */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/80 z-50 md:hidden"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <motion.aside
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="fixed left-0 top-0 bottom-0 w-[280px] bg-zinc-950 z-50 flex flex-col pt-8 pb-8 border-r border-white/10 md:hidden"
+                        >
+                            <div className="px-6 mb-8 flex justify-between items-center">
+                                <span className="text-xl font-bold">Menu</span>
+                                <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400">✕</button>
+                            </div>
+                            <SidebarContent />
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Desktop Sidebar */}
             <motion.aside
-                className="fixed left-0 top-0 bottom-0 z-50 flex flex-col bg-black/80 backdrop-blur-xl border-r border-white/10 pt-24 pb-8"
-                initial={{ width: '80px' }}
-                animate={{ width: isSidebarHovered ? '280px' : '88px' }}
-                onMouseEnter={() => setIsSidebarHovered(true)}
-                onMouseLeave={() => setIsSidebarHovered(false)}
+                className="fixed left-0 top-0 bottom-0 z-50 hidden md:flex flex-col bg-zinc-950 border-r border-zinc-900 pt-24 pb-8 shadow-xl"
+                initial={{ width: '280px' }}
+                animate={{ width: '280px' }}
                 transition={{ type: 'spring', damping: 20, stiffness: 300 }}
             >
-                <div className="flex flex-col gap-2 px-4 w-full">
-                    {menuItems.map((item) => (
-                        <button
-                            key={item.name}
-                            onClick={() => setActiveTab(item.name)}
-                            className={`flex items-center gap-4 p-3 rounded-2xl transition-all overflow-hidden whitespace-nowrap group ${activeTab === item.name
-                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                                : 'text-gray-400 hover:bg-white/10 hover:text-white'
-                                }`}
-                        >
-                            <span className="text-2xl min-w-[32px] flex justify-center">{item.icon}</span>
-
-                            {/* Text label - animates in opacity */}
-                            <motion.span
-                                animate={{ opacity: isSidebarHovered ? 1 : 0 }}
-                                className="font-bold text-sm"
-                            >
-                                {item.name}
-                            </motion.span>
-                        </button>
-                    ))}
-                </div>
-
-                {/* User Mini Profile at bottom of sidebar */}
-                <div className="mt-auto px-4 w-full overflow-hidden">
-                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
-                        <div className="h-8 w-8 rounded-full bg-zinc-700 shrink-0 flex items-center justify-center text-xs font-bold border border-white/10">
-                            {user.avatar ? <img src={user.avatar} className="h-full w-full rounded-full object-cover" /> : user.name[0]}
-                        </div>
-                        <motion.div
-                            animate={{ opacity: isSidebarHovered ? 1 : 0 }}
-                            className="flex flex-col truncate"
-                        >
-                            <span className="text-xs font-bold text-white truncate">{user.name}</span>
-                            <span className="text-[10px] text-gray-500 truncate">Pro Account</span>
-                        </motion.div>
-                    </div>
-                </div>
+                <SidebarContent />
             </motion.aside>
 
             {/* Main Content */}
-            <main className="relative z-10 flex-1 pl-[88px] p-8 md:p-12 transition-all duration-300">
-                <div className="max-w-7xl mx-auto pt-20">
+            <main className="relative z-10 flex-1 p-4 md:pl-[280px] md:p-12 transition-all duration-300">
+                {/* CSS Variables Injection */}
+                <style jsx global>{`
+                    :root {
+                        --color-primary: ${user.dashboardConfig?.primaryColor || '#4ade80'};
+                        --color-accent: ${user.dashboardConfig?.accentColor || '#86efac'};
+                    }
+                `}</style>
+                <div className="max-w-7xl mx-auto pt-4 md:pt-20">
                     <motion.div
                         key={activeTab}
                         initial={{ opacity: 0, y: 10 }}

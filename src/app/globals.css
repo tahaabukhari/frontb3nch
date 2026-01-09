@@ -7,15 +7,16 @@
 
   /* Monochrome color scheme */
   --bg-dark: #0a0a0a;
-  --bg-card: rgba(26, 26, 26, 0.6);
-  /* Semi-transparent for glass effect */
+  --bg-card: #1a1a1a;
+
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
 
-  /* Functional colors - kept for outputs/feedback */
-  --accent-gold: #D4AF37;
-  --accent-green: #7CB342;
-  --accent-purple: #9B59B6;
+  /* Default Colors (overridden by JS if set) */
+  --color-primary: #4ade80;
+  /* Light Green */
+  --color-accent: #86efac;
+  /* Lighter Green */
 }
 
 body {

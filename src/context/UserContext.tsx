@@ -15,6 +15,8 @@ interface UserProfile {
     dashboardConfig: {
         bgColor: string;
         bgImage: string | null;
+        primaryColor: string;
+        accentColor: string;
     };
 }
 
@@ -38,6 +40,8 @@ const defaultUser: UserProfile = {
     dashboardConfig: {
         bgColor: '#000000', // Default black
         bgImage: null,
+        primaryColor: '#4ade80',
+        accentColor: '#86efac'
     },
 };
 
