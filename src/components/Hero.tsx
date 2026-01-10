@@ -44,7 +44,7 @@ const Hero = () => (
             <img
               src="/desktop-hero-1.png"
               alt="Hero Background"
-              className="w-full max-w-4xl scale-[1.5] object-contain drop-shadow-2xl"
+              className="w-full max-w-4xl scale-[2] object-contain drop-shadow-2xl"
             />
           </motion.div>
         </div>
