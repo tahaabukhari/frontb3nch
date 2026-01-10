@@ -384,9 +384,9 @@ export default function DashboardPage() {
 
             {/* Dashboard Mobile Sidebar Toggle - Visible only on mobile, placed to the left of the navbar */}
             <button
-                onClick={() => setIsMobileMenuOpen(true)}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden fixed top-4 left-4 z-[101] h-12 w-12 flex items-center justify-center rounded-full bg-black/90 border border-white/10 text-white shadow-xl active:scale-95 transition-all"
-                aria-label="Open Dashboard Menu"
+                aria-label="Toggle Dashboard Menu"
             >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
@@ -407,7 +407,7 @@ export default function DashboardPage() {
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className="fixed left-0 top-0 bottom-0 w-[280px] bg-zinc-950 z-50 flex flex-col pt-8 pb-8 border-r border-white/10 md:hidden"
+                            className="fixed left-0 top-0 bottom-0 w-[280px] bg-zinc-950 z-50 flex flex-col pt-24 pb-8 border-r border-white/10 md:hidden"
                         >
                             <div className="px-6 mb-8 flex justify-between items-center">
                                 <span className="text-xl font-bold">Menu</span>
