@@ -9,7 +9,7 @@ import { UserProvider } from '@/context/UserContext';
 
 export default function GlobalLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/play/profile');
+  const isDashboard = pathname?.startsWith('/dashboard');
 
   if (isDashboard) {
     return (

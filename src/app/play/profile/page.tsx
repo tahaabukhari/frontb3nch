@@ -23,7 +23,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 md:pt-32">
+        <div className="min-h-screen pb-20 px-4 sm:px-6">
             <div className="mx-auto max-w-5xl">
                 {/* Hidden Inputs */}
                 <input
