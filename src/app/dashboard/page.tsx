@@ -382,22 +382,14 @@ export default function DashboardPage() {
 
             <UserManagement isOpen={isUserMenuOpen} onClose={() => setIsUserMenuOpen(false)} />
 
-            {/* Mobile Header */}
-            <div className="md:hidden flex items-center justify-between px-4 py-3 bg-zinc-950/90 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 transition-all">
-                {/* Left: Brand Logo (Goes Home) */}
-                <Link href="/" className="flex items-center gap-2 group">
-                    <img src="/logo.png" alt="frontb3nch" className="h-8 w-8 object-contain group-hover:scale-105 transition-transform" />
-                    <span className="font-bold text-lg tracking-tight text-white">frontb3nch</span>
-                </Link>
-
-                {/* Right: Profile Avatar (Opens Menu) */}
-                <button
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="h-9 w-9 -mr-1 rounded-full bg-zinc-800 border border-white/10 overflow-hidden active:scale-95 transition-transform shadow-lg"
-                >
-                    {user.avatar ? <img src={user.avatar} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white">{user.name[0]}</div>}
-                </button>
-            </div>
+            {/* Dashboard Mobile Sidebar Toggle - Visible only on mobile, placed to the left of the navbar */}
+            <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden fixed top-4 left-4 z-[101] h-12 w-12 flex items-center justify-center rounded-full bg-black/90 border border-white/10 text-white shadow-xl active:scale-95 transition-all"
+                aria-label="Open Dashboard Menu"
+            >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
 
             {/* Mobile Drawer */}
             <AnimatePresence>
