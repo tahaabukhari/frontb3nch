@@ -12,7 +12,7 @@ const Navbar = ({ isDashboard = false, className = '' }: { isDashboard?: boolean
   return (
     <header className={`fixed top-4 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none ${className}`}>
       {/* Container - Enable pointer events for the navbar itself */}
-      <nav className={`pointer-events-auto relative z-[100] flex w-full max-w-7xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/95 p-2 pl-6 shadow-2xl transition-all sm:pr-2 ${isDashboard ? 'ml-12 w-[calc(100%-3.5rem)]' : ''}`}>
+      <nav className={`pointer-events-auto relative z-[100] flex w-full max-w-7xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/95 py-1 px-4 md:p-2 md:pl-6 shadow-2xl transition-all sm:pr-2 ${isDashboard ? 'ml-16 w-[calc(100%-4.5rem)]' : ''}`}>
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">

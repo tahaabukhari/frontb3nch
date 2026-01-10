@@ -438,7 +438,7 @@ export default function DashboardPage() {
                         --color-accent: ${user.dashboardConfig?.accentColor || '#ffffff'};
                     }
                 `}</style>
-                <div className="max-w-7xl mx-auto pt-4 md:pt-20">
+                <div className="max-w-7xl mx-auto pt-24 md:pt-20">
                     <motion.div
                         key={activeTab}
                         initial={{ opacity: 0, y: 10 }}
