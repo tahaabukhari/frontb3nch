@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '@/context/UserContext';
 
-const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
+const Navbar = ({ isDashboard = false, className = '' }: { isDashboard?: boolean; className?: string }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useUser();
 
   return (
-    <header className="fixed top-4 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
+    <header className={`fixed top-4 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none ${className}`}>
       {/* Container - Enable pointer events for the navbar itself */}
       <nav className="pointer-events-auto relative z-[100] flex w-full max-w-7xl items-center justify-between gap-4 rounded-full border border-white/10 bg-black/95 p-2 pl-6 shadow-2xl transition-all sm:pr-2">
 
