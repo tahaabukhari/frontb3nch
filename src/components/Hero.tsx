@@ -44,7 +44,7 @@ const Hero = () => (
             <img
               src="/desktop-hero-1.png"
               alt="Hero Background"
-              className="w-full max-w-4xl scale-[2] object-contain drop-shadow-2xl"
+              className="w-full max-w-4xl scale-[1.8] object-contain drop-shadow-2xl"
             />
           </motion.div>
         </div>
@@ -78,7 +78,7 @@ const SectionTwo = () => {
             <img
               src="/desktop-hero-2.png"
               alt="AI Tutoring"
-              className="w-full max-w-4xl scale-[1.5] object-contain drop-shadow-2xl"
+              className="w-full max-w-4xl scale-[1.4] object-contain drop-shadow-2xl"
             />
           </motion.div>
         </div>
@@ -150,7 +150,7 @@ const SectionThree = () => {
             <img
               src="/desktop-hero-3.png"
               alt="Funzone"
-              className="w-full max-w-4xl scale-[1.5] object-contain drop-shadow-2xl"
+              className="w-full max-w-4xl scale-[1.4] object-contain drop-shadow-2xl"
             />
           </motion.div>
         </div>
