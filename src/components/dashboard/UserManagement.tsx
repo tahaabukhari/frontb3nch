@@ -215,13 +215,7 @@ export const UserManagement = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
                     className="bg-zinc-950 w-full md:max-w-6xl h-[92vh] md:h-[85vh] rounded-t-[2rem] md:rounded-[2rem] border border-zinc-800 shadow-2xl flex flex-col md:flex-row overflow-hidden relative"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Close Button Mobile/Desktop */}
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 z-50 p-2 bg-zinc-800/80 hover:bg-zinc-700 text-white rounded-full transition-colors md:hidden border border-white/10 shadow-lg"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
+
 
                     {/* Navigation Sidebar (Desktop) / Top Bar (Mobile) */}
                     <div className="w-full md:w-72 bg-zinc-900/80 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col backdrop-blur-xl z-20">
@@ -246,6 +240,14 @@ export const UserManagement = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                     {activeTab === tab.id && <motion.div layoutId="activeTabBg" className="absolute inset-0 bg-primary z-0" />}
                                 </button>
                             ))}
+
+                            {/* Integrated Close Button - Mobile Only */}
+                            <button
+                                onClick={onClose}
+                                className="md:hidden flex items-center justify-center p-3 aspect-square rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5 transition-all shrink-0 active:scale-95"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
                         </div>
 
                         <div className="mt-auto p-4 hidden md:block border-t border-white/5">
