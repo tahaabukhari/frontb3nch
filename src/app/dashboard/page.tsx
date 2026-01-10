@@ -384,24 +384,15 @@ export default function DashboardPage() {
 
             {/* Mobile Header */}
             <div className="md:hidden flex items-center justify-between px-4 py-3 bg-zinc-950/90 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 transition-all">
-                {/* Left: Hamburger */}
+                {/* Left: Brand Logo (Goes Home) */}
+                <Link href="/" className="flex items-center gap-2 group">
+                    <img src="/logo.png" alt="frontb3nch" className="h-8 w-8 object-contain group-hover:scale-105 transition-transform" />
+                    <span className="font-bold text-lg tracking-tight text-white">frontb3nch</span>
+                </Link>
+
+                {/* Right: Profile Avatar (Opens Menu) */}
                 <button
                     onClick={() => setIsMobileMenuOpen(true)}
-                    className="p-2 -ml-2 rounded-xl hover:bg-white/5 active:scale-95 transition-all text-gray-300"
-                    aria-label="Open Menu"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-
-                {/* Center: Brand */}
-                <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
-                    <img src="/logo.png" alt="frontb3nch" className="h-8 w-8 object-contain" />
-                    <span className="font-bold text-lg tracking-tight text-white">frontb3nch</span>
-                </div>
-
-                {/* Right: Profile */}
-                <button
-                    onClick={() => setIsUserMenuOpen(true)}
                     className="h-9 w-9 -mr-1 rounded-full bg-zinc-800 border border-white/10 overflow-hidden active:scale-95 transition-transform shadow-lg"
                 >
                     {user.avatar ? <img src={user.avatar} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white">{user.name[0]}</div>}
