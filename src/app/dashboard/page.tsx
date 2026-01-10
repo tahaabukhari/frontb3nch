@@ -25,7 +25,7 @@ const DashboardHome = ({ user }: { user: any }) => (
         {/* Welcome Banner */}
         <div className="rounded-3xl bg-primary p-8 shadow-2xl relative overflow-hidden transition-colors duration-300">
             <div className="relative z-10">
-                <h2 className="text-3xl font-bold text-white mb-2">Welcome back, {user.name.split(' ')[0]}! 👋</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Welcome back, {user.name.split(' ')[0]}! 👋</h2>
                 <p className="text-white/80">You're on a {user.streak} day streak. Keep it up!</p>
             </div>
             {/* Subtle Texture/Pattern instead of gradient */}

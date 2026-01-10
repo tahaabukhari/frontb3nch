@@ -127,7 +127,7 @@ const Navbar = ({ isDashboard = false }: { isDashboard?: boolean }) => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="pointer-events-auto absolute right-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-zinc-900 p-2 shadow-2xl origin-top-right overflow-hidden z-50"
+                className="pointer-events-auto absolute right-0 top-full mt-3 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-zinc-900 p-2 shadow-2xl origin-top-right overflow-hidden max-h-[80vh] overflow-y-auto z-50"
               >
 
                 <div className="px-4 py-3 border-b border-white/5 mb-2">

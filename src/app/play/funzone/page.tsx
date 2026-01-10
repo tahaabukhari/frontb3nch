@@ -156,7 +156,7 @@ export default function FunzonePage() {
                 {/* --- Steam-style Carousel --- */}
                 <section className="mb-16 relative group">
                     {/* Main Banner Area */}
-                    <div className="relative h-[400px] md:h-[450px] w-full overflow-hidden rounded-2xl bg-[#161b2e] shadow-2xl border border-white/5">
+                    <div className="relative h-[550px] md:h-[450px] w-full overflow-hidden rounded-2xl bg-[#161b2e] shadow-2xl border border-white/5">
 
                         <AnimatePresence initial={false} custom={direction} mode="popLayout">
                             <motion.div
@@ -179,10 +179,10 @@ export default function FunzonePage() {
                                     <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay"></div>
 
                                     <div className="relative z-10 space-y-4">
-                                        <h2 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tighter">
+                                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tighter">
                                             {TOP_GAMES[currentIndex].title}
                                         </h2>
-                                        <p className="text-lg md:text-xl text-white/90 max-w-xl font-medium leading-relaxed drop-shadow-md">
+                                        <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-xl font-medium leading-relaxed drop-shadow-md">
                                             {TOP_GAMES[currentIndex].description}
                                         </p>
                                         <div className="flex flex-wrap gap-2 mt-4">
@@ -202,7 +202,7 @@ export default function FunzonePage() {
                                         initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
                                         animate={{ scale: 1, opacity: 1, rotate: 0 }}
                                         transition={{ delay: 0.2, type: "spring" }}
-                                        className="text-[120px] md:text-[160px] relative z-10 filter drop-shadow-2xl"
+                                        className="text-8xl md:text-[160px] relative z-10 filter drop-shadow-2xl"
                                     >
                                         {TOP_GAMES[currentIndex].emoji}
                                     </motion.div>

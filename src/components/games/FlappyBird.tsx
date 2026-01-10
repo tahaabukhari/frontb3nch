@@ -54,12 +54,17 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
         }
     }, []);
 
-    const startGame = () => {
-        setGameState(prev => ({ ...prev, isPlaying: true, isGameOver: false, score: 0, expEarned: 0 }));
+    const resetGame = () => {
+        setGameState(prev => ({ ...prev, isPlaying: false, isGameOver: false, score: 0, expEarned: 0 }));
         birdY.current = 300;
         birdVelocity.current = 0;
         pipes.current = [];
         spawnTimer.current = 0;
+        lastTime.current = 0;
+    };
+
+    const startGame = () => {
+        setGameState(prev => ({ ...prev, isPlaying: true }));
         lastTime.current = performance.now();
         gameLoop(performance.now());
     };
@@ -67,6 +72,7 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
     const jump = useCallback(() => {
         if (!gameState.isPlaying && !gameState.isGameOver) {
             startGame();
+            birdVelocity.current = JUMP_STRENGTH;
         } else if (gameState.isPlaying) {
             birdVelocity.current = JUMP_STRENGTH;
         }
@@ -279,7 +285,7 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
 
             {/* Game Canvas Container */}
             <div
-                className="relative w-full max-w-lg aspect-[3/4] md:aspect-[9/16] bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-white/10 ring-1 ring-white/5 cursor-pointer select-none"
+                className="relative w-full max-w-[400px] aspect-[2/3] bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-white/10 ring-1 ring-white/5 cursor-pointer select-none"
                 onClick={jump}
             >
                 {/* Background Pattern */}
@@ -347,7 +353,7 @@ export default function FlappyBird({ onBack }: FlappyBirdProps) {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <button
-                                    onClick={startGame}
+                                    onClick={resetGame}
                                     className="py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-transform active:scale-95 shadow-lg shadow-blue-500/20"
                                 >
                                     Replay ↻
