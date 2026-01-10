@@ -13,7 +13,7 @@ const ALIGNMENT = {
   },
   desktop: {
     // Desktop-specific adjustments
-    image: { x: 0, y: 0, scale: 0.75 },
+    image: { x: 0, y: 0, scale: 0.65 },
   }
 };
 
@@ -112,7 +112,7 @@ const SectionTwo = () => {
             <img
               src="/desktop-hero-2.png"
               alt="AI Tutoring"
-              className="w-full max-w-md object-contain drop-shadow-2xl"
+              className="w-full max-w-lg object-contain drop-shadow-2xl"
             />
           </motion.div>
         </div>
@@ -184,7 +184,7 @@ const SectionThree = () => {
             <img
               src="/desktop-hero-3.png"
               alt="Funzone"
-              className="w-full max-w-md object-contain drop-shadow-2xl"
+              className="w-full max-w-lg object-contain drop-shadow-2xl"
             />
           </motion.div>
         </div>
