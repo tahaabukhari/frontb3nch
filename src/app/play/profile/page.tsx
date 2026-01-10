@@ -21,7 +21,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="min-h-screen pt-4 pb-20 px-4 sm:px-6">
+        <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 md:pt-32">
             <div className="mx-auto max-w-5xl">
                 {/* Hidden Inputs */}
                 <input
@@ -43,26 +43,27 @@ export default function ProfilePage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="relative h-48 w-full overflow-hidden rounded-3xl bg-zinc-900 border border-white/5 cursor-pointer group"
+                    className="relative h-40 sm:h-56 w-full overflow-hidden rounded-3xl bg-zinc-900 border border-white/5 cursor-pointer group shadow-2xl"
                     onClick={() => bannerInputRef.current?.click()}
                 >
                     {user.banner ? (
-                        <img src={user.banner} alt="Banner" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                        <img src={user.banner} alt="Banner" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     ) : (
-                        <div className="absolute inset-0 bg-white/[0.02]"></div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black"></div>
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-white font-medium bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">Change Banner</span>
+                        <span className="text-white font-medium bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10">Change Banner</span>
                     </div>
                 </motion.div>
 
                 {/* Profile Header */}
-                <div className="relative z-10 -mt-16 sm:-mt-20 px-6 sm:px-10 flex flex-col items-center sm:items-end sm:flex-row gap-6">
+                <div className="relative z-10 -mt-14 sm:-mt-20 px-4 sm:px-10 flex flex-col items-center sm:items-end sm:flex-row gap-4 sm:gap-8">
+                    {/* Profile Picture */}
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.1 }}
-                        className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-[6px] border-black bg-zinc-800 shadow-2xl sm:h-40 sm:w-40 cursor-pointer group"
+                        className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full border-[6px] border-[#0a0f1c] bg-zinc-800 shadow-2xl sm:h-44 sm:w-44 cursor-pointer group"
                         onClick={(e) => {
                             e.stopPropagation();
                             avatarInputRef.current?.click();
@@ -80,12 +81,13 @@ export default function ProfilePage() {
                         </div>
                     </motion.div>
 
-                    <div className="flex-1 text-center sm:text-left pb-4">
+                    {/* Name & Title */}
+                    <div className="flex-1 text-center sm:text-left pb-2 sm:pb-6 space-y-1">
                         <motion.h1
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="text-3xl font-bold text-white sm:text-4xl"
+                            className="text-2xl sm:text-4xl font-bold text-white tracking-tight"
                         >
                             {user.name}
                         </motion.h1>
@@ -93,29 +95,30 @@ export default function ProfilePage() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="mt-1 text-gray-400 font-medium"
+                            className="text-sm sm:text-base text-gray-400 font-medium"
                         >
-                            Level {user.level} {user.level < 5 ? '• Novice Learner' : user.level < 10 ? '• Intermediate' : '• Expert'}
+                            Level {user.level} <span className="text-gray-600">•</span> {user.level < 5 ? 'Novice Learner' : user.level < 10 ? 'Intermediate' : 'Expert'}
                         </motion.p>
                     </div>
 
+                    {/* Action Buttons */}
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 }}
-                        className="flex gap-3 pb-4"
+                        className="flex gap-3 pb-4 sm:pb-8 w-full sm:w-auto justify-center sm:justify-end"
                     >
-                        <button className="rounded-full bg-white px-6 py-2.5 text-sm font-bold text-black transition hover:bg-gray-200 shadow-lg shadow-white/10">
+                        <button className="rounded-xl bg-white px-6 py-2.5 text-sm font-bold text-black transition hover:bg-gray-200 shadow-lg shadow-white/5 active:scale-95">
                             Edit Profile
                         </button>
-                        <button className="rounded-full border border-white/10 bg-zinc-900 px-4 py-2.5 text-white transition hover:bg-zinc-800 hover:border-white/20">
+                        <button className="rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-white transition hover:bg-zinc-800 hover:border-white/20 active:scale-95 shadow-lg">
                             ⚙️
                         </button>
                     </motion.div>
                 </div>
 
                 {/* Content Grid */}
-                <div className="mt-12 grid gap-8 sm:grid-cols-3">
+                <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 lg:grid-cols-3">
                     {/* Left Column - Stats */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -123,10 +126,10 @@ export default function ProfilePage() {
                         transition={{ delay: 0.5 }}
                         className="space-y-6"
                     >
-                        <div className="rounded-2xl border border-white/10 bg-black/60 p-6 backdrop-blur-sm shadow-xl">
-                            <h3 className="mb-4 text-lg font-bold text-white">Statistics</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <StatBox label="XP" value={`${Math.floor(user.currentExp)}`} />
+                        <div className="rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-6 backdrop-blur-md shadow-xl">
+                            <h3 className="mb-4 text-base font-bold text-white uppercase tracking-wider opacity-80">Statistics</h3>
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                <StatBox label="XP Earned" value={`${Math.floor(user.currentExp)}`} />
                                 <StatBox label="Next Level" value={`${user.maxExp}`} />
                                 <StatBox label="Quizzes" value="0" />
                                 <StatBox label="Avg Score" value="-%" />
@@ -134,7 +137,8 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="relative rounded-2xl border border-white/10 overflow-hidden group">
-                            <div className="relative h-full w-full bg-[#0a0a0a]/90 p-6 backdrop-blur-xl">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/20 to-purple-900/20 opacity-50"></div>
+                            <div className="relative h-full w-full bg-[#0a0a0a]/80 p-6 backdrop-blur-xl">
                                 <h3 className="mb-2 text-lg font-bold text-white">Pro Plan</h3>
                                 <p className="mb-6 text-sm text-gray-400 leading-relaxed">Upgrade to unlock unlimited quizzes, advanced analytics, and exclusive badges.</p>
                                 <button className="w-full rounded-xl bg-white text-black py-3 text-sm font-bold shadow-lg transition hover:bg-gray-200 active:scale-[0.98]">
@@ -145,16 +149,16 @@ export default function ProfilePage() {
                     </motion.div>
 
                     {/* Right Column - Badges & Recent */}
-                    <div className="sm:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-6">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.6 }}
-                            className="rounded-2xl border border-white/10 bg-black/60 p-6 sm:p-8 shadow-xl"
+                            className="rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-8 shadow-xl backdrop-blur-md"
                         >
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-white">Earned Badges</h2>
-                                <button className="text-sm font-medium text-indigo-400 hover:text-indigo-300">View All</button>
+                                <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-wide">View All</button>
                             </div>
 
                             {/* Badge Grid - Empty State for new user */}
@@ -171,7 +175,7 @@ export default function ProfilePage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.65 }}
-                            className="rounded-2xl border border-white/10 bg-black/60 p-6 sm:p-8 shadow-xl"
+                            className="rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-8 shadow-xl backdrop-blur-md"
                         >
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-white">My Friends</h2>
@@ -180,7 +184,7 @@ export default function ProfilePage() {
                                 </button>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {/* Mock Friend 1 */}
                                 <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3 px-4 hover:bg-white/10 transition-colors group">
                                     <div className="flex items-center gap-3">
@@ -225,7 +229,7 @@ export default function ProfilePage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.7 }}
-                            className="rounded-2xl border border-white/10 bg-black/60 p-6 sm:p-8 shadow-xl"
+                            className="rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-8 shadow-xl backdrop-blur-md"
                         >
                             <h2 className="text-xl font-bold text-white mb-6">Recent Activity</h2>
                             <div className="flex flex-col gap-4">
