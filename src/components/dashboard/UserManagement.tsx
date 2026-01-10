@@ -218,9 +218,9 @@ export const UserManagement = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
                     {/* Close Button Mobile/Desktop */}
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 z-50 p-2 bg-black/50 hover:bg-white/10 text-white rounded-full transition-colors md:hidden"
+                        className="absolute top-4 right-4 z-50 p-2 bg-zinc-800/80 hover:bg-zinc-700 text-white rounded-full transition-colors md:hidden border border-white/10 shadow-lg"
                     >
-                        ✕
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
 
                     {/* Navigation Sidebar (Desktop) / Top Bar (Mobile) */}
@@ -236,13 +236,13 @@ export const UserManagement = ({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap md:w-full text-left relative overflow-hidden group ${activeTab === tab.id
-                                            ? 'bg-primary text-black font-bold shadow-lg shadow-primary/20'
-                                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                    className={`flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap flex-1 md:flex-none md:w-full text-left relative overflow-hidden group ${activeTab === tab.id
+                                        ? 'bg-primary text-black font-bold shadow-lg shadow-primary/20'
+                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
                                     <span className="text-xl relative z-10">{tab.icon}</span>
-                                    <span className="relative z-10">{tab.label}</span>
+                                    <span className="relative z-10 hidden md:inline">{tab.label}</span>
                                     {activeTab === tab.id && <motion.div layoutId="activeTabBg" className="absolute inset-0 bg-primary z-0" />}
                                 </button>
                             ))}
