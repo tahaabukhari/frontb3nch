@@ -409,9 +409,13 @@ export default function DashboardPage() {
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                             className="fixed left-0 top-0 bottom-0 w-[280px] bg-zinc-950 z-50 flex flex-col pt-24 pb-8 border-r border-white/10 md:hidden"
                         >
-                            <div className="px-6 mb-8 flex justify-between items-center">
-                                <span className="text-xl font-bold">Menu</span>
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400">✕</button>
+                            <div className="px-6 mb-6 flex justify-end">
+                                <button
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                                >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
                             </div>
                             <SidebarContent />
                         </motion.aside>
