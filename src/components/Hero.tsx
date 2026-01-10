@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import DailyStreakFab from '@/components/DailyStreakFab';
+
 
 const Hero = () => (
   <>
@@ -57,8 +57,7 @@ const Hero = () => (
     {/* Section 3: Funzone */}
     <SectionThree />
 
-    {/* Daily Streak FAB */}
-    <DailyStreakFab />
+
   </>
 );
 

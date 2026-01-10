@@ -4,6 +4,8 @@ import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useUser } from '@/context/UserContext';
 
+import DailyStreakFab from '@/components/DailyStreakFab';
+
 export default function ProfilePage() {
     const { user, updateProfile } = useUser();
     const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -241,7 +243,8 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
-        </div>
+            <DailyStreakFab />
+        </div >
     );
 }
 
