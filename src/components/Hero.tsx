@@ -5,15 +5,15 @@ import { motion } from 'framer-motion';
 import DailyStreakFab from '@/components/DailyStreakFab';
 
 // Manual alignment configuration for the Body (Image)
-// Adjust these values to perfectly align the static body
+// Reset to defaults for new images
 const ALIGNMENT = {
   mobile: {
     // Mobile-specific adjustments
-    image: { x: -20, y: 380, scale: 0.85 },
+    image: { x: 0, y: 0, scale: 1 },
   },
   desktop: {
     // Desktop-specific adjustments
-    image: { x: 240, y: 0, scale: 0.85 },
+    image: { x: 0, y: 0, scale: 1 },
   }
 };
 
@@ -43,7 +43,7 @@ const Hero = () => (
           "
         >
           <img
-            src="/desktop-herobg.png"
+            src="/desktop-hero-1.png"
             alt="Hero Background"
             className="h-full w-full object-cover"
           />
@@ -66,7 +66,7 @@ const Hero = () => (
         <div className="flex flex-col gap-4 sm:flex-row justify-center md:justify-start">
           <Link
             href="/play/import"
-            className="rounded-full bg-white px-8 py-4 text-center text-lg font-bold text-black shadow-lg hover:bg-gray-200 transition-all sm:min-w-[160px]">
+            className="rounded-full bg-primary px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all sm:min-w-[160px]">
             Start Playing
           </Link>
           <Link
@@ -106,12 +106,13 @@ const SectionTwo = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="relative h-64 w-64 flex items-center justify-center rounded-3xl bg-zinc-900/50 border border-white/10 shadow-2xl skew-y-3"
+            className="relative"
           >
-            <span className="text-9xl filter drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">📓</span>
-            {/* Decorative Elements */}
-            <div className="absolute -top-4 -right-4 h-12 w-12 rounded-full bg-blue-500/20 blur-xl" />
-            <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-purple-500/20 blur-xl" />
+            <img
+              src="/desktop-hero-2.png"
+              alt="AI Tutoring"
+              className="w-full max-w-md object-contain drop-shadow-2xl"
+            />
           </motion.div>
         </div>
 
@@ -120,7 +121,7 @@ const SectionTwo = () => {
           <h2 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             AI-Powered Tutoring &
             <br />
-            <span className="text-blue-400">Mock Exam Tools</span>
+            <span className="text-primary">Mock Exam Tools</span>
           </h2>
           <p className="text-gray-400 text-lg sm:text-xl leading-relaxed">
             Prepare smarter with personalized AI guidance. Generate mock exams, get instant feedback, and master your subjects with a tutor that never sleeps.
@@ -128,7 +129,7 @@ const SectionTwo = () => {
           <div className="flex justify-center md:justify-end">
             <Link
               href="/dashboard"
-              className="rounded-full bg-blue-600 px-8 py-3 text-lg font-bold text-white shadow-lg hover:bg-blue-500 transition-all shadow-blue-500/20"
+              className="rounded-full bg-primary px-8 py-3 text-lg font-bold text-white shadow-lg hover:bg-primary/90 transition-all shadow-primary/20"
             >
               Go to Dashboard
             </Link>
@@ -148,7 +149,7 @@ const SectionThree = () => {
           <h2 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Learning redefined for
             <br />
-            <span className="text-purple-400">Gamers, by Gamers</span>
+            <span className="text-primary">Gamers, by Gamers</span>
           </h2>
           <p className="text-gray-400 text-lg sm:text-xl leading-relaxed">
             Level up your knowledge with our learning-oriented webgames! Experience education that feels like play, designed to keep you engaged and addicted to learning.
@@ -156,7 +157,7 @@ const SectionThree = () => {
           <div className="flex justify-center md:justify-start">
             <Link
               href="/play/funzone"
-              className="rounded-full bg-purple-600 px-8 py-3 text-lg font-bold text-white shadow-lg hover:bg-purple-500 transition-all shadow-purple-500/20"
+              className="rounded-full bg-primary px-8 py-3 text-lg font-bold text-white shadow-lg hover:bg-primary/90 transition-all shadow-primary/20"
             >
               Enter Funzone
             </Link>
@@ -169,12 +170,13 @@ const SectionThree = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="relative h-64 w-64 flex items-center justify-center rounded-3xl bg-zinc-900/50 border border-white/10 shadow-2xl -skew-y-3"
+            className="relative"
           >
-            <span className="text-9xl filter drop-shadow-[0_0_30px_rgba(168,85,247,0.3)]">🎮</span>
-            {/* Decorative Elements */}
-            <div className="absolute -top-4 -left-4 h-12 w-12 rounded-full bg-purple-500/20 blur-xl" />
-            <div className="absolute -bottom-4 -right-4 h-16 w-16 rounded-full bg-pink-500/20 blur-xl" />
+            <img
+              src="/desktop-hero-3.png"
+              alt="Funzone"
+              className="w-full max-w-md object-contain drop-shadow-2xl"
+            />
           </motion.div>
         </div>
       </div>
