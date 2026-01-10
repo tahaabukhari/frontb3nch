@@ -13,7 +13,7 @@ const ALIGNMENT = {
   },
   desktop: {
     // Desktop-specific adjustments
-    image: { x: 0, y: 0, scale: 1 },
+    image: { x: 0, y: 0, scale: 0.75 },
   }
 };
 
@@ -105,6 +105,7 @@ const SectionTwo = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.5 }}
             className="relative"
           >
@@ -169,7 +170,15 @@ const SectionThree = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            whileHover={{ rotate: [0, -5, 5, -5, 0] }}
+            transition={{
+              duration: 0.5,
+              rotate: {
+                repeat: Infinity,
+                duration: 1.5,
+                ease: "easeInOut"
+              }
+            }}
             className="relative"
           >
             <img
