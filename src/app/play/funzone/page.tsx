@@ -243,30 +243,10 @@ export default function FunzonePage() {
                                 </div>
                             </motion.div>
                         </AnimatePresence>
-
-                        {/* Navigation Buttons - Around the sides */}
-                        <div className="absolute top-1/2 -left-4 md:-left-12 transform -translate-y-1/2 z-20">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-                                className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)] transition-all transform hover:scale-110 border border-white/20"
-                                aria-label="Previous Slide"
-                            >
-                                <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-                            </button>
-                        </div>
-                        <div className="absolute top-1/2 -right-4 md:-right-12 transform -translate-y-1/2 z-20">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-                                className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)] transition-all transform hover:scale-110 border border-white/20"
-                                aria-label="Next Slide"
-                            >
-                                <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-                            </button>
-                        </div>
                     </div>
 
-                    {/* Dot Indicators */}
-                    <div className="flex justify-center gap-3 mt-6">
+                    {/* Dot Indicators - Now the primary navigation */}
+                    <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
                         {TOP_GAMES.map((_, index) => (
                             <button
                                 key={index}
@@ -373,12 +353,12 @@ export default function FunzonePage() {
                             className="relative w-full max-w-2xl bg-[#161b2e] border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-10"
                         >
                             {/* Modal Header/Art */}
-                            <div className={`h-64 bg-gradient-to-r ${selectedGame.color || 'from-gray-800 to-black'} relative`}>
+                            <div className={`h-40 sm:h-56 md:h-64 bg-gradient-to-r ${selectedGame.color || 'from-gray-800 to-black'} relative`}>
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {((selectedGame as any).coverPreview || (selectedGame as any).cover) ? (
                                         <img src={((selectedGame as any).coverPreview || (selectedGame as any).cover).src} alt={selectedGame.title} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="text-[100px] drop-shadow-2xl animate-bounce-slow">{selectedGame.emoji}</div>
+                                        <div className="text-6xl sm:text-8xl md:text-[100px] drop-shadow-2xl">{selectedGame.emoji}</div>
                                     )}
                                 </div>
 
@@ -386,32 +366,32 @@ export default function FunzonePage() {
 
                                 <button
                                     onClick={() => setSelectedGame(null)}
-                                    className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors border border-white/10"
+                                    className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors border border-white/10"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                 </button>
                             </div>
 
                             {/* Modal Content */}
-                            <div className="p-8 -mt-10 relative z-10">
-                                <h2 className="text-4xl font-bold text-white mb-2">{selectedGame.title}</h2>
-                                <div className="flex gap-2 mb-6">
+                            <div className="p-4 sm:p-6 md:p-8 -mt-6 sm:-mt-8 md:-mt-10 relative z-10">
+                                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">{selectedGame.title}</h2>
+                                <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
                                     {(selectedGame.tags || [selectedGame.category]).map((t: string) => (
                                         <span key={t} className="px-2 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded border border-blue-500/30">{t}</span>
                                     ))}
                                 </div>
-                                <p className="text-gray-300 mb-8 leading-relaxed text-lg">{selectedGame.description || "Join the fun and compete with friends in this amazing game."}</p>
+                                <p className="text-gray-300 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base md:text-lg">{selectedGame.description || "Join the fun and compete with friends in this amazing game."}</p>
 
-                                <div className="flex gap-4">
+                                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                                     <button
                                         onClick={() => handlePlayGame(selectedGame.id)}
-                                        className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-xl text-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all flex items-center justify-center gap-2 transform active:scale-95"
+                                        className="flex-1 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-xl text-base sm:text-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all flex items-center justify-center gap-2 transform active:scale-95"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z" /></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z" /></svg>
                                         Play Now
                                     </button>
-                                    <button className="flex-1 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-lg hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    <button className="flex-1 py-3 sm:py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-base sm:text-lg hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                                         Create Lobby
                                     </button>
                                 </div>
