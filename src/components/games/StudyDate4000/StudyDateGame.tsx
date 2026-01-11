@@ -29,7 +29,6 @@ interface Segment {
 
 type GamePhase = 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'ENDING' | 'PAUSED';
 
-// Sprite Map
 const SPRITES: Record<FahiEmotion, any> = {
     'neutral': fahiNeutral,
     'happy': fahiHappy,
@@ -42,7 +41,6 @@ const SPRITES: Record<FahiEmotion, any> = {
     'happy-neutral': fahiHappyNeutral
 };
 
-// Intro dialogue
 const INTRO_DIALOGUE = [
     { text: "Oh! Hello there~ 💕", emotion: 'happy' as FahiEmotion },
     { text: "Welcome to Study Date 4000! I'm Fahi, your personal study buddy!", emotion: 'excited' as FahiEmotion },
@@ -53,14 +51,12 @@ const INTRO_DIALOGUE = [
 const TEXT_INPUT_LIMIT = 150;
 
 export default function StudyDateGame() {
-    // Core State
     const [phase, setPhase] = useState<GamePhase>('INTRO');
     const [previousPhase, setPreviousPhase] = useState<GamePhase>('INTRO');
     const [mood, setMood] = useState(70);
     const [progress, setProgress] = useState(0);
     const [userName, setUserName] = useState('');
 
-    // Dialogue State
     const [introIndex, setIntroIndex] = useState(0);
     const [segments, setSegments] = useState<Segment[]>([]);
     const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
@@ -69,71 +65,54 @@ export default function StudyDateGame() {
     const [emotion, setEmotion] = useState<FahiEmotion>(INTRO_DIALOGUE[0].emotion);
     const [endingType, setEndingType] = useState<'GOOD' | 'NEUTRAL' | 'BAD' | null>(null);
 
-    // Input State
     const [topic, setTopic] = useState('');
     const [goals, setGoals] = useState('');
     const [textInput, setTextInput] = useState('');
-
-    // Animation State
     const [explainFrame, setExplainFrame] = useState(0);
-
-    // Typewriter State
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
-    // Typewriter effect
+    // Responsive check
+    const [isMobile, setIsMobile] = useState(false);
     useEffect(() => {
-        if (!currentText) {
-            setDisplayedText('');
-            return;
-        }
+        const check = () => setIsMobile(window.innerWidth < 768);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
 
+    // Typewriter
+    useEffect(() => {
+        if (!currentText) { setDisplayedText(''); return; }
         setIsTyping(true);
         setDisplayedText('');
-        let index = 0;
-
+        let i = 0;
         const interval = setInterval(() => {
-            if (index < currentText.length) {
-                setDisplayedText(prev => prev + currentText[index]);
-                index++;
+            if (i < currentText.length) {
+                setDisplayedText(prev => prev + currentText[i]);
+                i++;
             } else {
                 setIsTyping(false);
                 clearInterval(interval);
             }
         }, 20);
-
         return () => clearInterval(interval);
     }, [currentText]);
 
     const getCurrentSprite = () => {
-        if (phase === 'TEACHING') {
-            return explainFrame === 0 ? SPRITES['explaining'] : SPRITES['explaining2'];
-        }
+        if (phase === 'TEACHING') return explainFrame === 0 ? SPRITES['explaining'] : SPRITES['explaining2'];
         return SPRITES[emotion] || SPRITES['happy-neutral'];
     };
 
-    // Generate 14 segments (5 text-input, 9 choice-based)
     const generateSegments = (baseTopic: string): Segment[] => {
         const subtopics = [
-            `Introduction to ${baseTopic}`,
-            `Core Concepts of ${baseTopic}`,
-            `${baseTopic} Fundamentals`,
-            `Understanding ${baseTopic} Basics`,
-            `${baseTopic} Key Principles`,
-            `Advanced ${baseTopic} Concepts`,
-            `${baseTopic} Applications`,
-            `${baseTopic} in Practice`,
-            `Real-world ${baseTopic}`,
-            `${baseTopic} Deep Dive`,
-            `${baseTopic} Analysis`,
-            `Critical ${baseTopic} Thinking`,
-            `${baseTopic} Mastery`,
-            `${baseTopic} Final Review`
+            `Introduction to ${baseTopic}`, `Core Concepts of ${baseTopic}`, `${baseTopic} Fundamentals`,
+            `Understanding ${baseTopic} Basics`, `${baseTopic} Key Principles`, `Advanced ${baseTopic} Concepts`,
+            `${baseTopic} Applications`, `${baseTopic} in Practice`, `Real-world ${baseTopic}`,
+            `${baseTopic} Deep Dive`, `${baseTopic} Analysis`, `Critical ${baseTopic} Thinking`,
+            `${baseTopic} Mastery`, `${baseTopic} Final Review`
         ];
-
-        // Create array of 14 items: 5 text-input (indices 0-4), 9 choice (5-13)
-        const inputIndices = [1, 4, 7, 10, 13]; // Spread out text inputs
-
+        const inputIndices = [1, 4, 7, 10, 13];
         return subtopics.map((topicName, i) => ({
             explanation: [
                 `*opens notebook* Alright, let's talk about ${topicName}!`,
@@ -145,10 +124,8 @@ export default function StudyDateGame() {
                 ? `In your own words, tell me what you understand about ${topicName}:`
                 : `What's the most important aspect of ${topicName}?`,
             options: inputIndices.includes(i) ? [] : [
-                'Understanding the fundamentals first',
-                'Memorizing without understanding',
-                'Skipping to advanced topics',
-                'Just guessing randomly'
+                'Understanding the fundamentals first', 'Memorizing without understanding',
+                'Skipping to advanced topics', 'Just guessing randomly'
             ],
             correctAnswer: inputIndices.includes(i) ? '' : 'Understanding the fundamentals first',
             requiresTextInput: inputIndices.includes(i),
@@ -156,35 +133,24 @@ export default function StudyDateGame() {
         }));
     };
 
-    // Pause/Resume
     const togglePause = () => {
-        if (phase === 'PAUSED') {
-            setPhase(previousPhase);
-        } else if (phase !== 'INTRO' && phase !== 'ASK_NAME' && phase !== 'SETUP' && phase !== 'ENDING') {
+        if (phase === 'PAUSED') setPhase(previousPhase);
+        else if (!['INTRO', 'ASK_NAME', 'SETUP', 'ENDING'].includes(phase)) {
             setPreviousPhase(phase);
             setPhase('PAUSED');
         }
     };
 
-    // Intro advancement
     const advanceIntro = () => {
-        if (isTyping) {
-            setDisplayedText(currentText);
-            setIsTyping(false);
-            return;
-        }
-
-        const nextIndex = introIndex + 1;
-        if (nextIndex < INTRO_DIALOGUE.length) {
-            setIntroIndex(nextIndex);
-            setCurrentText(INTRO_DIALOGUE[nextIndex].text);
-            setEmotion(INTRO_DIALOGUE[nextIndex].emotion);
-        } else {
-            setPhase('ASK_NAME');
-        }
+        if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
+        const next = introIndex + 1;
+        if (next < INTRO_DIALOGUE.length) {
+            setIntroIndex(next);
+            setCurrentText(INTRO_DIALOGUE[next].text);
+            setEmotion(INTRO_DIALOGUE[next].emotion);
+        } else setPhase('ASK_NAME');
     };
 
-    // Name submission
     const submitName = () => {
         if (!textInput.trim()) return;
         setUserName(textInput.trim());
@@ -194,48 +160,34 @@ export default function StudyDateGame() {
         setTimeout(() => setPhase('SETUP'), 100);
     };
 
-    // Start the game
     const handleStart = async () => {
         if (!topic.trim()) return;
-
         setPhase('LOADING');
         setCurrentText(`*excited* Ooh, ${topic}! Let me prepare something special for you, ${userName}...`);
         setEmotion('excited');
-
-        // Generate local segments for reliability
         const gameSegments = generateSegments(topic);
         setSegments(gameSegments);
 
-        // Optional: Try to enhance with AI
         try {
             const response = await fetch('/api/study-date', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'generate_plan', topic, goals, userName })
             });
-
             const result = await response.json();
-
             if (result.success && result.data?.length > 0) {
-                // Merge AI content with our structure
                 const enhanced = gameSegments.map((seg, i) => {
-                    if (result.data[i % result.data.length]) {
-                        const aiContent = result.data[i % result.data.length];
-                        return {
-                            ...seg,
-                            explanation: aiContent.explanation || seg.explanation,
-                            question: seg.requiresTextInput ? seg.question : (aiContent.question || seg.question),
-                            options: seg.requiresTextInput ? [] : (aiContent.options || seg.options),
-                            correctAnswer: seg.requiresTextInput ? '' : (aiContent.correctAnswer || seg.correctAnswer)
-                        };
-                    }
-                    return seg;
+                    const ai = result.data[i % result.data.length];
+                    return ai ? {
+                        ...seg, explanation: ai.explanation || seg.explanation,
+                        question: seg.requiresTextInput ? seg.question : (ai.question || seg.question),
+                        options: seg.requiresTextInput ? [] : (ai.options || seg.options),
+                        correctAnswer: seg.requiresTextInput ? '' : (ai.correctAnswer || seg.correctAnswer)
+                    } : seg;
                 });
                 setSegments(enhanced);
             }
-        } catch (error) {
-            console.log('Using fallback content');
-        }
+        } catch (e) { console.log('Using fallback'); }
 
         setCurrentSegmentIndex(0);
         setDialogueIndex(0);
@@ -244,22 +196,14 @@ export default function StudyDateGame() {
         setPhase('TEACHING');
     };
 
-    // Advance dialogue
     const advanceDialogue = () => {
-        if (isTyping) {
-            setDisplayedText(currentText);
-            setIsTyping(false);
-            return;
-        }
-
+        if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
         const segment = segments[currentSegmentIndex];
         if (!segment) return;
-
-        const nextIndex = dialogueIndex + 1;
-
-        if (nextIndex < segment.explanation.length) {
-            setDialogueIndex(nextIndex);
-            setCurrentText(segment.explanation[nextIndex]);
+        const next = dialogueIndex + 1;
+        if (next < segment.explanation.length) {
+            setDialogueIndex(next);
+            setCurrentText(segment.explanation[next]);
             setExplainFrame(prev => (prev + 1) % 2);
         } else {
             setCurrentText(segment.question);
@@ -268,11 +212,9 @@ export default function StudyDateGame() {
         }
     };
 
-    // Handle choice answer
-    const handleAnswer = async (answer: string) => {
+    const handleAnswer = (answer: string) => {
         const segment = segments[currentSegmentIndex];
         if (!segment) return;
-
         setPhase('FEEDBACK');
         const isCorrect = answer === segment.correctAnswer;
 
@@ -288,22 +230,17 @@ export default function StudyDateGame() {
         }
 
         setTimeout(() => {
-            if (mood <= 10) {
-                setEndingType('BAD');
-                setPhase('ENDING');
-                return;
-            }
-
+            if (mood <= 10) { setEndingType('BAD'); setPhase('ENDING'); return; }
             if (isCorrect) {
-                const nextSegment = currentSegmentIndex + 1;
-                if (nextSegment >= segments.length) {
+                const next = currentSegmentIndex + 1;
+                if (next >= segments.length) {
                     setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
                     setPhase('ENDING');
                 } else {
-                    setCurrentSegmentIndex(nextSegment);
+                    setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
-                    setCurrentText(segments[nextSegment].explanation[0]);
+                    setCurrentText(segments[next].explanation[0]);
                     setPhase('TEACHING');
                 }
             } else {
@@ -315,10 +252,8 @@ export default function StudyDateGame() {
         }, 2000);
     };
 
-    // Handle text input
     const handleTextSubmit = () => {
         if (!textInput.trim()) return;
-
         setPhase('FEEDBACK');
         setCurrentText(`*thinking* Hmm, interesting perspective, ${userName}!`);
         setEmotion('neutral');
@@ -330,203 +265,217 @@ export default function StudyDateGame() {
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
 
             setTimeout(() => {
-                const nextSegment = currentSegmentIndex + 1;
-                if (nextSegment >= segments.length) {
-                    setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
-                    setPhase('ENDING');
-                } else {
-                    setCurrentSegmentIndex(nextSegment);
+                const next = currentSegmentIndex + 1;
+                if (next >= segments.length) { setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL'); setPhase('ENDING'); }
+                else {
+                    setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
-                    setCurrentText(segments[nextSegment].explanation[0]);
+                    setCurrentText(segments[next].explanation[0]);
                     setPhase('TEACHING');
                 }
             }, 1500);
         }, 1500);
-
         setTextInput('');
     };
 
     const handleExit = () => window.history.back();
-
-    // Get topic lists for pause menu
     const coveredTopics = segments.slice(0, currentSegmentIndex).map(s => s.topicName);
     const currentTopic = segments[currentSegmentIndex]?.topicName || '';
     const upcomingTopics = segments.slice(currentSegmentIndex + 1).map(s => s.topicName);
 
+    const showUI = ['INTRO', 'ASK_NAME', 'TEACHING', 'QUIZ', 'TEXT_INPUT', 'FEEDBACK', 'LOADING'].includes(phase);
+    const showBars = !['INTRO', 'ASK_NAME', 'SETUP', 'PAUSED', 'ENDING'].includes(phase);
+
     return (
         <div className="fixed inset-0 w-screen h-screen overflow-hidden font-sans select-none bg-black">
-
             {/* BACKGROUND */}
             <img src={bgImg.src} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
 
             {/* TABLE */}
-            <div className="absolute bottom-0 left-0 right-0 h-[22vh] z-10">
+            <div className="absolute bottom-0 left-0 right-0 h-[20vh] z-10">
                 <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* MAIN LAYOUT - Centered with compact spacing */}
-            <div className="absolute inset-0 z-20 flex items-center justify-center">
-
-                {/* Content Container - Centered */}
-                <div className="flex items-end gap-4" style={{ marginBottom: '8vh' }}>
-
-                    {/* LEFT: Progress Bars */}
-                    {phase !== 'INTRO' && phase !== 'ASK_NAME' && phase !== 'SETUP' && phase !== 'PAUSED' && (
-                        <div className="flex flex-col gap-3 mb-8">
-                            <div className="text-center">
-                                <span className="text-white text-[10px] font-bold drop-shadow-lg block mb-1">CC</span>
-                                <div className="h-28 w-6 bg-black/50 backdrop-blur-sm rounded-full p-0.5 border border-white/30">
-                                    <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
-                                        <motion.div
-                                            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-full"
-                                            animate={{ height: `${progress}%` }}
-                                        />
-                                    </div>
-                                </div>
-                                <span className="text-white text-[10px] font-bold">{Math.round(progress)}%</span>
-                            </div>
-                            <div className="text-center">
-                                <span className="text-white text-[10px] font-bold drop-shadow-lg block mb-1">💕</span>
-                                <div className="h-28 w-6 bg-black/50 backdrop-blur-sm rounded-full p-0.5 border border-white/30">
-                                    <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
-                                        <motion.div
-                                            className={`absolute bottom-0 left-0 right-0 rounded-full ${mood >= 70 ? 'bg-gradient-to-t from-pink-500 to-pink-300' :
-                                                    mood >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-300' :
-                                                        'bg-gradient-to-t from-red-600 to-red-400'
-                                                }`}
-                                            animate={{ height: `${mood}%` }}
-                                        />
-                                    </div>
-                                </div>
-                                <span className="text-white text-[10px] font-bold">{mood}%</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CENTER: FAHI - Scaled up by 0.5 */}
-                    <motion.img
-                        key={getCurrentSprite()?.src}
-                        src={getCurrentSprite()?.src}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.2 }}
-                        className="h-[70vh] object-contain drop-shadow-2xl pointer-events-none"
-                        style={{ transform: 'scale(1.15)' }}
-                        alt="Fahi"
-                    />
-
-                    {/* RIGHT: Dialogue Box - Compact */}
-                    {(phase === 'INTRO' || phase === 'ASK_NAME' || phase === 'TEACHING' || phase === 'QUIZ' || phase === 'TEXT_INPUT' || phase === 'FEEDBACK' || phase === 'LOADING') && (
-                        <div className="w-80 mb-8">
-                            <motion.div
-                                initial={{ opacity: 0, x: 10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="bg-white/95 backdrop-blur-md rounded-xl rounded-bl-none py-4 px-5 shadow-2xl border-3 border-pink-300 relative"
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-pink-500 font-black text-sm">Fahi</span>
-                                    <span className="text-pink-300 text-xs">💕</span>
-                                </div>
-                                <p className="text-slate-700 text-sm leading-relaxed min-h-[45px]">
-                                    {displayedText}
-                                    {isTyping && <span className="animate-pulse text-pink-400">▌</span>}
-                                </p>
-
-                                {(phase === 'INTRO' || phase === 'TEACHING') && !isTyping && (
-                                    <button
-                                        onClick={phase === 'INTRO' ? advanceIntro : advanceDialogue}
-                                        className="absolute top-3 right-3 bg-pink-100 hover:bg-pink-200 text-pink-500 w-6 h-6 rounded-full text-xs font-bold transition-all flex items-center justify-center"
-                                    >
-                                        ▶
-                                    </button>
-                                )}
-                            </motion.div>
-
-                            {/* NAME INPUT */}
-                            {phase === 'ASK_NAME' && (
-                                <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="mt-2 flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={textInput}
-                                        onChange={e => setTextInput(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && submitName()}
-                                        placeholder="Your name..."
-                                        className="flex-1 bg-white/90 border-2 border-pink-200 rounded-lg px-3 py-2 text-slate-700 text-sm font-medium focus:outline-none focus:border-pink-400"
-                                        autoFocus
-                                    />
-                                    <button
-                                        onClick={submitName}
-                                        disabled={!textInput.trim()}
-                                        className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all"
-                                    >
-                                        ✓
-                                    </button>
-                                </motion.div>
-                            )}
-
-                            {/* QUIZ OPTIONS */}
-                            <AnimatePresence>
-                                {phase === 'QUIZ' && segments[currentSegmentIndex] && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-2 space-y-1.5">
-                                        {segments[currentSegmentIndex].options.map((option, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => handleAnswer(option)}
-                                                className="w-full bg-white hover:bg-pink-50 border border-pink-200 hover:border-pink-400 p-2 rounded-lg text-left font-medium text-slate-700 text-xs transition-all"
-                                            >
-                                                {option}
-                                            </button>
-                                        ))}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* TEXT INPUT */}
-                            {phase === 'TEXT_INPUT' && (
-                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">
-                                    <div className="relative">
-                                        <textarea
-                                            value={textInput}
-                                            onChange={e => setTextInput(e.target.value.slice(0, TEXT_INPUT_LIMIT))}
-                                            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleTextSubmit()}
-                                            placeholder="Type your answer..."
-                                            maxLength={TEXT_INPUT_LIMIT}
-                                            className="w-full bg-white/90 border-2 border-pink-200 rounded-lg px-3 py-2 text-slate-700 text-sm font-medium focus:outline-none focus:border-pink-400 resize-none h-16"
-                                            autoFocus
-                                        />
-                                        <span className="absolute bottom-1 right-2 text-[10px] text-gray-400">
-                                            {textInput.length}/{TEXT_INPUT_LIMIT}
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={handleTextSubmit}
-                                        disabled={!textInput.trim()}
-                                        className="w-full mt-1.5 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white py-2 rounded-lg font-bold text-sm transition-all"
-                                    >
-                                        Send
-                                    </button>
-                                </motion.div>
-                            )}
-                        </div>
-                    )}
-                </div>
+            {/* FAHI - Centered */}
+            <div className="absolute inset-0 z-20 flex items-end justify-center pointer-events-none" style={{ paddingBottom: '12vh' }}>
+                <motion.img
+                    key={getCurrentSprite()?.src}
+                    src={getCurrentSprite()?.src}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="object-contain drop-shadow-2xl"
+                    style={{
+                        height: isMobile ? '50vh' : '65vh',
+                        transform: 'scale(1.25)'
+                    }}
+                    alt="Fahi"
+                />
             </div>
 
-            {/* TOP RIGHT: Pause & Exit Buttons */}
-            <div className="absolute top-4 right-4 z-50 flex flex-col gap-2">
-                {phase !== 'INTRO' && phase !== 'ASK_NAME' && phase !== 'SETUP' && phase !== 'ENDING' && (
-                    <button
-                        onClick={togglePause}
-                        className="bg-black/50 hover:bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg text-white font-bold text-sm transition-all border border-white/20"
+            {/* BARS - Left of center (100px gap) - Desktop only beside Fahi, mobile hidden during gameplay */}
+            {showBars && !isMobile && (
+                <div
+                    className="absolute z-30 flex flex-col gap-3"
+                    style={{
+                        left: 'calc(50% - 200px)',
+                        bottom: '25vh'
+                    }}
+                >
+                    <div className="text-center">
+                        <span className="text-white text-[10px] font-bold drop-shadow-lg block mb-1">CC</span>
+                        <div className="h-24 w-5 bg-black/50 backdrop-blur-sm rounded-full p-0.5 border border-white/30">
+                            <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
+                                <motion.div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-full" animate={{ height: `${progress}%` }} />
+                            </div>
+                        </div>
+                        <span className="text-white text-[9px] font-bold">{Math.round(progress)}%</span>
+                    </div>
+                    <div className="text-center">
+                        <span className="text-white text-[10px] font-bold drop-shadow-lg block mb-1">💕</span>
+                        <div className="h-24 w-5 bg-black/50 backdrop-blur-sm rounded-full p-0.5 border border-white/30">
+                            <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
+                                <motion.div
+                                    className={`absolute bottom-0 left-0 right-0 rounded-full ${mood >= 70 ? 'bg-gradient-to-t from-pink-500 to-pink-300' : mood >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-300' : 'bg-gradient-to-t from-red-600 to-red-400'}`}
+                                    animate={{ height: `${mood}%` }}
+                                />
+                            </div>
+                        </div>
+                        <span className="text-white text-[9px] font-bold">{mood}%</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile Bars - Top of screen */}
+            {showBars && isMobile && (
+                <div className="absolute top-16 left-4 right-4 z-30 flex justify-center gap-4">
+                    <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
+                        <span className="text-white text-[10px] font-bold">CC</span>
+                        <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
+                            <motion.div className="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 rounded-full" animate={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-white text-[10px]">{Math.round(progress)}%</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
+                        <span className="text-[10px]">💕</span>
+                        <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
+                            <motion.div className={`h-full rounded-full ${mood >= 70 ? 'bg-gradient-to-r from-pink-500 to-pink-300' : mood >= 40 ? 'bg-gradient-to-r from-yellow-500 to-yellow-300' : 'bg-gradient-to-r from-red-600 to-red-400'}`} animate={{ width: `${mood}%` }} />
+                        </div>
+                        <span className="text-white text-[10px]">{mood}%</span>
+                    </div>
+                </div>
+            )}
+
+            {/* DIALOGUE BOX - Desktop: Right of center (100px gap), Mobile: Bottom center */}
+            {showUI && (
+                <div
+                    className={`absolute z-30 ${isMobile ? 'bottom-4 left-4 right-4' : ''}`}
+                    style={!isMobile ? {
+                        right: 'calc(50% - 380px)',
+                        bottom: '18vh',
+                        width: '280px'
+                    } : {}}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, x: isMobile ? 0 : 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-white/95 backdrop-blur-md rounded-xl rounded-bl-none shadow-2xl border-2 border-pink-300 relative"
+                        style={{ padding: isMobile ? '12px' : '14px 16px' }}
                     >
+                        <div className="flex items-center gap-1 mb-1">
+                            <span className="text-pink-500 font-black" style={{ fontSize: isMobile ? '12px' : '13px' }}>Fahi</span>
+                            <span className="text-pink-300" style={{ fontSize: isMobile ? '10px' : '11px' }}>💕</span>
+                        </div>
+                        <p className="text-slate-700 leading-relaxed" style={{ fontSize: isMobile ? '12px' : '13px', minHeight: isMobile ? '36px' : '40px' }}>
+                            {displayedText}
+                            {isTyping && <span className="animate-pulse text-pink-400">▌</span>}
+                        </p>
+
+                        {(phase === 'INTRO' || phase === 'TEACHING') && !isTyping && (
+                            <button
+                                onClick={phase === 'INTRO' ? advanceIntro : advanceDialogue}
+                                className="absolute top-2 right-2 bg-pink-100 hover:bg-pink-200 text-pink-500 rounded-full font-bold transition-all flex items-center justify-center"
+                                style={{ width: isMobile ? '20px' : '22px', height: isMobile ? '20px' : '22px', fontSize: isMobile ? '10px' : '11px' }}
+                            >
+                                ▶
+                            </button>
+                        )}
+                    </motion.div>
+
+                    {/* NAME INPUT */}
+                    {phase === 'ASK_NAME' && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 flex gap-1">
+                            <input
+                                type="text"
+                                value={textInput}
+                                onChange={e => setTextInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && submitName()}
+                                placeholder="Your name..."
+                                className="flex-1 bg-white/90 border border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400"
+                                style={{ padding: isMobile ? '6px 10px' : '8px 12px', fontSize: isMobile ? '12px' : '13px' }}
+                                autoFocus
+                            />
+                            <button onClick={submitName} disabled={!textInput.trim()}
+                                className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
+                                style={{ padding: isMobile ? '6px 12px' : '8px 14px', fontSize: isMobile ? '12px' : '13px' }}>
+                                ✓
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* QUIZ OPTIONS */}
+                    <AnimatePresence>
+                        {phase === 'QUIZ' && segments[currentSegmentIndex] && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-2 space-y-1">
+                                {segments[currentSegmentIndex].options.map((option, i) => (
+                                    <button key={i} onClick={() => handleAnswer(option)}
+                                        className="w-full bg-white hover:bg-pink-50 border border-pink-200 hover:border-pink-400 rounded-lg text-left font-medium text-slate-700 transition-all"
+                                        style={{ padding: isMobile ? '6px 10px' : '8px 10px', fontSize: isMobile ? '11px' : '12px' }}>
+                                        {option}
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* TEXT INPUT */}
+                    {phase === 'TEXT_INPUT' && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">
+                            <div className="relative">
+                                <textarea
+                                    value={textInput}
+                                    onChange={e => setTextInput(e.target.value.slice(0, TEXT_INPUT_LIMIT))}
+                                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleTextSubmit()}
+                                    placeholder="Type your answer..."
+                                    maxLength={TEXT_INPUT_LIMIT}
+                                    className="w-full bg-white/90 border border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400 resize-none"
+                                    style={{ padding: isMobile ? '6px 10px' : '8px 10px', fontSize: isMobile ? '11px' : '12px', height: isMobile ? '50px' : '55px' }}
+                                    autoFocus
+                                />
+                                <span className="absolute bottom-1 right-2 text-gray-400" style={{ fontSize: '9px' }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
+                            </div>
+                            <button onClick={handleTextSubmit} disabled={!textInput.trim()}
+                                className="w-full mt-1 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
+                                style={{ padding: isMobile ? '6px' : '8px', fontSize: isMobile ? '11px' : '12px' }}>
+                                Send
+                            </button>
+                        </motion.div>
+                    )}
+                </div>
+            )}
+
+            {/* TOP RIGHT: Pause & Exit */}
+            <div className="absolute top-3 right-3 z-50 flex flex-col gap-1">
+                {!['INTRO', 'ASK_NAME', 'SETUP', 'ENDING'].includes(phase) && (
+                    <button onClick={togglePause}
+                        className="bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg text-white font-bold transition-all border border-white/20"
+                        style={{ padding: isMobile ? '6px 10px' : '8px 14px', fontSize: isMobile ? '10px' : '12px' }}>
                         {phase === 'PAUSED' ? '▶ Resume' : '⏸ Pause'}
                     </button>
                 )}
-                <button
-                    onClick={handleExit}
-                    className="bg-red-500/80 hover:bg-red-600 backdrop-blur-sm px-4 py-2 rounded-lg text-white font-bold text-sm transition-all border border-white/20"
-                >
+                <button onClick={handleExit}
+                    className="bg-red-500/80 hover:bg-red-600 backdrop-blur-sm rounded-lg text-white font-bold transition-all border border-white/20"
+                    style={{ padding: isMobile ? '6px 10px' : '8px 14px', fontSize: isMobile ? '10px' : '12px' }}>
                     ✕ Exit
                 </button>
             </div>
@@ -534,60 +483,35 @@ export default function StudyDateGame() {
             {/* PAUSE MENU */}
             <AnimatePresence>
                 {phase === 'PAUSED' && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            className="bg-white/95 rounded-2xl p-6 max-w-lg w-[90%] shadow-2xl border-4 border-pink-300"
-                        >
-                            <h2 className="text-2xl font-black text-pink-500 mb-4 text-center">⏸ Game Paused</h2>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white/95 rounded-xl shadow-2xl border-2 border-pink-300"
+                            style={{ padding: isMobile ? '16px' : '20px', width: isMobile ? '90%' : '400px', maxWidth: '90%' }}>
+                            <h2 className="font-black text-pink-500 mb-3 text-center" style={{ fontSize: isMobile ? '18px' : '20px' }}>⏸ Game Paused</h2>
 
-                            <div className="mb-4">
-                                <h3 className="text-sm font-bold text-slate-700 mb-1">📍 Current Topic:</h3>
-                                <p className="text-pink-500 font-medium text-sm bg-pink-50 rounded-lg p-2">{currentTopic}</p>
+                            <div className="mb-3">
+                                <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '11px' : '12px' }}>📍 Current:</h3>
+                                <p className="text-pink-500 font-medium bg-pink-50 rounded-lg" style={{ padding: '6px 8px', fontSize: isMobile ? '11px' : '12px' }}>{currentTopic}</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-2 gap-2 mb-3">
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-700 mb-1">✅ Covered ({coveredTopics.length})</h3>
-                                    <div className="bg-green-50 rounded-lg p-2 h-32 overflow-y-auto">
-                                        {coveredTopics.length === 0 ? (
-                                            <p className="text-gray-400 text-xs">None yet</p>
-                                        ) : (
-                                            coveredTopics.map((t, i) => (
-                                                <p key={i} className="text-green-600 text-xs mb-0.5">• {t}</p>
-                                            ))
-                                        )}
+                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '10px' : '11px' }}>✅ Done ({coveredTopics.length})</h3>
+                                    <div className="bg-green-50 rounded-lg overflow-y-auto" style={{ padding: '6px', height: isMobile ? '80px' : '100px' }}>
+                                        {coveredTopics.length === 0 ? <p className="text-gray-400" style={{ fontSize: '10px' }}>None</p> :
+                                            coveredTopics.map((t, i) => <p key={i} className="text-green-600" style={{ fontSize: '10px', marginBottom: '2px' }}>• {t}</p>)}
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-700 mb-1">📋 Upcoming ({upcomingTopics.length})</h3>
-                                    <div className="bg-blue-50 rounded-lg p-2 h-32 overflow-y-auto">
-                                        {upcomingTopics.map((t, i) => (
-                                            <p key={i} className="text-blue-600 text-xs mb-0.5">• {t}</p>
-                                        ))}
+                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '10px' : '11px' }}>📋 Next ({upcomingTopics.length})</h3>
+                                    <div className="bg-blue-50 rounded-lg overflow-y-auto" style={{ padding: '6px', height: isMobile ? '80px' : '100px' }}>
+                                        {upcomingTopics.map((t, i) => <p key={i} className="text-blue-600" style={{ fontSize: '10px', marginBottom: '2px' }}>• {t}</p>)}
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex gap-2">
-                                <button
-                                    onClick={togglePause}
-                                    className="flex-1 bg-pink-400 hover:bg-pink-500 text-white py-3 rounded-xl font-bold transition-all"
-                                >
-                                    ▶ Resume
-                                </button>
-                                <button
-                                    onClick={handleExit}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-700 py-3 rounded-xl font-bold transition-all"
-                                >
-                                    Exit Game
-                                </button>
+                                <button onClick={togglePause} className="flex-1 bg-pink-400 hover:bg-pink-500 text-white rounded-lg font-bold transition-all" style={{ padding: isMobile ? '8px' : '10px', fontSize: isMobile ? '12px' : '13px' }}>▶ Resume</button>
+                                <button onClick={handleExit} className="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg font-bold transition-all" style={{ padding: isMobile ? '8px' : '10px', fontSize: isMobile ? '12px' : '13px' }}>Exit</button>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -598,27 +522,19 @@ export default function StudyDateGame() {
             <AnimatePresence>
                 {phase === 'SETUP' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white border-4 border-pink-300 p-5 rounded-2xl max-w-sm w-[90%] shadow-2xl">
-                            <label className="block text-sm font-bold text-slate-700 mb-1">What do you want to learn?</label>
-                            <input
-                                className="w-full p-2.5 rounded-lg border-2 border-pink-200 mb-3 focus:outline-none focus:border-pink-400 text-slate-700 text-sm"
-                                placeholder="e.g., Photosynthesis, JavaScript..."
-                                value={topic}
-                                onChange={e => setTopic(e.target.value)}
-                                autoFocus
-                            />
-                            <label className="block text-sm font-bold text-slate-700 mb-1">Notes? (Optional)</label>
-                            <textarea
-                                className="w-full p-2.5 rounded-lg border-2 border-pink-200 mb-3 h-16 focus:outline-none focus:border-pink-400 text-slate-700 text-sm resize-none"
-                                placeholder="Paste notes..."
-                                value={goals}
-                                onChange={e => setGoals(e.target.value)}
-                            />
-                            <button
-                                onClick={handleStart}
-                                disabled={!topic.trim()}
-                                className="w-full py-2.5 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white font-bold rounded-lg transition-all text-sm"
-                            >
+                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white border-2 border-pink-300 rounded-xl shadow-2xl"
+                            style={{ padding: isMobile ? '16px' : '18px', width: isMobile ? '90%' : '320px', maxWidth: '90%' }}>
+                            <label className="block font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '12px' : '13px' }}>What to learn?</label>
+                            <input className="w-full border border-pink-200 rounded-lg mb-2 focus:outline-none focus:border-pink-400 text-slate-700"
+                                style={{ padding: isMobile ? '8px 10px' : '10px 12px', fontSize: isMobile ? '12px' : '13px' }}
+                                placeholder="e.g., Photosynthesis..." value={topic} onChange={e => setTopic(e.target.value)} autoFocus />
+                            <label className="block font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '12px' : '13px' }}>Notes? (Optional)</label>
+                            <textarea className="w-full border border-pink-200 rounded-lg mb-2 focus:outline-none focus:border-pink-400 text-slate-700 resize-none"
+                                style={{ padding: isMobile ? '8px 10px' : '10px 12px', fontSize: isMobile ? '12px' : '13px', height: isMobile ? '50px' : '60px' }}
+                                placeholder="Paste notes..." value={goals} onChange={e => setGoals(e.target.value)} />
+                            <button onClick={handleStart} disabled={!topic.trim()}
+                                className="w-full bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white font-bold rounded-lg transition-all"
+                                style={{ padding: isMobile ? '10px' : '12px', fontSize: isMobile ? '13px' : '14px' }}>
                                 Let's Study! 💕
                             </button>
                         </motion.div>
@@ -629,22 +545,21 @@ export default function StudyDateGame() {
             {/* ENDING */}
             <AnimatePresence>
                 {phase === 'ENDING' && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/80">
-                        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center p-6">
-                            <h1 className="text-4xl font-black text-white mb-3">
-                                {endingType === 'GOOD' && '💖 Perfect Study Date! 💖'}
-                                {endingType === 'NEUTRAL' && '📚 Study Complete!'}
-                                {endingType === 'BAD' && '💔 Date Over...'}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+                        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center">
+                            <h1 className="font-black text-white mb-2" style={{ fontSize: isMobile ? '28px' : '36px' }}>
+                                {endingType === 'GOOD' && '💖 Perfect! 💖'}
+                                {endingType === 'NEUTRAL' && '📚 Complete!'}
+                                {endingType === 'BAD' && '💔 Over...'}
                             </h1>
-                            <p className="text-lg text-white/80 mb-5 max-w-sm mx-auto">
-                                {endingType === 'GOOD' && `Amazing, ${userName}! Fahi had the best time~`}
-                                {endingType === 'NEUTRAL' && `Good job, ${userName}! Maybe next time?`}
-                                {endingType === 'BAD' && `Fahi left... Try again, ${userName}?`}
+                            <p className="text-white/80 mb-4 max-w-xs mx-auto" style={{ fontSize: isMobile ? '14px' : '16px' }}>
+                                {endingType === 'GOOD' && `Amazing, ${userName}!`}
+                                {endingType === 'NEUTRAL' && `Good job, ${userName}!`}
+                                {endingType === 'BAD' && `Try again, ${userName}?`}
                             </p>
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="bg-white text-pink-500 px-6 py-2.5 rounded-full font-bold hover:scale-105 transition-all shadow-xl"
-                            >
+                            <button onClick={() => window.location.reload()}
+                                className="bg-white text-pink-500 rounded-full font-bold hover:scale-105 transition-all shadow-xl"
+                                style={{ padding: isMobile ? '10px 20px' : '12px 24px', fontSize: isMobile ? '14px' : '16px' }}>
                                 Play Again
                             </button>
                         </motion.div>
