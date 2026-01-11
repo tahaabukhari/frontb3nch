@@ -1,9 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { generateInitialPlan, evaluateAnswer, generateFreeformReaction } from './lib/ai';
-import { GameState, TeachingSegment, FahiMood } from './lib/types';
 
 // Asset Imports
 import bgImg from './public/background.jpg';
@@ -16,287 +14,472 @@ import fahiShy from './public/fahi-character/fahi-shy.png';
 import fahiExcited from './public/fahi-character/fahi-excited.png';
 import fahiHappyExplaining from './public/fahi-character/fahi-happy-explaining.png';
 import fahiHappyExplaining2 from './public/fahi-character/fahi-happy-explaining2.png';
-import fahiHappyConfused from './public/fahi-character/fahi-happy-confused.png';
-import fahiAngryDisappointed from './public/fahi-character/fahi-angry-disappointed.png';
 import fahiHappyNeutral from './public/fahi-character/fahi-happy-neutral.png';
 
+type FahiEmotion = 'neutral' | 'happy' | 'mad' | 'disappointed' | 'shy' | 'excited' | 'explaining' | 'explaining2' | 'happy-neutral';
+
+interface Segment {
+    explanation: string[];
+    question: string;
+    options: string[];
+    correctAnswer: string;
+}
+
+type GamePhase = 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'FEEDBACK' | 'ENDING';
+
 // Sprite Map
-const FAHI_SPRITES: Record<FahiMood, any> = {
+const SPRITES: Record<FahiEmotion, any> = {
     'neutral': fahiNeutral,
     'happy': fahiHappy,
     'mad': fahiMad,
     'disappointed': fahiDisappointed,
     'shy': fahiShy,
     'excited': fahiExcited,
-    'happy-explaining': fahiHappyExplaining,
-    'happy-explaining2': fahiHappyExplaining2,
-    'happy-confused': fahiHappyConfused,
-    'angry-disappointed': fahiAngryDisappointed,
+    'explaining': fahiHappyExplaining,
+    'explaining2': fahiHappyExplaining2,
     'happy-neutral': fahiHappyNeutral
 };
 
 export default function StudyDateGame() {
-    const [gameState, setGameState] = useState<GameState>({
-        mood: 70,
-        courseProgress: 0,
-        phase: 'SETUP',
-        topic: '',
-        history: []
-    });
+    // Game State
+    const [phase, setPhase] = useState<GamePhase>('SETUP');
+    const [mood, setMood] = useState(70);
+    const [progress, setProgress] = useState(0);
+    const [segments, setSegments] = useState<Segment[]>([]);
+    const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+    const [dialogueIndex, setDialogueIndex] = useState(0);
+    const [currentText, setCurrentText] = useState('');
+    const [emotion, setEmotion] = useState<FahiEmotion>('happy-neutral');
+    const [endingType, setEndingType] = useState<'GOOD' | 'NEUTRAL' | 'BAD' | null>(null);
 
-    const [inputTopic, setInputTopic] = useState('');
-    const [inputGoals, setInputGoals] = useState('');
-    const [lessonPlan, setLessonPlan] = useState<TeachingSegment[]>([]);
-    const [currentSegmentIdx, setCurrentSegmentIdx] = useState(0);
-    const [dialogueQueue, setDialogueQueue] = useState<string[]>([]);
-    const [currentDialogue, setCurrentDialogue] = useState('');
-    const [fahiState, setFahiState] = useState<FahiMood>('happy-neutral');
-    const [userTextInput, setUserTextInput] = useState('');
+    // Input State
+    const [topic, setTopic] = useState('');
+    const [goals, setGoals] = useState('');
 
     // Animation State
-    const [isSpeaking, setIsSpeaking] = useState(false);
-    const [animationFrame, setAnimationFrame] = useState(0);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [animFrame, setAnimFrame] = useState(0);
 
-    // Auto-scroll text effect & Speaking Animation
+    // Typewriter State
+    const [displayedText, setDisplayedText] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+
+    // Animation loop for explaining sprites
     useEffect(() => {
-        if (gameState.phase === 'TEACHING' && dialogueQueue.length > 0) {
-            setIsSpeaking(true);
-            setCurrentDialogue(dialogueQueue[0]);
-        } else {
-            setIsSpeaking(false);
-        }
-    }, [gameState.phase, dialogueQueue]);
-
-    // Sprite Animation Loop
-    useEffect(() => {
-        if (!isSpeaking) return;
-
+        if (!isAnimating) return;
         const interval = setInterval(() => {
-            setAnimationFrame(prev => (prev + 1) % 2);
-        }, 200); // Toggle every 200ms
-
+            setAnimFrame(prev => (prev + 1) % 2);
+        }, 300);
         return () => clearInterval(interval);
-    }, [isSpeaking]);
+    }, [isAnimating]);
 
-    // Derived Sprite for Animation
-    const currentSprite = isSpeaking
-        ? (animationFrame === 0 ? 'happy-explaining' : 'happy-explaining2')
-        : fahiState;
-
-    const handleStart = async () => {
-        setGameState(prev => ({ ...prev, phase: 'INTRO', subPhase: 'PROCESSING' }));
-        try {
-            const plan = await generateInitialPlan(inputTopic, inputGoals);
-            setLessonPlan(plan);
-            setGameState(prev => ({ ...prev, phase: 'TEACHING', subPhase: 'PROCESSING' }));
-            setDialogueQueue(plan[0].explanation);
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const advanceDialogue = () => {
-        const remaining = dialogueQueue.slice(1);
-        if (remaining.length > 0) {
-            setDialogueQueue(remaining);
-        } else {
-            // Done explanation, move to quiz
-            setGameState(prev => ({ ...prev, phase: 'QUIZ', subPhase: 'WAITING_FOR_USER' }));
-            setFahiState(gameState.mood > 50 ? 'happy-neutral' : 'neutral');
-            setIsSpeaking(false);
-        }
-    };
-
-    const handleOptionSelect = async (option: string) => {
-        setGameState(prev => ({ ...prev, subPhase: 'PROCESSING' }));
-        const segment = lessonPlan[currentSegmentIdx];
-        const result = await evaluateAnswer(option, segment, gameState.mood);
-
-        setGameState(prev => ({
-            ...prev,
-            mood: Math.min(100, Math.max(0, prev.mood + (result.moodChange || 0))),
-            courseProgress: result.moodChange && result.moodChange > 0 ? Math.min(100, prev.courseProgress + (100 / lessonPlan.length)) : prev.courseProgress,
-            phase: 'FEEDBACK'
-        }));
-
-        setCurrentDialogue(result.text || "...");
-        if (result.fahiEmotion) setFahiState(result.fahiEmotion);
-
-        setTimeout(() => {
-            checkProgression(result.moodChange && result.moodChange > 0);
-        }, 3000);
-    };
-
-    const checkProgression = (wasCorrect: boolean | undefined) => {
-        if (gameState.mood <= 0) {
-            setGameState(prev => ({ ...prev, phase: 'ENDING', endingType: 'BAD' }));
+    // Typewriter effect
+    useEffect(() => {
+        if (!currentText) {
+            setDisplayedText('');
             return;
         }
 
-        if (wasCorrect) {
-            const nextIdx = currentSegmentIdx + 1;
-            if (nextIdx < lessonPlan.length) {
-                setCurrentSegmentIdx(nextIdx);
-                setDialogueQueue(lessonPlan[nextIdx].explanation);
-                setGameState(prev => ({ ...prev, phase: 'TEACHING' }));
+        setIsTyping(true);
+        setDisplayedText('');
+        let index = 0;
+
+        const interval = setInterval(() => {
+            if (index < currentText.length) {
+                setDisplayedText(prev => prev + currentText[index]);
+                index++;
             } else {
-                const ending = gameState.mood >= 95 ? 'GOOD' : 'NEUTRAL';
-                setGameState(prev => ({ ...prev, phase: 'ENDING', endingType: ending }));
+                setIsTyping(false);
+                clearInterval(interval);
             }
-        } else {
-            setDialogueQueue(lessonPlan[currentSegmentIdx].explanation);
-            setGameState(prev => ({ ...prev, phase: 'TEACHING' }));
+        }, 30);
+
+        return () => clearInterval(interval);
+    }, [currentText]);
+
+    // Get current sprite based on state
+    const getCurrentSprite = () => {
+        if (isAnimating) {
+            return animFrame === 0 ? SPRITES['explaining'] : SPRITES['explaining2'];
+        }
+        return SPRITES[emotion] || SPRITES['happy-neutral'];
+    };
+
+    // Start the game
+    const handleStart = async () => {
+        if (!topic.trim()) return;
+
+        setPhase('LOADING');
+        setCurrentText('*thinking* Let me prepare something special for you...');
+        setIsAnimating(true);
+
+        try {
+            const response = await fetch('/api/study-date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'generate_plan', topic, goals })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data?.length > 0) {
+                setSegments(result.data);
+                setCurrentSegmentIndex(0);
+                setDialogueIndex(0);
+                setCurrentText(result.data[0].explanation[0]);
+                setPhase('TEACHING');
+                setIsAnimating(true);
+            } else {
+                // Fallback
+                const fallbackSegments: Segment[] = [{
+                    explanation: [
+                        `*smiles* Okay! Let's learn about ${topic} together!`,
+                        `The first thing you should know is that ${topic} is really interesting once you understand the basics.`,
+                        `*adjusts notes* Let me explain the key concepts step by step...`,
+                        `Are you ready? Let's do this!`
+                    ],
+                    question: `What's the best approach to learning ${topic}?`,
+                    options: ['Step by step basics first', 'Skip to advanced topics', 'Just memorize everything', 'Give up immediately'],
+                    correctAnswer: 'Step by step basics first'
+                }];
+                setSegments(fallbackSegments);
+                setCurrentSegmentIndex(0);
+                setDialogueIndex(0);
+                setCurrentText(fallbackSegments[0].explanation[0]);
+                setPhase('TEACHING');
+                setIsAnimating(true);
+            }
+        } catch (error) {
+            console.error('Failed to generate plan:', error);
+            setCurrentText('*nervous* Oops, something went wrong... Let me try again!');
         }
     };
 
-    return (
-        <div className="relative w-full h-screen bg-gray-900 overflow-hidden font-sans text-slate-800">
+    // Advance dialogue
+    const advanceDialogue = () => {
+        if (isTyping) {
+            // Skip typing animation
+            setDisplayedText(currentText);
+            setIsTyping(false);
+            return;
+        }
 
-            {/* LAYER 1: BACKGROUND (Bottom) */}
+        const segment = segments[currentSegmentIndex];
+        if (!segment) return;
+
+        const nextIndex = dialogueIndex + 1;
+
+        if (nextIndex < segment.explanation.length) {
+            setDialogueIndex(nextIndex);
+            setCurrentText(segment.explanation[nextIndex]);
+        } else {
+            // Done with explanation, show question
+            setPhase('QUIZ');
+            setCurrentText(segment.question);
+            setIsAnimating(false);
+            setEmotion('happy-neutral');
+        }
+    };
+
+    // Handle answer selection
+    const handleAnswer = async (answer: string) => {
+        const segment = segments[currentSegmentIndex];
+        if (!segment) return;
+
+        setPhase('FEEDBACK');
+        setIsAnimating(false);
+
+        try {
+            const response = await fetch('/api/study-date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'evaluate',
+                    segment,
+                    userAnswer: answer,
+                    mood
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const { text, emotion: newEmotion, moodChange } = result.data;
+                setCurrentText(text);
+                setEmotion(newEmotion as FahiEmotion);
+
+                const newMood = Math.min(100, Math.max(0, mood + moodChange));
+                setMood(newMood);
+
+                const isCorrect = answer === segment.correctAnswer;
+
+                if (isCorrect) {
+                    // Progress forward
+                    const progressPerSegment = 100 / segments.length;
+                    setProgress(prev => Math.min(100, prev + progressPerSegment));
+                }
+
+                // Wait then proceed
+                setTimeout(() => {
+                    // Check game over
+                    if (newMood <= 0) {
+                        setEndingType('BAD');
+                        setPhase('ENDING');
+                        return;
+                    }
+
+                    if (isCorrect) {
+                        const nextSegment = currentSegmentIndex + 1;
+                        if (nextSegment >= segments.length) {
+                            // Game complete
+                            setEndingType(newMood >= 95 ? 'GOOD' : 'NEUTRAL');
+                            setPhase('ENDING');
+                        } else {
+                            // Next segment
+                            setCurrentSegmentIndex(nextSegment);
+                            setDialogueIndex(0);
+                            setCurrentText(segments[nextSegment].explanation[0]);
+                            setPhase('TEACHING');
+                            setIsAnimating(true);
+                            setEmotion('explaining');
+                        }
+                    } else {
+                        // Repeat current segment
+                        setDialogueIndex(0);
+                        setCurrentText("*sighs* Let me explain that again...");
+                        setTimeout(() => {
+                            setCurrentText(segment.explanation[0]);
+                            setPhase('TEACHING');
+                            setIsAnimating(true);
+                        }, 2000);
+                    }
+                }, 2500);
+            }
+        } catch (error) {
+            console.error('Evaluation error:', error);
+            setCurrentText('*confused* Something went wrong...');
+        }
+    };
+
+    // Handle back/exit
+    const handleExit = () => {
+        window.history.back();
+    };
+
+    return (
+        <div className="relative w-full h-screen overflow-hidden font-sans select-none">
+
+            {/* LAYER 0: BACKGROUND */}
             <div className="absolute inset-0 z-0">
-                <img src={bgImg.src} className="w-full h-full object-cover opacity-100" alt="bg" />
+                <img src={bgImg.src} className="w-full h-full object-cover" alt="Background" />
             </div>
 
-            {/* SETUP PHASE UI */}
-            {gameState.phase === 'SETUP' && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-[#FFF0F5] border-4 border-[#B2F7EF] p-8 rounded-2xl max-w-lg w-full shadow-2xl">
-                        <h1 className="text-3xl font-bold text-[#FF9AA2] mb-4 text-center">Study Date 4000 💖</h1>
-                        <p className="mb-4 text-gray-600">Enter a topic and I'll create a date... I mean, study plan for us!</p>
+            {/* LAYER 1: CHARACTER (Centered) */}
+            <div className="absolute inset-0 z-10 flex items-end justify-center pb-32 pointer-events-none">
+                <motion.img
+                    key={getCurrentSprite()?.src}
+                    src={getCurrentSprite()?.src}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="h-[75vh] max-h-[800px] object-contain drop-shadow-2xl"
+                    alt="Fahi"
+                />
+            </div>
 
-                        <label className="block text-sm font-bold mb-1">Topic</label>
-                        <input
-                            className="w-full p-2 rounded border border-pink-200 mb-4 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                            placeholder="e.g., Photosynthesis"
-                            value={inputTopic}
-                            onChange={e => setInputTopic(e.target.value)}
-                        />
+            {/* LAYER 2: TABLE (Bottom, Foreground) */}
+            <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none">
+                <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
+            </div>
 
-                        <label className="block text-sm font-bold mb-1">Learning Goals / Notes</label>
-                        <textarea
-                            className="w-full p-2 rounded border border-pink-200 mb-6 h-32 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                            placeholder="Paste your notes here..."
-                            value={inputGoals}
-                            onChange={e => setInputGoals(e.target.value)}
-                        />
+            {/* UI LAYER */}
 
-                        <button
-                            onClick={handleStart}
-                            disabled={!inputTopic}
-                            className="w-full py-3 bg-[#FFB7B2] hover:bg-[#FF9AA2] text-white font-bold rounded-xl transition-all shadow-md active:scale-95"
-                        >
-                            Start Date 💖
-                        </button>
-                    </div>
-                </div>
+            {/* Back Button */}
+            {phase !== 'SETUP' && (
+                <button
+                    onClick={handleExit}
+                    className="absolute top-4 left-4 z-50 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-full text-white font-bold transition-all border border-white/30"
+                >
+                    ← Back
+                </button>
             )}
 
-            {gameState.phase !== 'SETUP' && (
-                <>
-                    {/* BARS - LEFT (UI Layer) */}
-                    <div className="absolute left-4 top-8 w-24 flex flex-col gap-4 z-40">
-                        <div className="flex-1 bg-white/50 rounded-full p-2 flex flex-col-reverse relative shadow-inner backdrop-blur-md border border-white/60 h-64">
-                            <div className="w-full bg-gradient-to-t from-blue-300 to-[#B2F7EF] rounded-full transition-all duration-1000" style={{ height: `${gameState.courseProgress}%` }} />
-                            <span className="absolute -top-8 w-full text-center font-bold text-white drop-shadow-md">Content</span>
-                        </div>
-                        <div className="flex-1 bg-white/50 rounded-full p-2 flex flex-col-reverse relative shadow-inner backdrop-blur-md border border-white/60 h-64">
-                            <div
-                                className={`w-full rounded-full transition-all duration-1000 ${gameState.mood < 30 ? 'bg-red-400' : 'bg-gradient-to-t from-pink-300 to-[#FFC1CC]'}`}
-                                style={{ height: `${gameState.mood}%` }}
-                            />
-                            <span className="absolute -top-8 w-full text-center font-bold text-white drop-shadow-md">Mood</span>
-                        </div>
-                    </div>
-
-                    {/* LAYER 2: CHARACTER (Middle) */}
-                    <div className="absolute right-[10%] bottom-[10%] h-[80%] w-[50%] z-10 flex items-end justify-center pointer-events-none">
-                        <motion.img
-                            key={String(currentSprite)} // Triggers re-render for animation if needed, or use src change
-                            src={FAHI_SPRITES[currentSprite as FahiMood]?.src}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="max-h-full object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
-                            alt="Fahi"
-                        />
-                    </div>
-
-                    {/* LAYER 3: TABLE (Top Foreground, Bottom Aligned) */}
-                    <div className="absolute bottom-0 left-0 right-0 h-48 z-20 pointer-events-none flex items-end">
-                        <img src={tableImg.src} className="w-full h-full object-cover object-bottom" alt="Table" />
-                    </div>
-
-                    {/* LAYER 4: DIALOGUE & INTERACTION (UI Top) */}
-                    <div className="absolute right-8 bottom-4 w-[500px] z-50 flex flex-col gap-4">
-
-                        {/* CHAT BUBBLE */}
-                        {(gameState.phase === 'TEACHING' || gameState.phase === 'FEEDBACK' || gameState.phase === 'QUIZ') && (
-                            <div className="bg-white/95 backdrop-blur-md border-4 border-[#FFC1CC] p-6 rounded-tr-3xl rounded-tl-3xl rounded-bl-3xl shadow-2xl relative min-h-[140px] mb-4">
-                                <h3 className="text-[#FF9AA2] font-black mb-2 text-xl tracking-wide uppercase">Fahi</h3>
-                                <p className="text-xl font-medium text-slate-700 leading-relaxed">
-                                    {currentDialogue || (gameState.phase === 'QUIZ' ? lessonPlan[currentSegmentIdx]?.question : "...")}
-                                </p>
-
-                                {gameState.phase === 'TEACHING' && (
-                                    <button
-                                        onClick={advanceDialogue}
-                                        className="absolute bottom-4 right-4 bg-pink-100 text-pink-500 px-4 py-1 rounded-full font-bold animate-pulse hover:bg-pink-200"
-                                    >
-                                        Next ▶
-                                    </button>
-                                )}
-                            </div>
-                        )}
-
-                        {/* OPTIONS (Only visible during QUIZ) */}
-                        <AnimatePresence>
-                            {gameState.phase === 'QUIZ' && lessonPlan[currentSegmentIdx] && (
+            {/* LEFT SIDE: Progress Bars */}
+            {phase !== 'SETUP' && phase !== 'LOADING' && (
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-6 w-20">
+                    {/* Content Progress Bar */}
+                    <div className="relative">
+                        <span className="text-white text-xs font-bold mb-2 block text-center drop-shadow-md">Content</span>
+                        <div className="h-48 bg-white/30 backdrop-blur-md rounded-full p-1 border border-white/40 shadow-lg">
+                            <div className="h-full w-full rounded-full bg-white/20 relative overflow-hidden">
                                 <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="grid grid-cols-1 gap-3"
-                                >
-                                    {lessonPlan[currentSegmentIdx].options.map((opt, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => handleOptionSelect(opt)}
-                                            className="bg-white/90 hover:bg-[#B2F7EF] border-2 border-white hover:border-[#52D1C6] p-4 rounded-xl text-left transition-all shadow-md transform hover:-translate-y-1 font-bold text-slate-700 active:scale-95"
-                                        >
-                                            {opt}
-                                        </button>
-                                    ))}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* USER INPUT (Only visible when interaction is allowed, e.g. after explanation or during quiz if designed) */}
-                        {/* Spec: "under the chatbubble... userinput box... chat bubble should not show user input until she asks a question" 
-                            Interpretation: Hide input box during Teacher Phase. Show in Quiz Phase.
-                        */}
-                        {gameState.phase === 'QUIZ' && (
-                            <div className="bg-white/90 rounded-full p-2 flex gap-2 shadow-lg border-2 border-pink-100 mt-2">
-                                <input
-                                    className="flex-1 bg-transparent px-4 py-2 outline-none text-slate-700 placeholder-slate-400 font-medium"
-                                    placeholder="Tell Fahi what you really think..."
-                                    value={userTextInput}
-                                    onChange={e => setUserTextInput(e.target.value)}
+                                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-400 to-cyan-200 rounded-full"
+                                    initial={{ height: '0%' }}
+                                    animate={{ height: `${progress}%` }}
+                                    transition={{ duration: 0.5 }}
                                 />
-                                <button className="bg-[#FF9AA2] text-white rounded-full px-6 font-bold hover:bg-[#FF808A] transition-colors">
-                                    Send
-                                </button>
                             </div>
-                        )}
+                        </div>
+                        <span className="text-white text-xs font-bold mt-1 block text-center">{Math.round(progress)}%</span>
                     </div>
-                </>
-            )}
 
-            {/* ENDING SCREENS */}
-            {gameState.phase === 'ENDING' && (
-                <div className="absolute inset-0 z-[60] bg-black/80 flex items-center justify-center text-white text-center p-10">
-                    <div>
-                        {/* Ending UI */}
+                    {/* Mood Bar */}
+                    <div className="relative">
+                        <span className="text-white text-xs font-bold mb-2 block text-center drop-shadow-md">Mood</span>
+                        <div className="h-48 bg-white/30 backdrop-blur-md rounded-full p-1 border border-white/40 shadow-lg">
+                            <div className="h-full w-full rounded-full bg-white/20 relative overflow-hidden">
+                                <motion.div
+                                    className={`absolute bottom-0 left-0 right-0 rounded-full transition-colors duration-500 ${mood >= 70 ? 'bg-gradient-to-t from-pink-400 to-pink-200' :
+                                            mood >= 40 ? 'bg-gradient-to-t from-yellow-400 to-yellow-200' :
+                                                'bg-gradient-to-t from-red-500 to-red-300'
+                                        }`}
+                                    initial={{ height: '70%' }}
+                                    animate={{ height: `${mood}%` }}
+                                    transition={{ duration: 0.5 }}
+                                />
+                            </div>
+                        </div>
+                        <span className="text-white text-xs font-bold mt-1 block text-center">{mood}%</span>
                     </div>
                 </div>
             )}
+
+            {/* RIGHT SIDE: Dialogue Box */}
+            {(phase === 'TEACHING' || phase === 'QUIZ' || phase === 'FEEDBACK' || phase === 'LOADING') && (
+                <div className="absolute right-6 bottom-48 z-40 w-[420px] max-w-[calc(100vw-200px)]">
+                    {/* Dialogue Bubble */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-white/95 backdrop-blur-md rounded-2xl rounded-br-none p-6 shadow-2xl border-4 border-pink-200 relative"
+                    >
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-pink-500 font-black text-lg">Fahi</span>
+                            <span className="text-pink-300 text-sm">💕</span>
+                        </div>
+                        <p className="text-slate-700 text-lg leading-relaxed min-h-[80px]">
+                            {displayedText}
+                            {isTyping && <span className="animate-pulse">▌</span>}
+                        </p>
+
+                        {/* Click to continue indicator */}
+                        {phase === 'TEACHING' && !isTyping && (
+                            <button
+                                onClick={advanceDialogue}
+                                className="absolute -bottom-3 right-4 bg-pink-400 hover:bg-pink-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg transition-all animate-bounce"
+                            >
+                                Continue ▶
+                            </button>
+                        )}
+                    </motion.div>
+
+                    {/* Answer Options */}
+                    <AnimatePresence>
+                        {phase === 'QUIZ' && segments[currentSegmentIndex] && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                className="mt-4 space-y-2"
+                            >
+                                {segments[currentSegmentIndex].options.map((option, i) => (
+                                    <motion.button
+                                        key={i}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        onClick={() => handleAnswer(option)}
+                                        className="w-full bg-white/90 hover:bg-pink-50 border-2 border-white hover:border-pink-300 p-4 rounded-xl text-left font-medium text-slate-700 shadow-md transition-all hover:scale-[1.02] active:scale-95"
+                                    >
+                                        {option}
+                                    </motion.button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            )}
+
+            {/* SETUP SCREEN */}
+            <AnimatePresence>
+                {phase === 'SETUP' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="bg-gradient-to-br from-pink-50 to-white border-4 border-pink-200 p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl"
+                        >
+                            <h1 className="text-4xl font-black text-pink-500 mb-2 text-center tracking-tight">
+                                Study Date 4000 💕
+                            </h1>
+                            <p className="mb-6 text-center text-gray-500">Learn anything with your study buddy Fahi!</p>
+
+                            <label className="block text-sm font-bold text-slate-700 mb-1">What do you want to learn?</label>
+                            <input
+                                className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-300 text-slate-700"
+                                placeholder="e.g., Photosynthesis, JavaScript, World War II..."
+                                value={topic}
+                                onChange={e => setTopic(e.target.value)}
+                            />
+
+                            <label className="block text-sm font-bold text-slate-700 mb-1">Any specific goals? (Optional)</label>
+                            <textarea
+                                className="w-full p-3 rounded-xl border-2 border-pink-200 mb-6 h-24 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-300 text-slate-700 resize-none"
+                                placeholder="Paste notes, learning objectives, or leave blank..."
+                                value={goals}
+                                onChange={e => setGoals(e.target.value)}
+                            />
+
+                            <button
+                                onClick={handleStart}
+                                disabled={!topic.trim()}
+                                className="w-full py-4 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold text-xl rounded-xl transition-all shadow-lg active:scale-95 disabled:cursor-not-allowed"
+                            >
+                                Start Study Date 💖
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ENDING SCREEN */}
+            <AnimatePresence>
+                {phase === 'ENDING' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/80"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: 1 }}
+                            className="text-center p-10"
+                        >
+                            <h1 className="text-6xl font-black text-white mb-6">
+                                {endingType === 'GOOD' && '💖 Perfect Study Date! 💖'}
+                                {endingType === 'NEUTRAL' && '📚 Study Complete!'}
+                                {endingType === 'BAD' && '💔 Date Over...'}
+                            </h1>
+                            <p className="text-2xl text-white/80 mb-8">
+                                {endingType === 'GOOD' && 'Fahi had an amazing time learning with you! She wants to see you again~'}
+                                {endingType === 'NEUTRAL' && 'You learned a lot! Maybe bring her flowers next time?'}
+                                {endingType === 'BAD' && 'Fahi got too frustrated and left... Better luck next time!'}
+                            </p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-white text-pink-500 px-10 py-4 rounded-full font-bold text-xl hover:scale-110 transition-all shadow-xl"
+                            >
+                                Play Again?
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
         </div>
     );
