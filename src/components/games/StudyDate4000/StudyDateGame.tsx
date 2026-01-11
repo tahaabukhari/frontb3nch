@@ -316,24 +316,24 @@ export default function StudyDateGame() {
             {/* BARS - Left of center (100px gap) - Desktop only beside Fahi, mobile hidden during gameplay */}
             {showBars && !isMobile && (
                 <div
-                    className="absolute z-30 flex flex-col gap-3"
+                    className="absolute z-30 flex flex-col gap-4"
                     style={{
-                        left: 'calc(50% - 200px)',
-                        bottom: '25vh'
+                        left: 'calc(50% - 280px)',
+                        bottom: '30vh'
                     }}
                 >
                     <div className="text-center">
-                        <span className="text-white text-[10px] font-bold drop-shadow-lg block mb-1">CC</span>
-                        <div className="h-24 w-5 bg-black/50 backdrop-blur-sm rounded-full p-0.5 border border-white/30">
+                        <span className="text-white font-bold drop-shadow-lg block mb-1" style={{ fontSize: '13px' }}>CC</span>
+                        <div style={{ height: '110px', width: '24px', padding: '2px' }} className="bg-black/50 backdrop-blur-sm rounded-full border border-white/30">
                             <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
                                 <motion.div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-full" animate={{ height: `${progress}%` }} />
                             </div>
                         </div>
-                        <span className="text-white text-[9px] font-bold">{Math.round(progress)}%</span>
+                        <span className="text-white font-bold" style={{ fontSize: '12px' }}>{Math.round(progress)}%</span>
                     </div>
                     <div className="text-center">
-                        <span className="text-white text-[10px] font-bold drop-shadow-lg block mb-1">💕</span>
-                        <div className="h-24 w-5 bg-black/50 backdrop-blur-sm rounded-full p-0.5 border border-white/30">
+                        <span className="text-white font-bold drop-shadow-lg block mb-1" style={{ fontSize: '13px' }}>💕</span>
+                        <div style={{ height: '110px', width: '24px', padding: '2px' }} className="bg-black/50 backdrop-blur-sm rounded-full border border-white/30">
                             <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
                                 <motion.div
                                     className={`absolute bottom-0 left-0 right-0 rounded-full ${mood >= 70 ? 'bg-gradient-to-t from-pink-500 to-pink-300' : mood >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-300' : 'bg-gradient-to-t from-red-600 to-red-400'}`}
@@ -341,7 +341,7 @@ export default function StudyDateGame() {
                                 />
                             </div>
                         </div>
-                        <span className="text-white text-[9px] font-bold">{mood}%</span>
+                        <span className="text-white font-bold" style={{ fontSize: '12px' }}>{mood}%</span>
                     </div>
                 </div>
             )}
@@ -371,22 +371,22 @@ export default function StudyDateGame() {
                 <div
                     className={`absolute z-30 ${isMobile ? 'bottom-4 left-4 right-4' : ''}`}
                     style={!isMobile ? {
-                        right: 'calc(50% - 380px)',
-                        bottom: '18vh',
-                        width: '280px'
+                        right: 'calc(50% - 520px)',
+                        bottom: '35vh',
+                        width: '340px'
                     } : {}}
                 >
                     <motion.div
                         initial={{ opacity: 0, x: isMobile ? 0 : 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="bg-white/95 backdrop-blur-md rounded-xl rounded-bl-none shadow-2xl border-2 border-pink-300 relative"
-                        style={{ padding: isMobile ? '12px' : '14px 16px' }}
+                        style={{ padding: isMobile ? '14px 16px' : '20px 24px' }}
                     >
-                        <div className="flex items-center gap-1 mb-1">
-                            <span className="text-pink-500 font-black" style={{ fontSize: isMobile ? '12px' : '13px' }}>Fahi</span>
-                            <span className="text-pink-300" style={{ fontSize: isMobile ? '10px' : '11px' }}>💕</span>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-pink-500 font-black" style={{ fontSize: isMobile ? '14px' : '18px' }}>Fahi</span>
+                            <span className="text-pink-300" style={{ fontSize: isMobile ? '12px' : '14px' }}>💕</span>
                         </div>
-                        <p className="text-slate-700 leading-relaxed" style={{ fontSize: isMobile ? '12px' : '13px', minHeight: isMobile ? '36px' : '40px' }}>
+                        <p className="text-slate-700 leading-relaxed" style={{ fontSize: isMobile ? '14px' : '17px', minHeight: isMobile ? '45px' : '60px' }}>
                             {displayedText}
                             {isTyping && <span className="animate-pulse text-pink-400">▌</span>}
                         </p>
@@ -394,8 +394,8 @@ export default function StudyDateGame() {
                         {(phase === 'INTRO' || phase === 'TEACHING') && !isTyping && (
                             <button
                                 onClick={phase === 'INTRO' ? advanceIntro : advanceDialogue}
-                                className="absolute top-2 right-2 bg-pink-100 hover:bg-pink-200 text-pink-500 rounded-full font-bold transition-all flex items-center justify-center"
-                                style={{ width: isMobile ? '20px' : '22px', height: isMobile ? '20px' : '22px', fontSize: isMobile ? '10px' : '11px' }}
+                                className="absolute top-3 right-3 bg-pink-100 hover:bg-pink-200 text-pink-500 rounded-full font-bold transition-all flex items-center justify-center"
+                                style={{ width: isMobile ? '26px' : '32px', height: isMobile ? '26px' : '32px', fontSize: isMobile ? '12px' : '14px' }}
                             >
                                 ▶
                             </button>
@@ -404,20 +404,20 @@ export default function StudyDateGame() {
 
                     {/* NAME INPUT */}
                     {phase === 'ASK_NAME' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 flex gap-1">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 flex gap-2">
                             <input
                                 type="text"
                                 value={textInput}
                                 onChange={e => setTextInput(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && submitName()}
                                 placeholder="Your name..."
-                                className="flex-1 bg-white/90 border border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400"
-                                style={{ padding: isMobile ? '6px 10px' : '8px 12px', fontSize: isMobile ? '12px' : '13px' }}
+                                className="flex-1 bg-white/90 border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400"
+                                style={{ padding: isMobile ? '10px 14px' : '12px 16px', fontSize: isMobile ? '14px' : '16px' }}
                                 autoFocus
                             />
                             <button onClick={submitName} disabled={!textInput.trim()}
                                 className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
-                                style={{ padding: isMobile ? '6px 12px' : '8px 14px', fontSize: isMobile ? '12px' : '13px' }}>
+                                style={{ padding: isMobile ? '10px 16px' : '12px 18px', fontSize: isMobile ? '14px' : '16px' }}>
                                 ✓
                             </button>
                         </motion.div>
@@ -426,11 +426,11 @@ export default function StudyDateGame() {
                     {/* QUIZ OPTIONS */}
                     <AnimatePresence>
                         {phase === 'QUIZ' && segments[currentSegmentIndex] && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-2 space-y-1">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3 space-y-2">
                                 {segments[currentSegmentIndex].options.map((option, i) => (
                                     <button key={i} onClick={() => handleAnswer(option)}
-                                        className="w-full bg-white hover:bg-pink-50 border border-pink-200 hover:border-pink-400 rounded-lg text-left font-medium text-slate-700 transition-all"
-                                        style={{ padding: isMobile ? '6px 10px' : '8px 10px', fontSize: isMobile ? '11px' : '12px' }}>
+                                        className="w-full bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 rounded-lg text-left font-medium text-slate-700 transition-all"
+                                        style={{ padding: isMobile ? '10px 14px' : '12px 16px', fontSize: isMobile ? '13px' : '15px' }}>
                                         {option}
                                     </button>
                                 ))}
@@ -440,7 +440,7 @@ export default function StudyDateGame() {
 
                     {/* TEXT INPUT */}
                     {phase === 'TEXT_INPUT' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3">
                             <div className="relative">
                                 <textarea
                                     value={textInput}
@@ -448,15 +448,15 @@ export default function StudyDateGame() {
                                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleTextSubmit()}
                                     placeholder="Type your answer..."
                                     maxLength={TEXT_INPUT_LIMIT}
-                                    className="w-full bg-white/90 border border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400 resize-none"
-                                    style={{ padding: isMobile ? '6px 10px' : '8px 10px', fontSize: isMobile ? '11px' : '12px', height: isMobile ? '50px' : '55px' }}
+                                    className="w-full bg-white/90 border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400 resize-none"
+                                    style={{ padding: isMobile ? '10px 14px' : '12px 16px', fontSize: isMobile ? '13px' : '15px', height: isMobile ? '60px' : '70px' }}
                                     autoFocus
                                 />
-                                <span className="absolute bottom-1 right-2 text-gray-400" style={{ fontSize: '9px' }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
+                                <span className="absolute bottom-2 right-3 text-gray-400" style={{ fontSize: isMobile ? '10px' : '11px' }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
                             </div>
                             <button onClick={handleTextSubmit} disabled={!textInput.trim()}
-                                className="w-full mt-1 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
-                                style={{ padding: isMobile ? '6px' : '8px', fontSize: isMobile ? '11px' : '12px' }}>
+                                className="w-full mt-2 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
+                                style={{ padding: isMobile ? '10px' : '12px', fontSize: isMobile ? '13px' : '15px' }}>
                                 Send
                             </button>
                         </motion.div>
