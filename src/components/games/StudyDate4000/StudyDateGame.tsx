@@ -28,7 +28,7 @@ interface Segment {
     isTextInput: boolean;
 }
 
-type GamePhase = 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'ENDING' | 'PAUSED';
+type GamePhase = 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'FINAL_QUIZ' | 'ENDING' | 'PAUSED';
 
 const SPRITES: Record<FahiEmotion, any> = {
     'neutral': fahiNeutral,
@@ -137,6 +137,8 @@ export default function StudyDateGame() {
 
     const [topic, setTopic] = useState('');
     const [goals, setGoals] = useState('');
+    const [clos, setClos] = useState(''); // Course Learning Objectives
+    const [finalQuizIndex, setFinalQuizIndex] = useState(0); // Track final quiz progress
     const [textInput, setTextInput] = useState('');
     const [explainFrame, setExplainFrame] = useState(0);
     const [failCount, setFailCount] = useState(0); // Track failures per segment
@@ -324,7 +326,7 @@ export default function StudyDateGame() {
             const response = await fetch('/api/study-date', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals })
+                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals, clos })
             });
             const result = await response.json();
 
@@ -332,34 +334,34 @@ export default function StudyDateGame() {
                 const curriculum = result.data.subsections.map((sub: any) => ({
                     id: sub.id,
                     title: sub.title,
-                    explanation: sub.explanation || [`Let's learn about ${sub.title}.`, 'This is an important concept.', 'Understanding this will help you progress.'],
+                    explanation: sub.explanation || [`So let's talk about ${sub.title}.`, 'This is pretty important.', 'Once you get this, the rest makes sense.'],
                     question: sub.question,
-                    options: sub.isTextInput ? [] : (sub.options || []),
-                    correctAnswer: sub.isTextInput ? '' : (sub.correctAnswer || ''),
-                    isTextInput: sub.isTextInput || false
+                    options: [], // No MCQ options - all conversational
+                    correctAnswer: sub.expectedAnswer || '',
+                    isTextInput: true // All questions are text input now
                 }));
                 setSegments(curriculum);
                 setCurrentSegmentIndex(0);
                 setDialogueIndex(0);
                 // Show first subsection title (user clicks to see explanations)
                 const first = curriculum[0];
-                setCurrentText(`Let's start with: ${first.title}`);
+                setCurrentText(`Alright, let's start with ${first.title}!`);
                 setPhase('TEACHING');
             } else {
                 throw new Error('Invalid curriculum');
             }
         } catch (e) {
             console.error('Curriculum generation error:', e);
-            // Fallback with explanations
+            // Fallback with explanations - all text input
             const fallback: Segment[] = [
-                { id: 1, title: `${topic} Basics`, explanation: [`Let's start with the fundamentals of ${topic}.`, `Understanding the basics is crucial for building knowledge.`, `Once you grasp these concepts, everything else becomes easier.`], question: `What is most important when learning ${topic}?`, options: ['Understanding basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Understanding basics', isTextInput: false },
-                { id: 2, title: `${topic} Practice`, explanation: [`Now let's see how ${topic} works in practice.`, `Applying what you learn helps cement your understanding.`, `Think about real examples from your experience.`], question: `Explain how you would use ${topic}:`, options: [], correctAnswer: '', isTextInput: true },
-                { id: 3, title: `${topic} Advanced`, explanation: [`Building on what we've learned, let's go deeper.`, `Advanced concepts connect to the foundation you now have.`, `This is where you start to see the bigger picture.`], question: `What helps achieve mastery?`, options: ['Consistent practice', 'Rushing', 'Skipping', 'Avoiding'], correctAnswer: 'Consistent practice', isTextInput: false }
+                { id: 1, title: `${topic} Basics`, explanation: [`So ${topic} - let's start simple.`, `The basics are actually pretty straightforward.`, `Once you get this part, everything else builds on it.`], question: `Can you tell me what you understand about ${topic} so far?`, options: [], correctAnswer: 'Understanding the fundamentals', isTextInput: true },
+                { id: 2, title: `${topic} In Depth`, explanation: [`Now let's go a bit deeper.`, `This part connects to what we just talked about.`, `Think about how this applies in real life.`], question: `How would you explain this concept to a friend?`, options: [], correctAnswer: '', isTextInput: true },
+                { id: 3, title: `${topic} Application`, explanation: [`Okay, let's see how this is actually used.`, `Real-world examples help make it click.`, `This is where it gets interesting.`], question: `What do you think is the most useful part of ${topic}?`, options: [], correctAnswer: 'Practice and application', isTextInput: true }
             ];
             setSegments(fallback);
             setCurrentSegmentIndex(0);
             setDialogueIndex(0);
-            setCurrentText(`Let's start with: ${fallback[0].title}`);
+            setCurrentText(`Let's start with ${fallback[0].title}!`);
             setPhase('TEACHING');
         }
     };
@@ -370,17 +372,17 @@ export default function StudyDateGame() {
         if (!segment) return;
 
         // dialogueIndex 0 = showing title, 1+ = showing explanations
-        // After all explanations, show question
+        // After all explanations, show question as text input
         if (dialogueIndex < segment.explanation.length) {
             // Show next explanation
             setCurrentText(segment.explanation[dialogueIndex]);
             setDialogueIndex(dialogueIndex + 1);
             setExplainFrame(prev => (prev + 1) % 2);
         } else {
-            // Done with explanations, show question
+            // Done with explanations, show question (always text input now)
             setCurrentText(segment.question);
             setEmotion('happy-neutral');
-            setPhase(segment.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
+            setPhase('TEXT_INPUT'); // All questions are conversational text input
         }
     };
 
@@ -524,18 +526,21 @@ export default function StudyDateGame() {
                 // Progress and move on
                 setProgress(prev => Math.min(100, prev + (100 / segments.length)));
 
-                // After feedback, move to next segment (user clicks to advance)
+                // After feedback, move to next segment or final quiz
                 setTimeout(() => {
                     const next = currentSegmentIndex + 1;
                     if (next >= segments.length) {
-                        setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
-                        setPhase('ENDING');
+                        // All segments done - time for final quiz!
+                        setFinalQuizIndex(0);
+                        setCurrentText(`Nice work getting through all that! Now let's do a quick review to make sure everything stuck~`);
+                        setEmotion('excited');
+                        setPhase('FINAL_QUIZ');
                     } else {
                         setCurrentSegmentIndex(next);
                         setDialogueIndex(0);
                         setExplainFrame(0);
                         setFailCount(0);
-                        setCurrentText(`Next topic: ${segments[next].title}`);
+                        setCurrentText(`Next up: ${segments[next].title}`);
                         setPhase('TEACHING'); // User clicks to see explanations
                     }
                 }, 2000);
@@ -545,15 +550,16 @@ export default function StudyDateGame() {
         } catch (error) {
             console.error('Evaluate text error:', error);
             // Fallback
-            setCurrentText('Okay, noted. Moving on.');
+            setCurrentText('Okay, got it. Let me think...');
             setEmotion('neutral');
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
 
             setTimeout(() => {
                 const next = currentSegmentIndex + 1;
                 if (next >= segments.length) {
-                    setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
-                    setPhase('ENDING');
+                    setFinalQuizIndex(0);
+                    setCurrentText(`Alright, that covers everything! Quick review time~`);
+                    setPhase('FINAL_QUIZ');
                 } else {
                     setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
@@ -568,11 +574,69 @@ export default function StudyDateGame() {
     };
 
     const handleExit = () => window.history.back();
+
+    // Final quiz - after showing intro, advances through questions
+    const advanceFinalQuiz = () => {
+        if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
+        // Show the current question for review
+        const seg = segments[finalQuizIndex];
+        if (seg) {
+            setCurrentText(`Quick check on ${seg.title}: ${seg.question}`);
+            setEmotion('happy-neutral');
+        }
+    };
+
+    const handleFinalQuizSubmit = async () => {
+        if (!textInput.trim()) return;
+        setPhase('FEEDBACK');
+        setCurrentText(`Let me see...`);
+
+        try {
+            const response = await fetch('/api/study-date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'evaluate_text',
+                    topicName: segments[finalQuizIndex]?.title || topic,
+                    userText: textInput,
+                    userName,
+                    currentMood: mood
+                })
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                setCurrentText(result.data.comment);
+                setEmotion(result.data.emotion as FahiEmotion);
+            }
+        } catch {
+            setCurrentText(`Okay, got that!`);
+            setEmotion('happy');
+        }
+
+        setTimeout(() => {
+            const next = finalQuizIndex + 1;
+            if (next >= segments.length) {
+                // Final quiz complete - end game
+                setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
+                setCurrentText(`That's it! Great job getting through everything, ${userName}!`);
+                setEmotion('excited');
+                setPhase('ENDING');
+            } else {
+                setFinalQuizIndex(next);
+                setCurrentText(`Next: ${segments[next].title} - ${segments[next].question}`);
+                setPhase('FINAL_QUIZ');
+            }
+        }, 2000);
+
+        setTextInput('');
+    };
+
     const coveredTopics = segments.slice(0, currentSegmentIndex).map(s => s.title);
     const currentTopic = segments[currentSegmentIndex]?.title || '';
     const upcomingTopics = segments.slice(currentSegmentIndex + 1).map(s => s.title);
 
-    const showUI = ['INTRO', 'ASK_NAME', 'TEACHING', 'QUIZ', 'TEXT_INPUT', 'FEEDBACK', 'LOADING'].includes(phase);
+    const showUI = ['INTRO', 'ASK_NAME', 'TEACHING', 'QUIZ', 'TEXT_INPUT', 'FEEDBACK', 'LOADING', 'FINAL_QUIZ'].includes(phase);
     const showBars = !['INTRO', 'ASK_NAME', 'SETUP', 'PAUSED', 'ENDING'].includes(phase);
 
     return (
@@ -769,6 +833,34 @@ export default function StudyDateGame() {
                             </button>
                         </motion.div>
                     )}
+
+                    {/* FINAL QUIZ INPUT */}
+                    {phase === 'FINAL_QUIZ' && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3">
+                            <div className="mb-2 text-center">
+                                <span className="bg-pink-100 text-pink-600 px-3 py-1 rounded-full font-bold" style={{ fontSize: `${getSize(11, 12, 14)}px` }}>
+                                    📋 Review {finalQuizIndex + 1}/{segments.length}
+                                </span>
+                            </div>
+                            <div className="relative">
+                                <textarea
+                                    value={textInput}
+                                    onChange={e => setTextInput(e.target.value.slice(0, TEXT_INPUT_LIMIT))}
+                                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleFinalQuizSubmit()}
+                                    placeholder="What do you remember...?"
+                                    maxLength={TEXT_INPUT_LIMIT}
+                                    className="w-full bg-white border-2 border-pink-300 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-500 resize-none"
+                                    style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px`, height: `${getSize(55, 65, 80)}px` }}
+                                    autoFocus
+                                />
+                            </div>
+                            <button onClick={handleFinalQuizSubmit} disabled={!textInput.trim()}
+                                className="w-full mt-2 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white rounded-lg font-bold transition-all"
+                                style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
+                                Submit Answer
+                            </button>
+                        </motion.div>
+                    )}
                 </div>
             )}
 
@@ -846,21 +938,30 @@ export default function StudyDateGame() {
                         >
                             <h2 className="text-pink-500 font-black text-center mb-4" style={{ fontSize: `${getSize(20, 24, 28)}px` }}>📚 What to Study?</h2>
 
-                            <label className="block font-bold text-slate-700 mb-2" style={{ fontSize: `${getSize(13, 15, 17)}px` }}>Topic</label>
+                            <label className="block font-bold text-slate-700 mb-2" style={{ fontSize: `${getSize(13, 15, 17)}px` }}>Topic / Subject</label>
                             <input
-                                className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl mb-4 focus:outline-none focus:border-pink-400 text-slate-800 placeholder-slate-400"
-                                style={{ padding: `${getSize(12, 14, 16)}px`, fontSize: `${getSize(14, 16, 18)}px` }}
+                                className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl mb-3 focus:outline-none focus:border-pink-400 text-slate-800 placeholder-slate-400"
+                                style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}
                                 placeholder="e.g., Photosynthesis, JavaScript..."
                                 value={topic}
                                 onChange={e => setTopic(e.target.value)}
                                 autoFocus
                             />
 
+                            <label className="block font-bold text-slate-700 mb-2" style={{ fontSize: `${getSize(13, 15, 17)}px` }}>Learning Objectives (CLOs)</label>
+                            <textarea
+                                className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl mb-3 focus:outline-none focus:border-pink-400 text-slate-800 placeholder-slate-400 resize-none"
+                                style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px`, height: `${getSize(50, 60, 70)}px` }}
+                                placeholder="What should you learn by the end? e.g., Understand loops, arrays..."
+                                value={clos}
+                                onChange={e => setClos(e.target.value)}
+                            />
+
                             <label className="block font-bold text-slate-700 mb-2" style={{ fontSize: `${getSize(13, 15, 17)}px` }}>Notes (Optional)</label>
                             <textarea
                                 className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl mb-4 focus:outline-none focus:border-pink-400 text-slate-800 placeholder-slate-400 resize-none"
-                                style={{ padding: `${getSize(12, 14, 16)}px`, fontSize: `${getSize(14, 16, 18)}px`, height: `${getSize(70, 90, 110)}px` }}
-                                placeholder="Paste your notes or learning goals here..."
+                                style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px`, height: `${getSize(50, 60, 70)}px` }}
+                                placeholder="Paste study notes here..."
                                 value={goals}
                                 onChange={e => setGoals(e.target.value)}
                             />
@@ -869,9 +970,9 @@ export default function StudyDateGame() {
                                 onClick={submitSetup}
                                 disabled={!topic.trim()}
                                 className="w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all shadow-lg"
-                                style={{ padding: `${getSize(14, 16, 20)}px`, fontSize: `${getSize(15, 17, 20)}px` }}
+                                style={{ padding: `${getSize(12, 14, 18)}px`, fontSize: `${getSize(14, 16, 18)}px` }}
                             >
-                                Next 💕
+                                Let's Go! 💕
                             </button>
                         </motion.div>
                     </motion.div>

@@ -25,36 +25,32 @@ export async function POST(request: NextRequest) {
         const { action, topic, goals, segment, userAnswer, mood, userName } = body;
 
         if (action === 'generate_curriculum') {
-            const { notes } = body;
+            const { notes, clos } = body;
             const prompt = `
 Topic: ${topic}
+${clos ? `Learning Objectives (CLOs): ${clos}` : ''}
 ${notes ? `Study Notes: ${notes}` : ''}
 
-Create a teaching curriculum with 4 subsections for this topic.
-This is for LEARNING - each subsection should TEACH before testing.
+Create a teaching curriculum with 4-5 subsections based on the CLOs.
+This is a CONVERSATION - Fahi is teaching like a friendly study buddy.
 
-Example for "C++ Programming":
-- Subsection 1: Variables & Data Types
-- Subsection 2: Control Flow
-- Subsection 3: Functions
-- Subsection 4: Classes & Objects
+IMPORTANT: 
+- NO multiple choice options (A, B, C, D)
+- ALL questions should be open-ended, conversational
+- Questions should prompt the student to EXPLAIN in their own words
 
 For EACH subsection provide:
 1. title: Short subsection name (3-5 words)
-2. explanation: Array of 3 SHORT teaching sentences that explain this concept clearly
-   - First sentence: Introduce the concept
-   - Second sentence: Explain how it works
-   - Third sentence: Give a practical example or why it matters
-3. question: A question to test understanding of THIS subsection
-4. options: 4 answer options (only if isTextInput is false)
-5. correctAnswer: The exact correct option string
-6. isTextInput: true for subsection 2 only (open-ended)
+2. explanation: Array of 3-4 SHORT teaching sentences (under 70 chars each)
+   - Be conversational, use "you" and casual language
+   - Actually teach the concept, don't just list topics
+3. question: An open-ended question like "Can you explain...?" or "What do you think...?"
+4. expectedAnswer: A brief summary of what a good answer would include (for AI evaluation)
 
 RULES:
-- Each subsection MUST have real teaching content
-- Explanations should be educational, not filler
-- Each explanation line under 80 characters
-- NO asterisks, NO emojis, NO roleplay
+- Make it sound like a friend explaining, not a textbook
+- Each subsection should cover one CLO if CLOs are provided
+- NO asterisks, NO emojis, NO formal language
 
 Output ONLY valid JSON:
 {
@@ -64,14 +60,12 @@ Output ONLY valid JSON:
       "id": 1,
       "title": "Subsection Name",
       "explanation": [
-        "First teaching point about this concept.",
-        "Second point explaining how it works.",
-        "Third point with an example or application."
+        "So basically, this concept is about...",
+        "The way it works is pretty simple.",
+        "Think of it like... [example]"
       ],
-      "question": "Question testing this concept?",
-      "options": ["A", "B", "C", "D"],
-      "correctAnswer": "A",
-      "isTextInput": false
+      "question": "Can you explain what X means in your own words?",
+      "expectedAnswer": "Should mention Y and Z concepts"
     }
   ]
 }
