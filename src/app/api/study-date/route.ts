@@ -24,67 +24,71 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { action, topic, goals, segment, userAnswer, mood, userName } = body;
 
-        if (action === 'generate_plan') {
+        if (action === 'generate_curriculum') {
+            const { notes } = body;
             const prompt = `
 Topic: ${topic}
-Learning Goals: ${goals || 'General understanding'}
-Student Name: ${userName || 'Student'}
+${notes ? `Study Notes: ${notes}` : ''}
 
-Create a lesson plan with exactly 3 segments to teach this topic.
-Keep explanations SHORT, CLEAR, and TO THE POINT.
+Create a curriculum with 6 DISTINCT subsections for this topic.
+Each subsection should cover a DIFFERENT concept (not repetitive).
 
-IMPORTANT RULES:
-- NO roleplay actions (no asterisks like *smiles* or *adjusts glasses*)
-- NO romantic language or emojis
-- Keep each dialogue line under 80 characters
-- Be friendly but professional
-- Focus on teaching, not entertainment
+Example for "C++ Programming":
+- Subsection 1: Variables & Data Types
+- Subsection 2: Control Flow (if/else, loops)
+- Subsection 3: Functions
+- Subsection 4: Classes & Objects
+- Subsection 5: Pointers & Memory
+- Subsection 6: Standard Template Library
 
-For each segment provide:
-1. explanation: Array of 4 SHORT dialogue strings. Direct teaching statements.
-2. question: A clear question to test understanding
-3. options: Exactly 4 answer options as strings
-4. correctAnswer: The exact string of the correct option
+For EACH subsection provide:
+1. title: Short subsection name (3-5 words)
+2. keyPoints: Array of 2 bullet points (under 40 chars each)
+3. question: A specific question about THIS subsection
+4. options: 4 answer options
+5. correctAnswer: The exact correct option string
+6. isTextInput: true for subsections 2 and 5 (open-ended questions)
 
-Output ONLY this JSON array:
-[
-  {
-    "explanation": ["First point about the topic.", "Second important concept.", "Here's why this matters.", "Let me test your understanding."],
-    "question": "What is the key concept here?",
-    "options": ["Correct answer", "Wrong option B", "Wrong option C", "Wrong option D"],
-    "correctAnswer": "Correct answer"
-  }
-]
+RULES:
+- Each subsection MUST be about a different concept
+- NO repetition between subsections
+- Questions should be specific to each subsection
+- Keep everything SHORT and DIRECT
+
+Output ONLY valid JSON:
+{
+  "courseName": "Topic Title",
+  "subsections": [
+    {
+      "id": 1,
+      "title": "Subsection Name",
+      "keyPoints": ["Point 1", "Point 2"],
+      "question": "Specific question?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A",
+      "isTextInput": false
+    }
+  ]
+}
 `;
-            const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-            const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-
             try {
+                const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
+                const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
                 const parsed = JSON.parse(text);
                 return NextResponse.json({ success: true, data: parsed });
             } catch (parseError) {
-                console.error('Parse error:', text);
-                // Fallback content - clean and simple
+                console.error('Curriculum parse error:', parseError);
+                // Fallback curriculum
                 return NextResponse.json({
                     success: true,
-                    data: [
-                        {
-                            explanation: [
-                                `Let's learn about ${topic}.`,
-                                `This is an important topic that you'll find useful.`,
-                                `The key is to understand the fundamentals first.`,
-                                `Ready for a quick check?`
-                            ],
-                            question: `What's the best approach when learning ${topic}?`,
-                            options: [
-                                "Understanding the fundamentals",
-                                "Memorizing everything immediately",
-                                "Skipping to advanced topics",
-                                "Just guessing randomly"
-                            ],
-                            correctAnswer: "Understanding the fundamentals"
-                        }
-                    ]
+                    data: {
+                        courseName: topic,
+                        subsections: [
+                            { id: 1, title: `${topic} Basics`, keyPoints: ['Core concepts', 'Foundation'], question: `What is the foundation of ${topic}?`, options: ['Understanding basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Understanding basics', isTextInput: false },
+                            { id: 2, title: `${topic} In Practice`, keyPoints: ['Real applications', 'Hands-on'], question: `Explain how you would apply ${topic}:`, options: [], correctAnswer: '', isTextInput: true },
+                            { id: 3, title: `Advanced ${topic}`, keyPoints: ['Deep concepts', 'Mastery'], question: `What comes after mastering basics?`, options: ['Practice', 'Quit', 'Skip', 'Rush'], correctAnswer: 'Practice', isTextInput: false }
+                        ]
+                    }
                 });
             }
         }
