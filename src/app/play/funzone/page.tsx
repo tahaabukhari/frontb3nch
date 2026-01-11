@@ -16,6 +16,14 @@ const TOP_GAMES = [
     },
     {
         id: 2,
+        title: 'StudyDate 4000',
+        color: 'from-pink-400 to-pink-600',
+        emoji: '💖',
+        description: 'A visual novel study buddy experience! Learn any topic with Fahi in a date-sim style game.',
+        tags: ['Educational', 'Visual Novel', 'AI']
+    },
+    {
+        id: 2,
         title: 'Coming Soon',
         color: 'from-gray-800 to-gray-900',
         emoji: '🔒',
@@ -49,6 +57,15 @@ const ALL_GAMES = [
         color: 'from-blue-600 to-indigo-700',
         tags: ['Casual', 'Endless'],
         emoji: '🐐'
+    },
+    {
+        id: 2,
+        title: 'StudyDate 4000',
+        category: 'Educational',
+        description: 'Learn with Fahi!',
+        color: 'from-pink-400 to-pink-600',
+        tags: ['Visual Novel'],
+        emoji: '💖'
     },
     ...Array.from({ length: 7 }).map((_, i) => ({
         id: i + 10,
@@ -85,8 +102,10 @@ export default function FunzonePage() {
         if (gameId === 1) { // Flappy Goat ID
             setActiveGameId(gameId);
             setSelectedGame(null); // Close modal
+        } else if (gameId === 2) {
+            window.location.href = '/play/study-date';
         } else {
-            alert("This game is currently a placeholder! Try 'Flappy Goat'.");
+            alert("This game is currently a placeholder! Try 'Flappy Goat' or 'StudyDate 4000'.");
         }
     };
 
