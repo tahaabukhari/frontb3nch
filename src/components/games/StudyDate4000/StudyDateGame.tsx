@@ -457,7 +457,7 @@ export default function StudyDateGame() {
             {showUI && (
                 <div
                     className={`absolute z-30 ${isMobile ? 'left-3 right-3' : ''}`}
-                    style={isMobile ? { top: 'calc(50% + 30px)', transform: 'translateY(0)' } : {
+                    style={isMobile ? { top: 'calc(50% + 60px)', transform: 'translateY(0)' } : {
                         right: 'calc(50% - 520px)',
                         bottom: '30vh',
                         width: `${getSize(300, 340, 400)}px`
@@ -510,14 +510,19 @@ export default function StudyDateGame() {
                         </motion.div>
                     )}
 
-                    {/* QUIZ OPTIONS - Stacked under question for all screens */}
+                    {/* QUIZ OPTIONS - 2x2 grid on mobile, list on desktop */}
                     <AnimatePresence>
                         {phase === 'QUIZ' && segments[currentSegmentIndex] && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3 space-y-2">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className={`mt-3 ${isMobile ? 'grid grid-cols-2 gap-2' : 'space-y-2'}`}
+                            >
                                 {segments[currentSegmentIndex].options.map((option, i) => (
                                     <button key={i} onClick={() => handleAnswer(option)}
-                                        className="w-full bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 rounded-lg text-left font-medium text-slate-700 transition-all active:scale-98"
-                                        style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
+                                        className={`bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 rounded-lg font-medium text-slate-700 transition-all active:scale-98 ${isMobile ? 'text-center' : 'w-full text-left'}`}
+                                        style={{ padding: isMobile ? '10px 8px' : `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: isMobile ? '12px' : `${getSize(13, 15, 17)}px` }}>
                                         {option}
                                     </button>
                                 ))}
