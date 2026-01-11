@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FlappyBird from '@/components/games/FlappyBird';
 import studyDateCover from '@/components/games/StudyDate4000/public/game-cover.jpg';
+import studyDateCoverPreview from '@/components/games/StudyDate4000/public/game-cover-preview.jpg';
+import studyDateCoverMini from '@/components/games/StudyDate4000/public/game-cover-mini.jpg';
 
 // --- Mock Data ---
 const TOP_GAMES = [
@@ -19,8 +21,9 @@ const TOP_GAMES = [
         id: 2,
         title: 'StudyDate 4000',
         color: 'from-pink-400 to-pink-600',
-        emoji: '💖', // Keeping emoji as fallback/icon but cover will be used in custom renderer or just as extra data
+        emoji: '💖',
         cover: studyDateCover,
+        coverPreview: studyDateCoverPreview,
         description: 'A visual novel study buddy experience! Learn any topic with Fahi in a date-sim style game.',
         tags: ['Educational', 'Visual Novel', 'AI']
     },
@@ -68,7 +71,7 @@ const ALL_GAMES = [
         color: 'from-pink-400 to-pink-600',
         tags: ['Visual Novel'],
         emoji: '💖',
-        cover: studyDateCover
+        cover: studyDateCoverMini
     },
     ...Array.from({ length: 7 }).map((_, i) => ({
         id: i + 10,
@@ -226,9 +229,9 @@ export default function FunzonePage() {
                                         transition={{ delay: 0.2, type: "spring" }}
                                         className="relative z-10 filter drop-shadow-2xl w-full h-full flex items-center justify-center"
                                     >
-                                        {(TOP_GAMES[currentIndex] as any).cover ? (
+                                        {((TOP_GAMES[currentIndex] as any).coverPreview || (TOP_GAMES[currentIndex] as any).cover) ? (
                                             <img
-                                                src={(TOP_GAMES[currentIndex] as any).cover.src}
+                                                src={((TOP_GAMES[currentIndex] as any).coverPreview || (TOP_GAMES[currentIndex] as any).cover).src}
                                                 className="w-full h-full object-cover opacity-90 transition-transform duration-700 hover:scale-110"
                                                 alt="Game Cover"
                                             />

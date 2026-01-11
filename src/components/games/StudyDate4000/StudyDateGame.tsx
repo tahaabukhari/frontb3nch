@@ -369,10 +369,10 @@ export default function StudyDateGame() {
                 <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* FAHI - Centered (lower on mobile with 40px gap to textbox) */}
+            {/* FAHI - Centered (mobile: lower with 20px gap to textbox) */}
             <div
                 className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-                style={{ paddingBottom: isMobile ? '20vh' : '5vh', marginTop: isMobile ? '140px' : '0' }}
+                style={{ paddingBottom: isMobile ? '25vh' : '5vh', marginTop: isMobile ? '80px' : '0' }}
             >
                 <div className="relative">
                     <motion.img
@@ -453,15 +453,15 @@ export default function StudyDateGame() {
                 </div>
             )}
 
-            {/* DIALOGUE BOX - Desktop: Right side, Mobile: Bottom under Fahi */}
+            {/* DIALOGUE BOX - Desktop: Left side, Mobile: Bottom under Fahi with 20px gap */}
             {showUI && (
                 <div
-                    className={`absolute z-30 ${isMobile ? 'bottom-4 left-3 right-3' : ''}`}
-                    style={!isMobile ? {
-                        right: 'calc(50% - 520px)',
-                        bottom: '35vh',
+                    className={`absolute z-30 ${isMobile ? 'left-3 right-3' : ''}`}
+                    style={isMobile ? { bottom: '20px' } : {
+                        left: 'calc(50% - 520px)',
+                        bottom: '30vh',
                         width: `${getSize(300, 340, 400)}px`
-                    } : {}}
+                    }}
                 >
                     <motion.div
                         initial={{ opacity: 0, x: isMobile ? 0 : 10 }}
@@ -510,9 +510,9 @@ export default function StudyDateGame() {
                         </motion.div>
                     )}
 
-                    {/* QUIZ OPTIONS */}
+                    {/* QUIZ OPTIONS - Only show in main dialogue box on mobile */}
                     <AnimatePresence>
-                        {phase === 'QUIZ' && segments[currentSegmentIndex] && (
+                        {phase === 'QUIZ' && segments[currentSegmentIndex] && isMobile && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3 space-y-2">
                                 {segments[currentSegmentIndex].options.map((option, i) => (
                                     <button key={i} onClick={() => handleAnswer(option)}
@@ -550,6 +550,36 @@ export default function StudyDateGame() {
                     )}
                 </div>
             )}
+
+            {/* DESKTOP QUIZ OPTIONS - Right side panel */}
+            <AnimatePresence>
+                {phase === 'QUIZ' && segments[currentSegmentIndex] && !isMobile && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="absolute z-30"
+                        style={{
+                            right: 'calc(50% - 520px)',
+                            bottom: '30vh',
+                            width: `${getSize(280, 320, 380)}px`
+                        }}
+                    >
+                        <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border-2 border-pink-300 p-4">
+                            <h3 className="text-pink-500 font-bold mb-3" style={{ fontSize: `${getSize(14, 16, 18)}px` }}>Choose your answer:</h3>
+                            <div className="space-y-2">
+                                {segments[currentSegmentIndex].options.map((option, i) => (
+                                    <button key={i} onClick={() => handleAnswer(option)}
+                                        className="w-full bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 rounded-lg text-left font-medium text-slate-700 transition-all"
+                                        style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
+                                        {option}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* PAUSE BUTTON ONLY (no exit button on main screen) */}
             {!['INTRO', 'ASK_NAME', 'SETUP', 'ENDING', 'PAUSED'].includes(phase) && (
