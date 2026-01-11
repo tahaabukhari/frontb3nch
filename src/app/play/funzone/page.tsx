@@ -374,8 +374,8 @@ export default function FunzonePage() {
                             {/* Modal Header/Art */}
                             <div className={`h-64 bg-gradient-to-r ${selectedGame.color || 'from-gray-800 to-black'} relative`}>
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    {(selectedGame as any).cover ? (
-                                        <img src={(selectedGame as any).cover.src} alt={selectedGame.title} className="w-full h-full object-cover" />
+                                    {((selectedGame as any).coverPreview || (selectedGame as any).cover) ? (
+                                        <img src={((selectedGame as any).coverPreview || (selectedGame as any).cover).src} alt={selectedGame.title} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="text-[100px] drop-shadow-2xl animate-bounce-slow">{selectedGame.emoji}</div>
                                     )}
