@@ -369,10 +369,10 @@ export default function StudyDateGame() {
                 <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* FAHI - Centered (higher on mobile to leave room for dialogue below) */}
+            {/* FAHI - Centered (lower on mobile with 40px gap to textbox) */}
             <div
                 className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-                style={{ paddingBottom: isMobile ? '35vh' : '5vh' }}
+                style={{ paddingBottom: isMobile ? '20vh' : '5vh', marginTop: isMobile ? '140px' : '0' }}
             >
                 <div className="relative">
                     <motion.img
