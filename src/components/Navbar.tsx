@@ -14,6 +14,8 @@ const Navbar = ({ isDashboard = false, className = '' }: { isDashboard?: boolean
   // Only shift for the main dashboard page where the toggle button exists
   const isDashboardHome = pathname === '/dashboard';
 
+  if (pathname.startsWith('/play/study-date')) return null;
+
   return (
     <header className={`fixed top-4 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none ${className}`}>
       {/* Container - Enable pointer events for the navbar itself */}

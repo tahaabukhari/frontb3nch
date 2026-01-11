@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FlappyBird from '@/components/games/FlappyBird';
+import studyDateCover from '@/components/games/StudyDate4000/public/game-cover.jpg';
 
 // --- Mock Data ---
 const TOP_GAMES = [
@@ -18,7 +19,8 @@ const TOP_GAMES = [
         id: 2,
         title: 'StudyDate 4000',
         color: 'from-pink-400 to-pink-600',
-        emoji: '💖',
+        emoji: '💖', // Keeping emoji as fallback/icon but cover will be used in custom renderer or just as extra data
+        cover: studyDateCover,
         description: 'A visual novel study buddy experience! Learn any topic with Fahi in a date-sim style game.',
         tags: ['Educational', 'Visual Novel', 'AI']
     },
@@ -221,9 +223,17 @@ export default function FunzonePage() {
                                         initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
                                         animate={{ scale: 1, opacity: 1, rotate: 0 }}
                                         transition={{ delay: 0.2, type: "spring" }}
-                                        className="text-8xl md:text-[160px] relative z-10 filter drop-shadow-2xl"
+                                        className="relative z-10 filter drop-shadow-2xl w-full h-full flex items-center justify-center"
                                     >
-                                        {TOP_GAMES[currentIndex].emoji}
+                                        {(TOP_GAMES[currentIndex] as any).cover ? (
+                                            <img
+                                                src={(TOP_GAMES[currentIndex] as any).cover.src}
+                                                className="w-full h-full object-cover opacity-90 transition-transform duration-700 hover:scale-110"
+                                                alt="Game Cover"
+                                            />
+                                        ) : (
+                                            <div className="text-8xl md:text-[160px]">{TOP_GAMES[currentIndex].emoji}</div>
+                                        )}
                                     </motion.div>
                                 </div>
                             </motion.div>
