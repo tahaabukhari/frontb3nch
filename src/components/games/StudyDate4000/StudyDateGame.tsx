@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Asset Imports
@@ -23,9 +23,10 @@ interface Segment {
     question: string;
     options: string[];
     correctAnswer: string;
+    requiresTextInput?: boolean;
 }
 
-type GamePhase = 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'FEEDBACK' | 'ENDING';
+type GamePhase = 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'ENDING';
 
 // Sprite Map
 const SPRITES: Record<FahiEmotion, any> = {
@@ -40,21 +41,34 @@ const SPRITES: Record<FahiEmotion, any> = {
     'happy-neutral': fahiHappyNeutral
 };
 
+// Intro dialogue sequence
+const INTRO_DIALOGUE = [
+    { text: "Oh! Hello there~ 💕", emotion: 'happy' as FahiEmotion },
+    { text: "Welcome to Study Date 4000! I'm Fahi, your personal study buddy!", emotion: 'excited' as FahiEmotion },
+    { text: "*adjusts glasses* I'll help you learn anything you want in a fun way~", emotion: 'happy-neutral' as FahiEmotion },
+    { text: "But first... what should I call you?", emotion: 'shy' as FahiEmotion }
+];
+
 export default function StudyDateGame() {
-    // Game State
-    const [phase, setPhase] = useState<GamePhase>('SETUP');
+    // Core State
+    const [phase, setPhase] = useState<GamePhase>('INTRO');
     const [mood, setMood] = useState(70);
     const [progress, setProgress] = useState(0);
+    const [userName, setUserName] = useState('');
+
+    // Dialogue State
+    const [introIndex, setIntroIndex] = useState(0);
     const [segments, setSegments] = useState<Segment[]>([]);
     const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
     const [dialogueIndex, setDialogueIndex] = useState(0);
-    const [currentText, setCurrentText] = useState('');
-    const [emotion, setEmotion] = useState<FahiEmotion>('happy-neutral');
+    const [currentText, setCurrentText] = useState(INTRO_DIALOGUE[0].text);
+    const [emotion, setEmotion] = useState<FahiEmotion>(INTRO_DIALOGUE[0].emotion);
     const [endingType, setEndingType] = useState<'GOOD' | 'NEUTRAL' | 'BAD' | null>(null);
 
     // Input State
     const [topic, setTopic] = useState('');
     const [goals, setGoals] = useState('');
+    const [textInput, setTextInput] = useState('');
 
     // Animation State
     const [isAnimating, setIsAnimating] = useState(false);
@@ -64,7 +78,7 @@ export default function StudyDateGame() {
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
-    // Animation loop for explaining sprites
+    // Animation loop
     useEffect(() => {
         if (!isAnimating) return;
         const interval = setInterval(() => {
@@ -92,12 +106,11 @@ export default function StudyDateGame() {
                 setIsTyping(false);
                 clearInterval(interval);
             }
-        }, 30);
+        }, 25);
 
         return () => clearInterval(interval);
     }, [currentText]);
 
-    // Get current sprite based on state
     const getCurrentSprite = () => {
         if (isAnimating) {
             return animFrame === 0 ? SPRITES['explaining'] : SPRITES['explaining2'];
@@ -105,19 +118,49 @@ export default function StudyDateGame() {
         return SPRITES[emotion] || SPRITES['happy-neutral'];
     };
 
+    // Handle intro advancement
+    const advanceIntro = () => {
+        if (isTyping) {
+            setDisplayedText(currentText);
+            setIsTyping(false);
+            return;
+        }
+
+        const nextIndex = introIndex + 1;
+        if (nextIndex < INTRO_DIALOGUE.length) {
+            setIntroIndex(nextIndex);
+            setCurrentText(INTRO_DIALOGUE[nextIndex].text);
+            setEmotion(INTRO_DIALOGUE[nextIndex].emotion);
+        } else {
+            // Move to name input
+            setPhase('ASK_NAME');
+        }
+    };
+
+    // Handle name submission
+    const submitName = () => {
+        if (!textInput.trim()) return;
+        setUserName(textInput.trim());
+        setTextInput('');
+        setCurrentText(`Nice to meet you, ${textInput.trim()}! 💕 So... what would you like to learn today?`);
+        setEmotion('happy');
+        setTimeout(() => setPhase('SETUP'), 100);
+    };
+
     // Start the game
     const handleStart = async () => {
         if (!topic.trim()) return;
 
         setPhase('LOADING');
-        setCurrentText('*thinking* Let me prepare something special for you...');
+        setCurrentText(`*excited* Ooh, ${topic}! Let me prepare something special for you, ${userName}...`);
         setIsAnimating(true);
+        setEmotion('excited');
 
         try {
             const response = await fetch('/api/study-date', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_plan', topic, goals })
+                body: JSON.stringify({ action: 'generate_plan', topic, goals, userName })
             });
 
             const result = await response.json();
@@ -129,36 +172,37 @@ export default function StudyDateGame() {
                 setCurrentText(result.data[0].explanation[0]);
                 setPhase('TEACHING');
                 setIsAnimating(true);
+                setEmotion('explaining');
             } else {
-                // Fallback
-                const fallbackSegments: Segment[] = [{
+                // Fallback content
+                const fallback: Segment[] = [{
                     explanation: [
-                        `*smiles* Okay! Let's learn about ${topic} together!`,
-                        `The first thing you should know is that ${topic} is really interesting once you understand the basics.`,
-                        `*adjusts notes* Let me explain the key concepts step by step...`,
-                        `Are you ready? Let's do this!`
+                        `Okay ${userName}, let's dive into ${topic}! *opens notebook*`,
+                        `The first thing you should understand is that ${topic} has some really interesting fundamentals.`,
+                        `*points at notes* Pay attention here, this is important~`,
+                        `Let me break this down step by step so it's easy to follow!`
                     ],
-                    question: `What's the best approach to learning ${topic}?`,
-                    options: ['Step by step basics first', 'Skip to advanced topics', 'Just memorize everything', 'Give up immediately'],
-                    correctAnswer: 'Step by step basics first'
+                    question: `So ${userName}, what's the best approach when learning something new?`,
+                    options: ['Start with fundamentals', 'Skip to advanced topics', 'Just memorize everything', 'Give up'],
+                    correctAnswer: 'Start with fundamentals'
                 }];
-                setSegments(fallbackSegments);
+                setSegments(fallback);
                 setCurrentSegmentIndex(0);
                 setDialogueIndex(0);
-                setCurrentText(fallbackSegments[0].explanation[0]);
+                setCurrentText(fallback[0].explanation[0]);
                 setPhase('TEACHING');
                 setIsAnimating(true);
             }
         } catch (error) {
-            console.error('Failed to generate plan:', error);
-            setCurrentText('*nervous* Oops, something went wrong... Let me try again!');
+            console.error('Failed to generate:', error);
+            setCurrentText(`*nervous* Oops, something went wrong... Let me try again, ${userName}!`);
+            setEmotion('shy');
         }
     };
 
-    // Advance dialogue
+    // Advance teaching dialogue
     const advanceDialogue = () => {
         if (isTyping) {
-            // Skip typing animation
             setDisplayedText(currentText);
             setIsTyping(false);
             return;
@@ -173,15 +217,21 @@ export default function StudyDateGame() {
             setDialogueIndex(nextIndex);
             setCurrentText(segment.explanation[nextIndex]);
         } else {
-            // Done with explanation, show question
-            setPhase('QUIZ');
+            // Show question
             setCurrentText(segment.question);
             setIsAnimating(false);
             setEmotion('happy-neutral');
+
+            // Decide if this needs text input or choices
+            if (segment.requiresTextInput) {
+                setPhase('TEXT_INPUT');
+            } else {
+                setPhase('QUIZ');
+            }
         }
     };
 
-    // Handle answer selection
+    // Handle choice answer
     const handleAnswer = async (answer: string) => {
         const segment = segments[currentSegmentIndex];
         if (!segment) return;
@@ -193,19 +243,14 @@ export default function StudyDateGame() {
             const response = await fetch('/api/study-date', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'evaluate',
-                    segment,
-                    userAnswer: answer,
-                    mood
-                })
+                body: JSON.stringify({ action: 'evaluate', segment, userAnswer: answer, mood, userName })
             });
 
             const result = await response.json();
 
             if (result.success && result.data) {
                 const { text, emotion: newEmotion, moodChange } = result.data;
-                setCurrentText(text);
+                setCurrentText(text.replace('user', userName));
                 setEmotion(newEmotion as FahiEmotion);
 
                 const newMood = Math.min(100, Math.max(0, mood + moodChange));
@@ -214,14 +259,10 @@ export default function StudyDateGame() {
                 const isCorrect = answer === segment.correctAnswer;
 
                 if (isCorrect) {
-                    // Progress forward
-                    const progressPerSegment = 100 / segments.length;
-                    setProgress(prev => Math.min(100, prev + progressPerSegment));
+                    setProgress(prev => Math.min(100, prev + (100 / segments.length)));
                 }
 
-                // Wait then proceed
                 setTimeout(() => {
-                    // Check game over
                     if (newMood <= 0) {
                         setEndingType('BAD');
                         setPhase('ENDING');
@@ -231,11 +272,9 @@ export default function StudyDateGame() {
                     if (isCorrect) {
                         const nextSegment = currentSegmentIndex + 1;
                         if (nextSegment >= segments.length) {
-                            // Game complete
                             setEndingType(newMood >= 95 ? 'GOOD' : 'NEUTRAL');
                             setPhase('ENDING');
                         } else {
-                            // Next segment
                             setCurrentSegmentIndex(nextSegment);
                             setDialogueIndex(0);
                             setCurrentText(segments[nextSegment].explanation[0]);
@@ -244,9 +283,8 @@ export default function StudyDateGame() {
                             setEmotion('explaining');
                         }
                     } else {
-                        // Repeat current segment
                         setDialogueIndex(0);
-                        setCurrentText("*sighs* Let me explain that again...");
+                        setCurrentText(`Let me explain that again, ${userName}...`);
                         setTimeout(() => {
                             setCurrentText(segment.explanation[0]);
                             setPhase('TEACHING');
@@ -256,231 +294,309 @@ export default function StudyDateGame() {
                 }, 2500);
             }
         } catch (error) {
-            console.error('Evaluation error:', error);
             setCurrentText('*confused* Something went wrong...');
         }
     };
 
-    // Handle back/exit
-    const handleExit = () => {
-        window.history.back();
+    // Handle text input submission
+    const handleTextSubmit = async () => {
+        if (!textInput.trim()) return;
+
+        setPhase('FEEDBACK');
+        setCurrentText(`*thinking* Hmm, "${textInput}"... Let me think about that, ${userName}~`);
+        setEmotion('neutral');
+
+        // For now, treat text inputs more leniently
+        setTimeout(() => {
+            setCurrentText(`That's an interesting perspective! I appreciate you sharing that with me. 💕`);
+            setEmotion('happy');
+            setMood(prev => Math.min(100, prev + 5));
+            setProgress(prev => Math.min(100, prev + (100 / segments.length)));
+
+            setTimeout(() => {
+                const nextSegment = currentSegmentIndex + 1;
+                if (nextSegment >= segments.length) {
+                    setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
+                    setPhase('ENDING');
+                } else {
+                    setCurrentSegmentIndex(nextSegment);
+                    setDialogueIndex(0);
+                    setCurrentText(segments[nextSegment].explanation[0]);
+                    setPhase('TEACHING');
+                    setIsAnimating(true);
+                }
+            }, 2000);
+        }, 1500);
+
+        setTextInput('');
     };
 
-    return (
-        <div className="relative w-full h-screen overflow-hidden font-sans select-none">
+    const handleExit = () => window.history.back();
 
-            {/* LAYER 0: BACKGROUND */}
-            <div className="absolute inset-0 z-0">
-                <img src={bgImg.src} className="w-full h-full object-cover" alt="Background" />
+    return (
+        <div className="fixed inset-0 w-screen h-screen overflow-hidden font-sans select-none bg-black">
+
+            {/* BACKGROUND - Full Screen */}
+            <img
+                src={bgImg.src}
+                className="absolute inset-0 w-full h-full object-cover"
+                alt="Background"
+            />
+
+            {/* TABLE - Bottom Layer */}
+            <div className="absolute bottom-0 left-0 right-0 h-[25vh] z-10">
+                <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* LAYER 1: CHARACTER (Centered) */}
-            <div className="absolute inset-0 z-10 flex items-end justify-center pb-32 pointer-events-none">
+            {/* CHARACTER - Center */}
+            <div className="absolute inset-0 z-20 flex items-end justify-center pointer-events-none" style={{ paddingBottom: '15vh' }}>
                 <motion.img
                     key={getCurrentSprite()?.src}
                     src={getCurrentSprite()?.src}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                    className="h-[75vh] max-h-[800px] object-contain drop-shadow-2xl"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="h-[65vh] object-contain drop-shadow-2xl"
                     alt="Fahi"
                 />
             </div>
 
-            {/* LAYER 2: TABLE (Bottom, Foreground) */}
-            <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none">
-                <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
-            </div>
+            {/* UI OVERLAY */}
+            <div className="absolute inset-0 z-30 pointer-events-none">
 
-            {/* UI LAYER */}
-
-            {/* Back Button */}
-            {phase !== 'SETUP' && (
+                {/* Back Button */}
                 <button
                     onClick={handleExit}
-                    className="absolute top-4 left-4 z-50 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-full text-white font-bold transition-all border border-white/30"
+                    className="pointer-events-auto absolute top-4 left-4 bg-black/40 hover:bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full text-white font-bold text-sm transition-all border border-white/20"
                 >
-                    ← Back
+                    ← Exit
                 </button>
-            )}
 
-            {/* LEFT SIDE: Progress Bars */}
-            {phase !== 'SETUP' && phase !== 'LOADING' && (
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-6 w-20">
-                    {/* Content Progress Bar */}
-                    <div className="relative">
-                        <span className="text-white text-xs font-bold mb-2 block text-center drop-shadow-md">Content</span>
-                        <div className="h-48 bg-white/30 backdrop-blur-md rounded-full p-1 border border-white/40 shadow-lg">
-                            <div className="h-full w-full rounded-full bg-white/20 relative overflow-hidden">
-                                <motion.div
-                                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-400 to-cyan-200 rounded-full"
-                                    initial={{ height: '0%' }}
-                                    animate={{ height: `${progress}%` }}
-                                    transition={{ duration: 0.5 }}
-                                />
+                {/* Progress Bars - Left Side, Centered Vertically */}
+                {phase !== 'INTRO' && phase !== 'ASK_NAME' && phase !== 'SETUP' && (
+                    <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 w-16">
+                        {/* Content Bar */}
+                        <div className="text-center">
+                            <span className="text-white text-[10px] font-bold drop-shadow-md">CC</span>
+                            <div className="h-32 bg-black/40 backdrop-blur-sm rounded-full p-1 border border-white/30 mt-1">
+                                <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
+                                    <motion.div
+                                        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-full"
+                                        animate={{ height: `${progress}%` }}
+                                        transition={{ duration: 0.5 }}
+                                    />
+                                </div>
                             </div>
+                            <span className="text-white text-[10px] font-bold">{Math.round(progress)}%</span>
                         </div>
-                        <span className="text-white text-xs font-bold mt-1 block text-center">{Math.round(progress)}%</span>
-                    </div>
 
-                    {/* Mood Bar */}
-                    <div className="relative">
-                        <span className="text-white text-xs font-bold mb-2 block text-center drop-shadow-md">Mood</span>
-                        <div className="h-48 bg-white/30 backdrop-blur-md rounded-full p-1 border border-white/40 shadow-lg">
-                            <div className="h-full w-full rounded-full bg-white/20 relative overflow-hidden">
-                                <motion.div
-                                    className={`absolute bottom-0 left-0 right-0 rounded-full transition-colors duration-500 ${mood >= 70 ? 'bg-gradient-to-t from-pink-400 to-pink-200' :
-                                            mood >= 40 ? 'bg-gradient-to-t from-yellow-400 to-yellow-200' :
-                                                'bg-gradient-to-t from-red-500 to-red-300'
-                                        }`}
-                                    initial={{ height: '70%' }}
-                                    animate={{ height: `${mood}%` }}
-                                    transition={{ duration: 0.5 }}
-                                />
+                        {/* Mood Bar */}
+                        <div className="text-center">
+                            <span className="text-white text-[10px] font-bold drop-shadow-md">💕</span>
+                            <div className="h-32 bg-black/40 backdrop-blur-sm rounded-full p-1 border border-white/30 mt-1">
+                                <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
+                                    <motion.div
+                                        className={`absolute bottom-0 left-0 right-0 rounded-full ${mood >= 70 ? 'bg-gradient-to-t from-pink-500 to-pink-300' :
+                                                mood >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-300' :
+                                                    'bg-gradient-to-t from-red-600 to-red-400'
+                                            }`}
+                                        animate={{ height: `${mood}%` }}
+                                        transition={{ duration: 0.5 }}
+                                    />
+                                </div>
                             </div>
+                            <span className="text-white text-[10px] font-bold">{mood}%</span>
                         </div>
-                        <span className="text-white text-xs font-bold mt-1 block text-center">{mood}%</span>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* RIGHT SIDE: Dialogue Box */}
-            {(phase === 'TEACHING' || phase === 'QUIZ' || phase === 'FEEDBACK' || phase === 'LOADING') && (
-                <div className="absolute right-6 bottom-48 z-40 w-[420px] max-w-[calc(100vw-200px)]">
-                    {/* Dialogue Bubble */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="bg-white/95 backdrop-blur-md rounded-2xl rounded-br-none p-6 shadow-2xl border-4 border-pink-200 relative"
-                    >
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="text-pink-500 font-black text-lg">Fahi</span>
-                            <span className="text-pink-300 text-sm">💕</span>
-                        </div>
-                        <p className="text-slate-700 text-lg leading-relaxed min-h-[80px]">
-                            {displayedText}
-                            {isTyping && <span className="animate-pulse">▌</span>}
-                        </p>
+                {/* DIALOGUE BOX - Bottom Center */}
+                {(phase === 'INTRO' || phase === 'ASK_NAME' || phase === 'TEACHING' || phase === 'QUIZ' || phase === 'TEXT_INPUT' || phase === 'FEEDBACK' || phase === 'LOADING') && (
+                    <div className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white/95 backdrop-blur-md rounded-2xl p-5 shadow-2xl border-4 border-pink-300 relative"
+                        >
+                            {/* Speaker Name */}
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-pink-500 font-black text-base">Fahi</span>
+                                <span className="text-pink-300 text-sm">💕</span>
+                            </div>
 
-                        {/* Click to continue indicator */}
-                        {phase === 'TEACHING' && !isTyping && (
-                            <button
-                                onClick={advanceDialogue}
-                                className="absolute -bottom-3 right-4 bg-pink-400 hover:bg-pink-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg transition-all animate-bounce"
-                            >
-                                Continue ▶
-                            </button>
-                        )}
-                    </motion.div>
+                            {/* Dialogue Text */}
+                            <p className="text-slate-700 text-base leading-relaxed min-h-[50px]">
+                                {displayedText}
+                                {isTyping && <span className="animate-pulse text-pink-400">▌</span>}
+                            </p>
 
-                    {/* Answer Options */}
-                    <AnimatePresence>
-                        {phase === 'QUIZ' && segments[currentSegmentIndex] && (
+                            {/* Advance Button */}
+                            {(phase === 'INTRO' || phase === 'TEACHING') && !isTyping && (
+                                <button
+                                    onClick={phase === 'INTRO' ? advanceIntro : advanceDialogue}
+                                    className="absolute top-4 right-4 bg-pink-100 hover:bg-pink-200 text-pink-500 px-3 py-1 rounded-full text-xs font-bold transition-all"
+                                >
+                                    ▶
+                                </button>
+                            )}
+                        </motion.div>
+
+                        {/* NAME INPUT */}
+                        {phase === 'ASK_NAME' && (
                             <motion.div
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="mt-4 space-y-2"
+                                className="mt-3 flex gap-2"
                             >
-                                {segments[currentSegmentIndex].options.map((option, i) => (
-                                    <motion.button
-                                        key={i}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.1 }}
-                                        onClick={() => handleAnswer(option)}
-                                        className="w-full bg-white/90 hover:bg-pink-50 border-2 border-white hover:border-pink-300 p-4 rounded-xl text-left font-medium text-slate-700 shadow-md transition-all hover:scale-[1.02] active:scale-95"
-                                    >
-                                        {option}
-                                    </motion.button>
-                                ))}
+                                <input
+                                    type="text"
+                                    value={textInput}
+                                    onChange={e => setTextInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && submitName()}
+                                    placeholder="Enter your name..."
+                                    className="flex-1 bg-white/90 border-2 border-pink-200 rounded-xl px-4 py-3 text-slate-700 font-medium focus:outline-none focus:border-pink-400"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={submitName}
+                                    disabled={!textInput.trim()}
+                                    className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-bold transition-all"
+                                >
+                                    Confirm
+                                </button>
                             </motion.div>
                         )}
-                    </AnimatePresence>
-                </div>
-            )}
 
-            {/* SETUP SCREEN */}
-            <AnimatePresence>
-                {phase === 'SETUP' && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            className="bg-gradient-to-br from-pink-50 to-white border-4 border-pink-200 p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl"
-                        >
-                            <h1 className="text-4xl font-black text-pink-500 mb-2 text-center tracking-tight">
-                                Study Date 4000 💕
-                            </h1>
-                            <p className="mb-6 text-center text-gray-500">Learn anything with your study buddy Fahi!</p>
+                        {/* QUIZ OPTIONS */}
+                        <AnimatePresence>
+                            {phase === 'QUIZ' && segments[currentSegmentIndex] && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    className="mt-3 grid grid-cols-2 gap-2"
+                                >
+                                    {segments[currentSegmentIndex].options.map((option, i) => (
+                                        <motion.button
+                                            key={i}
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: i * 0.05 }}
+                                            onClick={() => handleAnswer(option)}
+                                            className="bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 p-3 rounded-xl text-left font-medium text-slate-700 text-sm transition-all active:scale-95"
+                                        >
+                                            {option}
+                                        </motion.button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-                            <label className="block text-sm font-bold text-slate-700 mb-1">What do you want to learn?</label>
-                            <input
-                                className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-300 text-slate-700"
-                                placeholder="e.g., Photosynthesis, JavaScript, World War II..."
-                                value={topic}
-                                onChange={e => setTopic(e.target.value)}
-                            />
-
-                            <label className="block text-sm font-bold text-slate-700 mb-1">Any specific goals? (Optional)</label>
-                            <textarea
-                                className="w-full p-3 rounded-xl border-2 border-pink-200 mb-6 h-24 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-300 text-slate-700 resize-none"
-                                placeholder="Paste notes, learning objectives, or leave blank..."
-                                value={goals}
-                                onChange={e => setGoals(e.target.value)}
-                            />
-
-                            <button
-                                onClick={handleStart}
-                                disabled={!topic.trim()}
-                                className="w-full py-4 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold text-xl rounded-xl transition-all shadow-lg active:scale-95 disabled:cursor-not-allowed"
+                        {/* TEXT INPUT FOR QUESTIONS */}
+                        {phase === 'TEXT_INPUT' && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-3 flex gap-2"
                             >
-                                Start Study Date 💖
-                            </button>
-                        </motion.div>
-                    </motion.div>
+                                <input
+                                    type="text"
+                                    value={textInput}
+                                    onChange={e => setTextInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleTextSubmit()}
+                                    placeholder="Type your answer..."
+                                    className="flex-1 bg-white/90 border-2 border-pink-200 rounded-xl px-4 py-3 text-slate-700 font-medium focus:outline-none focus:border-pink-400"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={handleTextSubmit}
+                                    disabled={!textInput.trim()}
+                                    className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-bold transition-all"
+                                >
+                                    Send
+                                </button>
+                            </motion.div>
+                        )}
+                    </div>
                 )}
-            </AnimatePresence>
 
-            {/* ENDING SCREEN */}
-            <AnimatePresence>
-                {phase === 'ENDING' && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/80"
-                    >
+                {/* SETUP MODAL */}
+                <AnimatePresence>
+                    {phase === 'SETUP' && (
                         <motion.div
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            className="text-center p-10"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm"
                         >
-                            <h1 className="text-6xl font-black text-white mb-6">
-                                {endingType === 'GOOD' && '💖 Perfect Study Date! 💖'}
-                                {endingType === 'NEUTRAL' && '📚 Study Complete!'}
-                                {endingType === 'BAD' && '💔 Date Over...'}
-                            </h1>
-                            <p className="text-2xl text-white/80 mb-8">
-                                {endingType === 'GOOD' && 'Fahi had an amazing time learning with you! She wants to see you again~'}
-                                {endingType === 'NEUTRAL' && 'You learned a lot! Maybe bring her flowers next time?'}
-                                {endingType === 'BAD' && 'Fahi got too frustrated and left... Better luck next time!'}
-                            </p>
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="bg-white text-pink-500 px-10 py-4 rounded-full font-bold text-xl hover:scale-110 transition-all shadow-xl"
+                            <motion.div
+                                initial={{ scale: 0.9, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                className="bg-white border-4 border-pink-300 p-6 rounded-2xl max-w-md w-[90%] shadow-2xl"
                             >
-                                Play Again?
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">What do you want to learn?</label>
+                                <input
+                                    className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 focus:outline-none focus:border-pink-400 text-slate-700"
+                                    placeholder="e.g., Photosynthesis, JavaScript..."
+                                    value={topic}
+                                    onChange={e => setTopic(e.target.value)}
+                                    autoFocus
+                                />
 
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Any notes or goals? (Optional)</label>
+                                <textarea
+                                    className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 h-20 focus:outline-none focus:border-pink-400 text-slate-700 resize-none"
+                                    placeholder="Paste notes here..."
+                                    value={goals}
+                                    onChange={e => setGoals(e.target.value)}
+                                />
+
+                                <button
+                                    onClick={handleStart}
+                                    disabled={!topic.trim()}
+                                    className="w-full py-3 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all"
+                                >
+                                    Let's Study! 💕
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* ENDING SCREEN */}
+                <AnimatePresence>
+                    {phase === 'ENDING' && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/80"
+                        >
+                            <motion.div
+                                initial={{ scale: 0.8 }}
+                                animate={{ scale: 1 }}
+                                className="text-center p-8"
+                            >
+                                <h1 className="text-5xl font-black text-white mb-4">
+                                    {endingType === 'GOOD' && '💖 Perfect Study Date! 💖'}
+                                    {endingType === 'NEUTRAL' && '📚 Study Complete!'}
+                                    {endingType === 'BAD' && '💔 Date Over...'}
+                                </h1>
+                                <p className="text-xl text-white/80 mb-6 max-w-md mx-auto">
+                                    {endingType === 'GOOD' && `Amazing, ${userName}! Fahi had the best time learning with you~`}
+                                    {endingType === 'NEUTRAL' && `Good job, ${userName}! Maybe bring flowers next time?`}
+                                    {endingType === 'BAD' && `Fahi got too frustrated and left... Try again, ${userName}?`}
+                                </p>
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="bg-white text-pink-500 px-8 py-3 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl"
+                                >
+                                    Play Again
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

@@ -10,6 +10,12 @@ import { UserProvider } from '@/context/UserContext';
 export default function GlobalLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith('/dashboard');
+  const isStudyDate = pathname?.startsWith('/play/study-date');
+
+  // StudyDate4000 has its own full-screen UI, no global elements
+  if (isStudyDate) {
+    return <UserProvider>{children}</UserProvider>;
+  }
 
   if (isDashboard) {
     return (
