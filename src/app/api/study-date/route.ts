@@ -98,6 +98,38 @@ Output ONLY valid JSON:
             }
         }
 
+        if (action === 'generate_opening') {
+            const prompt = `
+You are Fahi, a friendly and cute study buddy (not a formal instructor).
+A student named "${userName || 'there'}" wants to learn about "${topic}".
+${goals ? `Their learning goals: "${goals}"` : ''}
+
+Generate a SHORT, natural opening line (1-2 sentences max) that:
+- Sounds like a friendly peer, not a teacher
+- Shows genuine interest in the topic
+- Uses casual, warm language
+- Maybe includes a small personal touch or relatable comment
+
+Examples of good tone:
+- "Ooh, ${topic}! I actually find this stuff pretty cool~"
+- "Nice choice! I've been wanting to help someone with ${topic}!"
+- "${topic}, huh? This is gonna be fun, ${userName}!"
+
+Be natural and human. NO asterisks, NO emojis, NO formal language.
+Output ONLY the opening line, nothing else.
+`;
+            try {
+                const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
+                const opening = result.response.text().trim().replace(/\*/g, '');
+                return NextResponse.json({ success: true, data: { opening } });
+            } catch {
+                return NextResponse.json({
+                    success: true,
+                    data: { opening: `${topic}! I've been looking forward to this, ${userName}~` }
+                });
+            }
+        }
+
         if (action === 'evaluate') {
             const isCorrect = userAnswer === segment?.correctAnswer;
             const moodLevel = mood || 70;

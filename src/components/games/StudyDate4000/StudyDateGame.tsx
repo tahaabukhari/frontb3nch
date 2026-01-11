@@ -41,14 +41,34 @@ const SPRITES: Record<FahiEmotion, any> = {
     'explaining2': fahiHappyExplaining2,
     'happy-neutral': fahiHappyNeutral
 };
-
+// Minimal intro - the real intro is AI-generated after setup
 const INTRO_DIALOGUE = [
-    { text: "Hey there! Welcome to Study Date 4000.", emotion: 'happy' as FahiEmotion },
-    { text: "I'm Fahi, your study buddy. I'll help you learn any topic you want!", emotion: 'excited' as FahiEmotion },
-    { text: "We'll go through the material step by step, and I'll quiz you along the way.", emotion: 'happy-neutral' as FahiEmotion },
-    { text: "First, what's your name?", emotion: 'neutral' as FahiEmotion }
+    { text: "Hey! Welcome to Study Date!", emotion: 'happy' as FahiEmotion },
+    { text: "I'm Fahi, and I'll be your study buddy today~", emotion: 'excited' as FahiEmotion },
+    { text: "So... what are we learning today?", emotion: 'happy-neutral' as FahiEmotion }
 ];
 
+// Random feedback responses for variety
+const CORRECT_RESPONSES = [
+    "Nice one!", "You got it!", "Exactly right!", "Perfect!",
+    "That's it!", "Yep, you nailed it!", "Good job!", "Right on!"
+];
+const CORRECT_AFTER_STRUGGLE = [
+    "There we go! Finally!", "Took a bit but you got there!",
+    "See? You can do it!", "About time~ but good job!"
+];
+const WRONG_FIRST = [
+    "Hmm, not quite...", "That's not it~", "Nope, let me explain again.",
+    "Almost! But not exactly.", "Close, but no."
+];
+const WRONG_AGAIN = [
+    "Still not it...", "Wrong again~", "Try listening more carefully?",
+    "That's still wrong...", "Not that one either."
+];
+const WRONG_FRUSTRATED = [
+    "Seriously?!", "How are you still missing this?", "Come on...",
+    "This really shouldn't be this hard.", "Focus please!"
+];
 const TEXT_INPUT_LIMIT = 150;
 
 // Star particle component - appears above head like frustration
@@ -215,26 +235,26 @@ export default function StudyDateGame() {
     };
 
     const getFrustrationFeedback = (loopCount: number, isCorrect: boolean): { text: string; emotion: FahiEmotion } => {
+        const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
         if (isCorrect) {
             if (loopCount >= 3) {
-                return { text: `Finally! You got it, ${userName}.`, emotion: 'neutral' };
+                return { text: pick(CORRECT_AFTER_STRUGGLE), emotion: 'neutral' };
             } else if (loopCount >= 1) {
-                return { text: `There you go! Took a bit but you got it.`, emotion: 'happy' };
+                return { text: pick(CORRECT_AFTER_STRUGGLE), emotion: 'happy' };
             }
-            return { text: `Correct, ${userName}! That's exactly right.`, emotion: 'happy' };
+            return { text: pick(CORRECT_RESPONSES), emotion: 'happy' };
         }
 
         switch (loopCount) {
             case 0:
-                return { text: `Not quite, ${userName}. Let me go over that again.`, emotion: 'disappointed' };
+                return { text: pick(WRONG_FIRST), emotion: 'disappointed' };
             case 1:
-                return { text: `Wrong again. Let me try explaining it differently.`, emotion: 'disappointed' };
+                return { text: pick(WRONG_AGAIN), emotion: 'disappointed' };
             case 2:
-                return { text: `Still wrong... I'm going to try one more approach.`, emotion: 'neutral' };
-            case 3:
-                return { text: `${userName}... how are you still getting this wrong?`, emotion: 'mad' };
+                return { text: pick(WRONG_AGAIN), emotion: 'neutral' };
             default:
-                return { text: `I don't understand how this is so hard for you.`, emotion: 'mad' };
+                return { text: pick(WRONG_FRUSTRATED), emotion: 'mad' };
         }
     };
 
@@ -255,22 +275,49 @@ export default function StudyDateGame() {
             setIntroIndex(next);
             setCurrentText(INTRO_DIALOGUE[next].text);
             setEmotion(INTRO_DIALOGUE[next].emotion);
-        } else setPhase('ASK_NAME');
+        } else setPhase('SETUP'); // Go to topic setup first
     };
 
-    const submitName = () => {
+    const submitSetup = async () => {
+        if (!topic.trim()) return;
+        setPhase('ASK_NAME');
+        setCurrentText(`${topic}! That sounds interesting~ And what's your name?`);
+        setEmotion('excited');
+    };
+
+    const submitName = async () => {
         if (!textInput.trim()) return;
-        setUserName(textInput.trim());
+        const name = textInput.trim();
+        setUserName(name);
         setTextInput('');
-        setCurrentText(`Great to meet you, ${textInput.trim()}! What topic would you like to learn today?`);
-        setEmotion('happy');
-        setTimeout(() => setPhase('SETUP'), 100);
+        setPhase('LOADING');
+        setCurrentText('Give me a sec to prep everything...');
+        setEmotion('neutral');
+
+        // Generate dynamic AI opening
+        try {
+            const introResponse = await fetch('/api/study-date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'generate_opening', topic, goals, userName: name })
+            });
+            const introResult = await introResponse.json();
+
+            if (introResult.success && introResult.data?.opening) {
+                setCurrentText(introResult.data.opening);
+                setTextKey(prev => prev + 1);
+                setEmotion('happy');
+            }
+        } catch (e) {
+            setCurrentText(`Alright ${name}, let's dive into ${topic} together!`);
+        }
+
+        // Start curriculum generation after showing opening
+        setTimeout(() => handleStart(), 2500);
     };
 
     const handleStart = async () => {
-        if (!topic.trim()) return;
-        setPhase('LOADING');
-        setCurrentText(`${topic}! Great choice, ${userName}. Let me prepare the curriculum...`);
+        setCurrentText(`Okay, let me set up the lesson...`);
         setEmotion('excited');
 
         try {
@@ -819,12 +866,12 @@ export default function StudyDateGame() {
                             />
 
                             <button
-                                onClick={handleStart}
+                                onClick={submitSetup}
                                 disabled={!topic.trim()}
                                 className="w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all shadow-lg"
                                 style={{ padding: `${getSize(14, 16, 20)}px`, fontSize: `${getSize(15, 17, 20)}px` }}
                             >
-                                Let's Study! 💕
+                                Next 💕
                             </button>
                         </motion.div>
                     </motion.div>
