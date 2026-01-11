@@ -50,40 +50,49 @@ const INTRO_DIALOGUE = [
 
 const TEXT_INPUT_LIMIT = 150;
 
-// Star particle component
+// Star particle component - appears above head like frustration
 const StarBurst = ({ show }: { show: boolean }) => {
     if (!show) return null;
     return (
-        <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center">
-            {[...Array(8)].map((_, i) => (
-                <motion.div
-                    key={i}
-                    initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
-                    animate={{
-                        scale: [0, 1, 0.5],
-                        opacity: [1, 1, 0],
-                        x: Math.cos((i * 45) * Math.PI / 180) * 100,
-                        y: Math.sin((i * 45) * Math.PI / 180) * 100
-                    }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="absolute text-3xl"
-                >
-                    ⭐
-                </motion.div>
-            ))}
-        </div>
+        <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 0] }}
+            transition={{ duration: 1 }}
+            className="absolute -top-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+        >
+            <div className="relative">
+                {[...Array(5)].map((_, i) => (
+                    <motion.span
+                        key={i}
+                        initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
+                        animate={{
+                            scale: [0, 1, 0.8],
+                            opacity: [1, 1, 0],
+                            x: Math.cos((i * 72 - 90) * Math.PI / 180) * 40,
+                            y: Math.sin((i * 72 - 90) * Math.PI / 180) * 40
+                        }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className="absolute text-2xl"
+                        style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+                    >
+                        ⭐
+                    </motion.span>
+                ))}
+                <span className="text-4xl">✨</span>
+            </div>
+        </motion.div>
     );
 };
 
-// Frustration effect
+// Frustration effect - appears above head
 const FrustrationEffect = ({ show }: { show: boolean }) => {
     if (!show) return null;
     return (
         <motion.div
             initial={{ scale: 0, opacity: 0, y: 0 }}
-            animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 0], y: -50 }}
+            animate={{ scale: [0, 1.5, 1.2], opacity: [0, 1, 0], y: -30 }}
             transition={{ duration: 0.8 }}
-            className="absolute top-10 left-1/2 -translate-x-1/2 z-50 text-5xl pointer-events-none"
+            className="absolute -top-8 left-1/2 -translate-x-1/2 z-50 text-5xl pointer-events-none"
         >
             💢
         </motion.div>
@@ -360,10 +369,10 @@ export default function StudyDateGame() {
                 <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* FAHI - Centered (higher on mobile) */}
+            {/* FAHI - Centered (higher on mobile to leave room for dialogue below) */}
             <div
-                className="absolute inset-0 z-20 flex items-end justify-center pointer-events-none"
-                style={{ paddingBottom: isMobile ? '20vh' : '12vh' }}
+                className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                style={{ paddingBottom: isMobile ? '35vh' : '5vh' }}
             >
                 <div className="relative">
                     <motion.img
@@ -373,7 +382,7 @@ export default function StudyDateGame() {
                         animate={{ opacity: 1 }}
                         className="object-contain drop-shadow-2xl"
                         style={{
-                            height: isMobile ? '45vh' : '65vh',
+                            height: isMobile ? '40vh' : '65vh',
                             transform: 'scale(1.25)'
                         }}
                         alt="Fahi"
@@ -424,9 +433,9 @@ export default function StudyDateGame() {
                 </div>
             )}
 
-            {/* Mobile Bars - Lower position */}
+            {/* Mobile Bars - Top of screen above Fahi */}
             {showBars && isMobile && (
-                <div className="absolute bottom-24 left-4 right-4 z-30 flex justify-center gap-6">
+                <div className="absolute top-16 left-4 right-4 z-30 flex justify-center gap-4">
                     <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2">
                         <span className="text-white text-xs font-bold">CC</span>
                         <div className="w-20 h-3 bg-white/20 rounded-full overflow-hidden">
@@ -444,10 +453,10 @@ export default function StudyDateGame() {
                 </div>
             )}
 
-            {/* DIALOGUE BOX */}
+            {/* DIALOGUE BOX - Desktop: Right side, Mobile: Bottom under Fahi */}
             {showUI && (
                 <div
-                    className={`absolute z-30 ${isMobile ? 'bottom-4 left-4 right-4' : ''}`}
+                    className={`absolute z-30 ${isMobile ? 'bottom-4 left-3 right-3' : ''}`}
                     style={!isMobile ? {
                         right: 'calc(50% - 520px)',
                         bottom: '35vh',

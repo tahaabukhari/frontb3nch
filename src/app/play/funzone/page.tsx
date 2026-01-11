@@ -67,7 +67,8 @@ const ALL_GAMES = [
         description: 'Learn with Fahi!',
         color: 'from-pink-400 to-pink-600',
         tags: ['Visual Novel'],
-        emoji: '💖'
+        emoji: '💖',
+        cover: studyDateCover
     },
     ...Array.from({ length: 7 }).map((_, i) => ({
         id: i + 10,
@@ -322,7 +323,11 @@ export default function FunzonePage() {
                             >
                                 {/* Aspect Ratio Box for Image */}
                                 <div className="aspect-[16/9] w-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center relative overflow-hidden group-hover:brightness-110 transition-all">
-                                    <span className="text-5xl group-hover:scale-125 transition-transform duration-300 drop-shadow-lg">{game.emoji}</span>
+                                    {(game as any).cover ? (
+                                        <img src={(game as any).cover.src} alt={game.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-5xl group-hover:scale-125 transition-transform duration-300 drop-shadow-lg">{game.emoji}</span>
+                                    )}
                                     {/* Play Overlay */}
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                         <div className="bg-blue-600 p-3 rounded-full text-white shadow-lg transform scale-0 group-hover:scale-100 transition-transform">
@@ -366,7 +371,11 @@ export default function FunzonePage() {
                             {/* Modal Header/Art */}
                             <div className={`h-64 bg-gradient-to-r ${selectedGame.color || 'from-gray-800 to-black'} relative`}>
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-[100px] drop-shadow-2xl animate-bounce-slow">{selectedGame.emoji}</div>
+                                    {(selectedGame as any).cover ? (
+                                        <img src={(selectedGame as any).cover.src} alt={selectedGame.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="text-[100px] drop-shadow-2xl animate-bounce-slow">{selectedGame.emoji}</div>
+                                    )}
                                 </div>
 
                                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-[#161b2e] to-transparent" />
