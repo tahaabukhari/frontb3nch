@@ -71,7 +71,8 @@ const ALL_GAMES = [
         color: 'from-pink-400 to-pink-600',
         tags: ['Visual Novel'],
         emoji: '💖',
-        cover: studyDateCoverMini
+        cover: studyDateCoverMini,
+        coverPreview: studyDateCoverPreview
     },
     ...Array.from({ length: 7 }).map((_, i) => ({
         id: i + 10,

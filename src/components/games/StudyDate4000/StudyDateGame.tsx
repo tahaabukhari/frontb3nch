@@ -369,10 +369,10 @@ export default function StudyDateGame() {
                 <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* FAHI - Centered */}
+            {/* FAHI - Mobile: vertical center, Desktop: slightly above center */}
             <div
                 className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-                style={{ paddingBottom: isMobile ? '30vh' : '5vh', marginTop: isMobile ? '0' : '0' }}
+                style={{ paddingBottom: isMobile ? '0' : '5vh' }}
             >
                 <div className="relative">
                     <motion.img
@@ -453,11 +453,11 @@ export default function StudyDateGame() {
                 </div>
             )}
 
-            {/* DIALOGUE BOX - Desktop: Right side, Mobile: Bottom with 20px gap */}
+            {/* DIALOGUE BOX - Desktop: Right side, Mobile: 30px below Fahi */}
             {showUI && (
                 <div
                     className={`absolute z-30 ${isMobile ? 'left-3 right-3' : ''}`}
-                    style={isMobile ? { bottom: '20px' } : {
+                    style={isMobile ? { top: 'calc(50% + 30px)', transform: 'translateY(0)' } : {
                         right: 'calc(50% - 520px)',
                         bottom: '30vh',
                         width: `${getSize(300, 340, 400)}px`
