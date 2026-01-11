@@ -121,6 +121,7 @@ export default function StudyDateGame() {
     const [failCount, setFailCount] = useState(0); // Track failures per segment
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [textKey, setTextKey] = useState(0); // Force re-render of typewriter
 
     // Effect states
     const [showStars, setShowStars] = useState(false);
@@ -146,7 +147,7 @@ export default function StudyDateGame() {
         return screenSize === 'sm' ? sm : screenSize === 'md' ? md : lg;
     };
 
-    // Typewriter - Fixed index bug
+    // Typewriter - Fixed index bug, uses textKey to force re-trigger
     useEffect(() => {
         if (!currentText) { setDisplayedText(''); return; }
         setIsTyping(true);
@@ -164,7 +165,7 @@ export default function StudyDateGame() {
             }
         }, 20);
         return () => clearInterval(interval);
-    }, [currentText]);
+    }, [currentText, textKey]);
 
     const getCurrentSprite = () => {
         if (phase === 'TEACHING') return explainFrame === 0 ? SPRITES['explaining'] : SPRITES['explaining2'];
@@ -388,6 +389,7 @@ export default function StudyDateGame() {
                 setDialogueIndex(0);
                 setExplainFrame(0);
                 setCurrentText(newExplanation[0]);
+                setTextKey(prev => prev + 1); // Force typewriter to restart
                 setPhase('TEACHING');
             }
         }, 2000);
