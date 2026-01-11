@@ -230,9 +230,9 @@ export default function FunzonePage() {
                                         transition={{ delay: 0.2, type: "spring" }}
                                         className="relative z-10 filter drop-shadow-2xl w-full h-full flex items-center justify-center"
                                     >
-                                        {((TOP_GAMES[currentIndex] as any).coverPreview || (TOP_GAMES[currentIndex] as any).cover) ? (
+                                        {(TOP_GAMES[currentIndex] as any).cover ? (
                                             <img
-                                                src={((TOP_GAMES[currentIndex] as any).coverPreview || (TOP_GAMES[currentIndex] as any).cover).src}
+                                                src={(TOP_GAMES[currentIndex] as any).cover.src}
                                                 className="w-full h-full object-cover opacity-90 transition-transform duration-700 hover:scale-110"
                                                 alt="Game Cover"
                                             />
