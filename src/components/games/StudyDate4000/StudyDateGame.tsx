@@ -118,6 +118,7 @@ export default function StudyDateGame() {
     const [goals, setGoals] = useState('');
     const [textInput, setTextInput] = useState('');
     const [explainFrame, setExplainFrame] = useState(0);
+    const [failCount, setFailCount] = useState(0); // Track failures per segment
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
@@ -170,6 +171,71 @@ export default function StudyDateGame() {
         return SPRITES[emotion] || SPRITES['happy-neutral'];
     };
 
+    // Generate frustration-based explanations
+    const getFrustrationExplanation = (topicName: string, loopCount: number): string[] => {
+        switch (loopCount) {
+            case 0: // Normal
+                return [
+                    `Let's learn about ${topicName}.`,
+                    `This is an important concept you'll want to understand well.`,
+                    `The key point here is to focus on the fundamentals first.`,
+                    `Alright, let me check if you got that!`
+                ];
+            case 1: // Simpler, like explaining to someone slow
+                return [
+                    `Okay, let me explain ${topicName} in a simpler way.`,
+                    `Think of it like this... just the basics, nothing complicated.`,
+                    `The MOST important thing is just understanding the foundation. That's it.`,
+                    `Let's try this again. You can do it.`
+                ];
+            case 2: // Confused and irritated
+                return [
+                    `${topicName}... again. Let me try a different approach.`,
+                    `I'm not sure what's confusing here, but let me break it down even more.`,
+                    `Look, the fundamentals are the base. Everything else builds on that. Simple.`,
+                    `Okay... let's see if this time works.`
+                ];
+            case 3: // Degrading
+                return [
+                    `Alright ${userName}, ${topicName} one more time...`,
+                    `I've explained this multiple times now. It's really not that hard.`,
+                    `Just remember: fundamentals first. That's literally all you need to know.`,
+                    `Please get it right this time.`
+                ];
+            default: // 4+ loops - Just mad
+                return [
+                    `${topicName}. Again.`,
+                    `I don't know how else to explain this.`,
+                    `Fundamentals. First. Always. How is this so difficult?`,
+                    `Just... try again.`
+                ];
+        }
+    };
+
+    const getFrustrationFeedback = (loopCount: number, isCorrect: boolean): { text: string; emotion: FahiEmotion } => {
+        if (isCorrect) {
+            if (loopCount >= 3) {
+                return { text: `Finally! You got it, ${userName}.`, emotion: 'neutral' };
+            } else if (loopCount >= 1) {
+                return { text: `There you go! Took a bit but you got it.`, emotion: 'happy' };
+            }
+            return { text: `Correct, ${userName}! That's exactly right.`, emotion: 'happy' };
+        }
+
+        switch (loopCount) {
+            case 0:
+                return { text: `Not quite, ${userName}. Let me go over that again.`, emotion: 'disappointed' };
+            case 1:
+                return { text: `Wrong again. Let me try explaining it differently.`, emotion: 'disappointed' };
+            case 2:
+                return { text: `Still wrong... I'm going to try one more approach.`, emotion: 'neutral' };
+            case 3:
+                return { text: `${userName}... how are you still getting this wrong?`, emotion: 'mad' };
+            default:
+                return { text: `I don't understand how this is so hard for you.`, emotion: 'mad' };
+        }
+    };
+
     const generateSegments = (baseTopic: string): Segment[] => {
         const subtopics = [
             `Introduction to ${baseTopic}`, `Core Concepts of ${baseTopic}`, `${baseTopic} Fundamentals`,
@@ -180,12 +246,7 @@ export default function StudyDateGame() {
         ];
         const inputIndices = [1, 4, 7, 10, 13];
         return subtopics.map((topicName, i) => ({
-            explanation: [
-                `Let's learn about ${topicName}.`,
-                `This is an important concept you'll want to understand well.`,
-                `The key point here is to focus on the fundamentals first.`,
-                `Alright, let me check if you got that!`
-            ],
+            explanation: getFrustrationExplanation(topicName, 0),
             question: inputIndices.includes(i)
                 ? `In your own words, explain what you understand about ${topicName}:`
                 : `What's the most important aspect of ${topicName}?`,
@@ -284,16 +345,16 @@ export default function StudyDateGame() {
         setPhase('FEEDBACK');
         const isCorrect = answer === segment.correctAnswer;
 
+        const feedback = getFrustrationFeedback(failCount, isCorrect);
+        setCurrentText(feedback.text);
+        setEmotion(feedback.emotion);
+
         if (isCorrect) {
-            setCurrentText(`Correct, ${userName}! That's exactly right.`);
-            setEmotion('happy');
             setMood(prev => Math.min(100, prev + 5));
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
             setShowStars(true);
             setTimeout(() => setShowStars(false), 1000);
         } else {
-            setCurrentText(`Not quite, ${userName}. Let me go over that again.`);
-            setEmotion('disappointed');
             setMood(prev => Math.max(0, prev - 10));
             setShowFrustration(true);
             setTimeout(() => setShowFrustration(false), 1000);
@@ -302,6 +363,8 @@ export default function StudyDateGame() {
         setTimeout(() => {
             if (mood <= 10) { setEndingType('BAD'); setPhase('ENDING'); return; }
             if (isCorrect) {
+                // Reset fail count and move to next segment
+                setFailCount(0);
                 const next = currentSegmentIndex + 1;
                 if (next >= segments.length) {
                     setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
@@ -314,9 +377,17 @@ export default function StudyDateGame() {
                     setPhase('TEACHING');
                 }
             } else {
+                // Increment fail count and regenerate explanation with new tone
+                const newFailCount = failCount + 1;
+                setFailCount(newFailCount);
+                const newExplanation = getFrustrationExplanation(segment.topicName, newFailCount);
+                // Update the segment with new explanation
+                setSegments(prev => prev.map((s, i) =>
+                    i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
+                ));
                 setDialogueIndex(0);
                 setExplainFrame(0);
-                setCurrentText(segment.explanation[0]);
+                setCurrentText(newExplanation[0]);
                 setPhase('TEACHING');
             }
         }, 2000);
