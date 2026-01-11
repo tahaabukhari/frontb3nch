@@ -31,26 +31,27 @@ Topic: ${topic}
 ${clos ? `Learning Objectives (CLOs): ${clos}` : ''}
 ${notes ? `Study Notes: ${notes}` : ''}
 
-Create a teaching curriculum with 4-5 subsections based on the CLOs.
-This is a CONVERSATION - Fahi is teaching like a friendly study buddy.
-
-IMPORTANT: 
-- NO multiple choice options (A, B, C, D)
-- ALL questions should be open-ended, conversational
-- Questions should prompt the student to EXPLAIN in their own words
+Create a teaching curriculum with 5 subsections.
+Structure: First 3-4 subsections have MULTIPLE CHOICE questions, last 1-2 have OPEN-ENDED questions.
 
 For EACH subsection provide:
 1. title: Short subsection name (3-5 words)
 2. explanation: Array of 3-4 SHORT teaching sentences (under 70 chars each)
-   - Be conversational, use "you" and casual language
-   - Actually teach the concept, don't just list topics
-3. question: An open-ended question like "Can you explain...?" or "What do you think...?"
-4. expectedAnswer: A brief summary of what a good answer would include (for AI evaluation)
+   - Be conversational, casual, friendly
+   - Actually teach the concept clearly
+3. question: A question testing this subsection
+4. isTextInput: false for first 3-4, true for last 1-2
+5. options: Array of 4 choices (ONLY if isTextInput is false)
+   - Natural language options, NOT "A) B) C) D)"
+   - Just the answer text itself
+6. correctAnswer: The exact correct option string (if MCQ)
+7. expectedAnswer: What a good text answer should include (if text input)
 
 RULES:
-- Make it sound like a friend explaining, not a textbook
-- Each subsection should cover one CLO if CLOs are provided
-- NO asterisks, NO emojis, NO formal language
+- Sound like a friend, not a textbook
+- MCQ options should be natural phrases, not lettered
+- Each explanation line under 70 characters
+- NO asterisks, NO emojis, NO JSON in displayed text
 
 Output ONLY valid JSON:
 {
@@ -59,13 +60,22 @@ Output ONLY valid JSON:
     {
       "id": 1,
       "title": "Subsection Name",
-      "explanation": [
-        "So basically, this concept is about...",
-        "The way it works is pretty simple.",
-        "Think of it like... [example]"
-      ],
-      "question": "Can you explain what X means in your own words?",
-      "expectedAnswer": "Should mention Y and Z concepts"
+      "explanation": ["First point...", "Second point...", "Third point..."],
+      "question": "What describes X best?",
+      "isTextInput": false,
+      "options": ["First option", "Second option", "Third option", "Fourth option"],
+      "correctAnswer": "First option",
+      "expectedAnswer": ""
+    },
+    {
+      "id": 5,
+      "title": "Final Review",
+      "explanation": ["Wrapping up...", "Remember that...", "The key is..."],
+      "question": "In your own words, explain X?",
+      "isTextInput": true,
+      "options": [],
+      "correctAnswer": "",
+      "expectedAnswer": "Should mention concept Y and Z"
     }
   ]
 }

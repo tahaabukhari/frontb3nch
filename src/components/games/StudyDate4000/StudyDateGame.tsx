@@ -146,6 +146,22 @@ export default function StudyDateGame() {
     const [isTyping, setIsTyping] = useState(false);
     const [textKey, setTextKey] = useState(0); // Force re-render of typewriter
 
+    // Track answers for ending summary
+    const [correctAnswers, setCorrectAnswers] = useState<string[]>([]);
+    const [mistakes, setMistakes] = useState<{ topic: string; userAnswer: string; correct: string }[]>([]);
+    const [waitingForClick, setWaitingForClick] = useState(false); // Require user click to proceed
+
+    // Sanitize text to remove JSON artifacts
+    const sanitizeText = (text: string): string => {
+        return text
+            .replace(/```json/gi, '')
+            .replace(/```/g, '')
+            .replace(/^\s*\{[\s\S]*\}\s*$/g, '') // Remove pure JSON objects
+            .replace(/\*\*/g, '')
+            .replace(/\*/g, '')
+            .trim();
+    };
+
     // Effect states
     const [showStars, setShowStars] = useState(false);
     const [showFrustration, setShowFrustration] = useState(false);
@@ -333,16 +349,18 @@ export default function StudyDateGame() {
             if (result.success && result.data?.subsections?.length > 0) {
                 const curriculum = result.data.subsections.map((sub: any) => ({
                     id: sub.id,
-                    title: sub.title,
-                    explanation: sub.explanation || [`So let's talk about ${sub.title}.`, 'This is pretty important.', 'Once you get this, the rest makes sense.'],
-                    question: sub.question,
-                    options: [], // No MCQ options - all conversational
-                    correctAnswer: sub.expectedAnswer || '',
-                    isTextInput: true // All questions are text input now
+                    title: sanitizeText(sub.title || ''),
+                    explanation: (sub.explanation || [`So let's talk about this.`, 'This is pretty important.', 'Once you get this, the rest makes sense.']).map(sanitizeText),
+                    question: sanitizeText(sub.question || ''),
+                    options: sub.options || [],
+                    correctAnswer: sub.correctAnswer || sub.expectedAnswer || '',
+                    isTextInput: sub.isTextInput === true
                 }));
                 setSegments(curriculum);
                 setCurrentSegmentIndex(0);
                 setDialogueIndex(0);
+                setCorrectAnswers([]);
+                setMistakes([]);
                 // Show first subsection title (user clicks to see explanations)
                 const first = curriculum[0];
                 setCurrentText(`Alright, let's start with ${first.title}!`);
@@ -352,15 +370,17 @@ export default function StudyDateGame() {
             }
         } catch (e) {
             console.error('Curriculum generation error:', e);
-            // Fallback with explanations - all text input
+            // Fallback with mixed MCQ and text input
             const fallback: Segment[] = [
-                { id: 1, title: `${topic} Basics`, explanation: [`So ${topic} - let's start simple.`, `The basics are actually pretty straightforward.`, `Once you get this part, everything else builds on it.`], question: `Can you tell me what you understand about ${topic} so far?`, options: [], correctAnswer: 'Understanding the fundamentals', isTextInput: true },
-                { id: 2, title: `${topic} In Depth`, explanation: [`Now let's go a bit deeper.`, `This part connects to what we just talked about.`, `Think about how this applies in real life.`], question: `How would you explain this concept to a friend?`, options: [], correctAnswer: '', isTextInput: true },
-                { id: 3, title: `${topic} Application`, explanation: [`Okay, let's see how this is actually used.`, `Real-world examples help make it click.`, `This is where it gets interesting.`], question: `What do you think is the most useful part of ${topic}?`, options: [], correctAnswer: 'Practice and application', isTextInput: true }
+                { id: 1, title: `${topic} Basics`, explanation: [`So ${topic} - let's start simple.`, `The basics are pretty straightforward.`, `Once you get this, everything else builds on it.`], question: `What's the most important thing about ${topic}?`, options: ['Understanding the fundamentals', 'Memorizing everything', 'Skipping to advanced topics', 'Guessing randomly'], correctAnswer: 'Understanding the fundamentals', isTextInput: false },
+                { id: 2, title: `${topic} Core Concepts`, explanation: [`Now for the core ideas.`, `This connects to what we just covered.`, `Think about why this matters.`], question: `Which approach helps most with learning?`, options: ['Practice regularly', 'Cram before tests', 'Avoid difficult parts', 'Only read notes'], correctAnswer: 'Practice regularly', isTextInput: false },
+                { id: 3, title: `${topic} In Depth`, explanation: [`Let's go a bit deeper now.`, `This part is where it gets interesting.`, `Real examples help make it click.`], question: `How would you explain ${topic} to a friend?`, options: [], correctAnswer: '', isTextInput: true }
             ];
             setSegments(fallback);
             setCurrentSegmentIndex(0);
             setDialogueIndex(0);
+            setCorrectAnswers([]);
+            setMistakes([]);
             setCurrentText(`Let's start with ${fallback[0].title}!`);
             setPhase('TEACHING');
         }
@@ -372,17 +392,18 @@ export default function StudyDateGame() {
         if (!segment) return;
 
         // dialogueIndex 0 = showing title, 1+ = showing explanations
-        // After all explanations, show question as text input
+        // After all explanations, show question
         if (dialogueIndex < segment.explanation.length) {
-            // Show next explanation
-            setCurrentText(segment.explanation[dialogueIndex]);
+            // Show next explanation (sanitized)
+            setCurrentText(sanitizeText(segment.explanation[dialogueIndex]));
             setDialogueIndex(dialogueIndex + 1);
             setExplainFrame(prev => (prev + 1) % 2);
         } else {
-            // Done with explanations, show question (always text input now)
-            setCurrentText(segment.question);
+            // Done with explanations, show question
+            setCurrentText(sanitizeText(segment.question));
             setEmotion('happy-neutral');
-            setPhase('TEXT_INPUT'); // All questions are conversational text input
+            // MCQ for segments with options, TEXT_INPUT for open-ended
+            setPhase(segment.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
         }
     };
 
@@ -393,7 +414,7 @@ export default function StudyDateGame() {
         const isCorrect = answer === segment.correctAnswer;
 
         const feedback = getFrustrationFeedback(failCount, isCorrect);
-        setCurrentText(feedback.text);
+        setCurrentText(sanitizeText(feedback.text));
         setEmotion(feedback.emotion);
 
         if (isCorrect) {
@@ -401,27 +422,37 @@ export default function StudyDateGame() {
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
             setShowStars(true);
             setTimeout(() => setShowStars(false), 1000);
+            // Track correct answer
+            setCorrectAnswers(prev => [...prev, segment.title]);
         } else {
             setMood(prev => Math.max(0, prev - 10));
             setShowFrustration(true);
             setTimeout(() => setShowFrustration(false), 1000);
+            // Track mistake
+            setMistakes(prev => [...prev, { topic: segment.title, userAnswer: answer, correct: segment.correctAnswer }]);
         }
 
+        // Wait for user to click to proceed
+        setWaitingForClick(true);
         setTimeout(async () => {
+            setWaitingForClick(false);
             if (mood <= 10) { setEndingType('BAD'); setPhase('ENDING'); return; }
             if (isCorrect) {
                 // Reset fail count and move to next segment
                 setFailCount(0);
                 const next = currentSegmentIndex + 1;
                 if (next >= segments.length) {
-                    setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
-                    setPhase('ENDING');
+                    // Go to final quiz
+                    setFinalQuizIndex(0);
+                    setCurrentText(`Nice! That covers all the main parts. Now let's do a quick review~`);
+                    setEmotion('excited');
+                    setPhase('FINAL_QUIZ');
                 } else {
-                    // Move to next segment - show title first, user clicks to see explanations
+                    // Move to next segment
                     setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
-                    setCurrentText(`Next topic: ${segments[next].title}`);
+                    setCurrentText(`Next up: ${segments[next].title}`);
                     setPhase('TEACHING');
                 }
             } else {
@@ -429,7 +460,7 @@ export default function StudyDateGame() {
                 const newFailCount = failCount + 1;
                 setFailCount(newFailCount);
 
-                // Call API for AI-generated frustrated re-explanation
+                // Call API for AI-generated re-explanation
                 try {
                     const response = await fetch('/api/study-date', {
                         method: 'POST',
@@ -447,36 +478,28 @@ export default function StudyDateGame() {
                     const result = await response.json();
 
                     if (result.success && result.data?.explanation) {
-                        const lines = result.data.explanation;
-                        // Store re-explanation and show first line - user clicks to continue
+                        const lines = result.data.explanation.map(sanitizeText);
+                        // Store re-explanation - user clicks to continue
                         setSegments(prev => prev.map((s, i) =>
                             i === currentSegmentIndex ? { ...s, explanation: lines } : s
                         ));
                         setDialogueIndex(0);
-                        setCurrentText(lines[0] || 'Wrong. Let me explain again.');
+                        setCurrentText(lines[0] || 'Let me explain that again.');
                         setTextKey(prev => prev + 1);
                         if (result.data.emotion) {
                             setEmotion(result.data.emotion as FahiEmotion);
                         }
-                        setPhase('TEACHING'); // User clicks to advance through re-explanation
+                        setPhase('TEACHING'); // User clicks to advance
                     } else {
-                        // Fallback - show feedback then go to TEACHING
-                        setCurrentText(`Wrong. The answer was "${segment.correctAnswer}".`);
+                        // Fallback - show correct answer then retry
+                        setCurrentText(`The correct answer was: ${segment.correctAnswer}`);
                         setTextKey(prev => prev + 1);
-                        setTimeout(() => {
-                            setCurrentText(segment.question);
-                            setPhase(segment.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
-                        }, 2000);
+                        setWaitingForClick(true);
                     }
                 } catch (error) {
                     console.error('Re-explain API error:', error);
-                    // Fallback - go straight to question
-                    setCurrentText(`Wrong. Try again.`);
+                    setCurrentText(`The answer was: ${segment.correctAnswer}. Let's try again.`);
                     setTextKey(prev => prev + 1);
-                    setTimeout(() => {
-                        setCurrentText(segment.question);
-                        setPhase(segment.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
-                    }, 1500);
                 }
             }
         }, 2000);
@@ -982,25 +1005,64 @@ export default function StudyDateGame() {
             {/* ENDING */}
             <AnimatePresence>
                 {phase === 'ENDING' && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-                        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center">
-                            <h1 className="font-black text-white mb-3" style={{ fontSize: `${getSize(28, 40, 52)}px` }}>
-                                {endingType === 'GOOD' && '💖 Perfect! 💖'}
-                                {endingType === 'NEUTRAL' && '📚 Complete!'}
-                                {endingType === 'BAD' && '💔 Over...'}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4 overflow-y-auto">
+                        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center max-w-lg w-full">
+                            <h1 className="font-black text-white mb-3" style={{ fontSize: `${getSize(24, 36, 44)}px` }}>
+                                {endingType === 'GOOD' && '💖 Amazing Work! 💖'}
+                                {endingType === 'NEUTRAL' && '📚 Session Complete!'}
+                                {endingType === 'BAD' && '💔 Study Session Over'}
                             </h1>
-                            <p className="text-white/80 mb-5 max-w-sm mx-auto" style={{ fontSize: `${getSize(14, 18, 22)}px` }}>
-                                {endingType === 'GOOD' && `Amazing, ${userName}! Fahi had the best time~`}
-                                {endingType === 'NEUTRAL' && `Good job, ${userName}! Maybe next time?`}
-                                {endingType === 'BAD' && `Fahi left... Try again, ${userName}?`}
+                            <p className="text-white/80 mb-4" style={{ fontSize: `${getSize(13, 16, 18)}px` }}>
+                                {endingType === 'GOOD' && `Perfect session, ${userName}! You nailed it~`}
+                                {endingType === 'NEUTRAL' && `Good effort, ${userName}! Keep practicing.`}
+                                {endingType === 'BAD' && `${userName}, let's try again sometime.`}
                             </p>
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="bg-white text-pink-500 rounded-full font-bold hover:scale-105 transition-all shadow-xl"
-                                style={{ padding: `${getSize(12, 14, 18)}px ${getSize(24, 30, 40)}px`, fontSize: `${getSize(14, 18, 22)}px` }}
-                            >
-                                Play Again
-                            </button>
+
+                            {/* Summary Box */}
+                            <div className="bg-white/10 backdrop-blur rounded-xl p-4 mb-4 text-left" style={{ fontSize: `${getSize(12, 14, 16)}px` }}>
+                                <h3 className="text-green-400 font-bold mb-2">✅ Topics Covered ({correctAnswers.length})</h3>
+                                {correctAnswers.length > 0 ? (
+                                    <ul className="text-white/70 mb-4 space-y-1">
+                                        {correctAnswers.map((topic, i) => (
+                                            <li key={i}>• {topic}</li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-white/50 mb-4">No correct answers yet</p>
+                                )}
+
+                                <h3 className="text-red-400 font-bold mb-2">❌ Mistakes Made ({mistakes.length})</h3>
+                                {mistakes.length > 0 ? (
+                                    <ul className="text-white/70 space-y-2">
+                                        {mistakes.map((m, i) => (
+                                            <li key={i} className="bg-red-500/10 rounded p-2">
+                                                <div className="font-medium">{m.topic}</div>
+                                                <div className="text-red-300 text-xs">You said: {m.userAnswer}</div>
+                                                <div className="text-green-300 text-xs">Correct: {m.correct}</div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-green-400/70">No mistakes! 🎉</p>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3 justify-center">
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="bg-white text-pink-500 rounded-full font-bold hover:scale-105 transition-all shadow-xl"
+                                    style={{ padding: `${getSize(10, 12, 16)}px ${getSize(20, 26, 34)}px`, fontSize: `${getSize(13, 16, 18)}px` }}
+                                >
+                                    Study Again
+                                </button>
+                                <button
+                                    onClick={handleExit}
+                                    className="bg-pink-500 text-white rounded-full font-bold hover:scale-105 transition-all"
+                                    style={{ padding: `${getSize(10, 12, 16)}px ${getSize(20, 26, 34)}px`, fontSize: `${getSize(13, 16, 18)}px` }}
+                                >
+                                    Exit
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
