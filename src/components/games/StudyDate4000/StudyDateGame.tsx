@@ -382,10 +382,6 @@ export default function StudyDateGame() {
                 const newFailCount = failCount + 1;
                 setFailCount(newFailCount);
 
-                // Show loading state
-                setCurrentText('Let me think about how to explain this differently...');
-                setPhase('TEACHING');
-
                 // Call API for AI-generated frustrated re-explanation
                 try {
                     const response = await fetch('/api/study-date', {
@@ -396,46 +392,53 @@ export default function StudyDateGame() {
                             topicName: segment.topicName,
                             failCount: newFailCount,
                             previousAnswer: answer,
-                            correctAnswer: segment.correctAnswer
+                            correctAnswer: segment.correctAnswer,
+                            userName
                         })
                     });
 
                     const result = await response.json();
 
                     if (result.success && result.data?.explanation) {
-                        const newExplanation = result.data.explanation;
-                        setSegments(prev => prev.map((s, i) =>
-                            i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
-                        ));
-                        setDialogueIndex(0);
-                        setExplainFrame(0);
-                        setCurrentText(newExplanation[0]);
+                        const lines = result.data.explanation;
+                        // Show first line (reaction)
+                        setCurrentText(lines[0] || 'Wrong.');
                         setTextKey(prev => prev + 1);
                         if (result.data.emotion) {
                             setEmotion(result.data.emotion as FahiEmotion);
                         }
+
+                        // After a pause, show second line then immediately go to question
+                        setTimeout(() => {
+                            if (lines[1]) {
+                                setCurrentText(lines[1]);
+                                setTextKey(prev => prev + 1);
+                            }
+                            // Go directly to question after brief delay
+                            setTimeout(() => {
+                                setCurrentText(segment.question);
+                                setEmotion('neutral');
+                                setPhase(segment.requiresTextInput ? 'TEXT_INPUT' : 'QUIZ');
+                            }, 1500);
+                        }, 1500);
                     } else {
-                        // Fallback to preset if API fails
-                        const newExplanation = getFrustrationExplanation(segment.topicName, newFailCount);
-                        setSegments(prev => prev.map((s, i) =>
-                            i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
-                        ));
-                        setDialogueIndex(0);
-                        setExplainFrame(0);
-                        setCurrentText(newExplanation[0]);
+                        // Fallback - go straight to question with brief feedback
+                        setCurrentText(`Wrong. The answer was "${segment.correctAnswer}".`);
                         setTextKey(prev => prev + 1);
+                        setTimeout(() => {
+                            setCurrentText(segment.question);
+                            setPhase(segment.requiresTextInput ? 'TEXT_INPUT' : 'QUIZ');
+                        }, 2000);
                     }
                 } catch (error) {
                     console.error('Re-explain API error:', error);
-                    // Fallback to preset
-                    const newExplanation = getFrustrationExplanation(segment.topicName, newFailCount);
-                    setSegments(prev => prev.map((s, i) =>
-                        i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
-                    ));
-                    setDialogueIndex(0);
-                    setExplainFrame(0);
-                    setCurrentText(newExplanation[0]);
+                    // Fallback - go straight to question
+                    setCurrentText(`Wrong. Try again.`);
                     setTextKey(prev => prev + 1);
+                    setTimeout(() => {
+                        setCurrentText(segment.question);
+                        setPhase(segment.requiresTextInput ? 'TEXT_INPUT' : 'QUIZ');
+                    }, 1500);
                 }
             }
         }, 2000);

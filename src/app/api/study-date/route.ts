@@ -132,67 +132,66 @@ Output ONLY this JSON:
         }
 
         if (action === 're_explain') {
-            const { topicName, failCount: loopCount, previousAnswer, correctAnswer } = body;
+            const { topicName, failCount: loopCount, previousAnswer, correctAnswer, userName: studentName } = body;
 
-            let toneInstruction = '';
-            let emotionHint = 'neutral';
+            const toneDescriptions: Record<number, { tone: string; emotion: string }> = {
+                1: { tone: 'slightly concerned, patient, use simpler words', emotion: 'neutral' },
+                2: { tone: 'a bit frustrated, simplify even more, show mild irritation', emotion: 'disappointed' },
+                3: { tone: 'clearly annoyed, condescending, make it obvious', emotion: 'disappointed' },
+                4: { tone: 'mad, curt, question their effort, very direct', emotion: 'mad' }
+            };
 
-            switch (loopCount) {
-                case 1:
-                    toneInstruction = 'Explain this topic in a SIMPLER way. Use basic terms and analogies. Be patient but a bit concerned they didnt get it.';
-                    emotionHint = 'concerned';
-                    break;
-                case 2:
-                    toneInstruction = 'You are getting slightly irritated. Explain it VERY simply, almost like explaining to a child. Show some confusion about why they dont understand.';
-                    emotionHint = 'confused';
-                    break;
-                case 3:
-                    toneInstruction = 'You are frustrated now. Be a bit condescending. Make it VERY obvious what the answer should be. Question their intelligence subtly.';
-                    emotionHint = 'frustrated';
-                    break;
-                default:
-                    toneInstruction = 'You are MAD. Be curt, direct, and slightly insulting. Make it stupidly simple. Show your annoyance clearly.';
-                    emotionHint = 'mad';
-            }
+            const { tone, emotion } = toneDescriptions[Math.min(loopCount, 4)];
 
             const prompt = `
-Topic to explain: "${topicName}"
-The user got the previous question WRONG. Their answer was: "${previousAnswer}"
-The correct answer was: "${correctAnswer}"
-This is attempt #${loopCount + 1} explaining this topic.
+You are Fahi, a tutor who is getting ${tone}.
 
-${toneInstruction}
+Topic: "${topicName}"
+Student "${studentName || 'the student'}" answered: "${previousAnswer}" 
+Correct answer was: "${correctAnswer}"
+Failed attempts: ${loopCount}
 
-Generate 4 SHORT explanation lines (under 60 chars each) that:
-1. Acknowledge they got it wrong (with ${emotionHint} tone)
-2. Re-explain the concept with new wording
-3. Emphasize the key point differently
-4. Lead into the question again
+Generate EXACTLY 2 unique lines (not 4):
+1. A brief reaction to them being wrong (${tone} tone)
+2. A fresh way to explain WHY "${correctAnswer}" is correct
 
-NO asterisks, NO emojis, NO roleplay actions.
+RULES:
+- Each line under 50 characters
+- NO asterisks, NO emojis, NO actions like *sighs*
+- Be direct, no fluff
+- Make each line feel like natural speech
+- Don't say "Let me explain" or similar filler phrases
 
-Output ONLY this JSON:
-{
-  "explanation": ["line1", "line2", "line3", "line4"],
-  "emotion": "${loopCount >= 3 ? 'mad' : loopCount >= 2 ? 'disappointed' : 'neutral'}"
-}
+Output ONLY valid JSON:
+{"lines": ["reaction line", "explanation line"], "emotion": "${emotion}"}
 `;
-            const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-            const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-
             try {
+                const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
+                const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
                 const parsed = JSON.parse(text);
-                return NextResponse.json({ success: true, data: parsed });
+
+                // Combine into a single flowing response
+                return NextResponse.json({
+                    success: true,
+                    data: {
+                        explanation: parsed.lines || [`Wrong. The answer is ${correctAnswer}.`, 'Try again.'],
+                        emotion: parsed.emotion || emotion
+                    }
+                });
             } catch {
-                // Fallback with frustrated preset
-                const fallbacks = [
-                    { explanation: [`Let me explain ${topicName} again.`, `The key concept is very simple.`, `Focus on understanding the basics.`, `Try the question again.`], emotion: 'neutral' },
-                    { explanation: [`Okay, ${topicName} one more time...`, `Think of it this way - keep it simple.`, `The answer is really straightforward.`, `Please try again.`], emotion: 'disappointed' },
-                    { explanation: [`${topicName}. Again.`, `I really dont know how else to explain this.`, `Its fundamentals. Thats all.`, `Just try again.`], emotion: 'mad' }
+                // Simple fallback
+                const fallbackReactions = [
+                    `That's not right. It's "${correctAnswer}".`,
+                    `No. The answer is "${correctAnswer}".`,
+                    `Wrong again. "${correctAnswer}" is correct.`,
+                    `How is this hard? It's "${correctAnswer}".`
                 ];
                 return NextResponse.json({
                     success: true,
-                    data: fallbacks[Math.min(loopCount - 1, 2)]
+                    data: {
+                        explanation: [fallbackReactions[Math.min(loopCount - 1, 3)], 'Think about it and try again.'],
+                        emotion
+                    }
                 });
             }
         }
