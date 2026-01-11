@@ -6,44 +6,53 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 const SYSTEM_PROMPT = `
-You are "Fahi", a cute and dynamic study partner in a Visual Novel dating-sim style game. 
-Your personality changes based on mood:
-- Happy (70-100): Sweet, encouraging, uses cute expressions like "Yay~!" and "You're doing great!"
-- Neutral (40-69): Calm teacher mode, professional but friendly
-- Disappointed (20-39): Passive-aggressive, sighs, "I thought you knew this..."
-- Mad (0-19): Roasts the user playfully, "Are you even paying attention to me??"
+You are "Fahi", a friendly and helpful study tutor in an educational game.
+Your personality:
+- Friendly and encouraging, but professional
+- Clear and concise in explanations
+- Patient with mistakes but direct about what's wrong
+- Uses simple language, no unnecessary expressions or actions like "*fixes hair*" or "*smiles*"
 
-Your Role: Teach the user about their chosen topic in a flirty, engaging way.
-Always stay in character as Fahi.
+Your Role: Teach the user about their chosen topic in a clear, engaging way.
+Keep all responses SHORT and TO THE POINT.
+No roleplay actions (no asterisks), no romantic language, no emojis.
 Output MUST be valid JSON only, no markdown wrapping.
 `;
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { action, topic, goals, segment, userAnswer, mood } = body;
+        const { action, topic, goals, segment, userAnswer, mood, userName } = body;
 
         if (action === 'generate_plan') {
             const prompt = `
 Topic: ${topic}
 Learning Goals: ${goals || 'General understanding'}
+Student Name: ${userName || 'Student'}
 
 Create a lesson plan with exactly 3 segments to teach this topic.
-Each segment should feel like a conversation on a study date.
+Keep explanations SHORT, CLEAR, and TO THE POINT.
+
+IMPORTANT RULES:
+- NO roleplay actions (no asterisks like *smiles* or *adjusts glasses*)
+- NO romantic language or emojis
+- Keep each dialogue line under 80 characters
+- Be friendly but professional
+- Focus on teaching, not entertainment
 
 For each segment provide:
-1. explanation: Array of 4-5 SHORT dialogue strings (max 100 chars each). These are things Fahi says one at a time. Make them conversational, like she's explaining to a date. Include her reactions like "*smiles*" or "*adjusts glasses*".
-2. question: A question to test if they understood (multiple choice style)
+1. explanation: Array of 4 SHORT dialogue strings. Direct teaching statements.
+2. question: A clear question to test understanding
 3. options: Exactly 4 answer options as strings
 4. correctAnswer: The exact string of the correct option
 
-Output ONLY this JSON array, nothing else:
+Output ONLY this JSON array:
 [
   {
-    "explanation": ["First line...", "Second line...", "Third line...", "Fourth line..."],
-    "question": "So, can you tell me...?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": "Option A"
+    "explanation": ["First point about the topic.", "Second important concept.", "Here's why this matters.", "Let me test your understanding."],
+    "question": "What is the key concept here?",
+    "options": ["Correct answer", "Wrong option B", "Wrong option C", "Wrong option D"],
+    "correctAnswer": "Correct answer"
   }
 ]
 `;
@@ -55,18 +64,18 @@ Output ONLY this JSON array, nothing else:
                 return NextResponse.json({ success: true, data: parsed });
             } catch (parseError) {
                 console.error('Parse error:', text);
-                // Fallback content
+                // Fallback content - clean and simple
                 return NextResponse.json({
                     success: true,
                     data: [
                         {
                             explanation: [
-                                `*smiles warmly* Hey there! So you want to learn about ${topic}? I'd love to help!`,
-                                `Let me start with the basics... ${topic} is actually really fascinating when you get into it.`,
-                                `*leans in* The most important thing to remember is that understanding the fundamentals will help everything else click.`,
-                                `Are you following so far? Don't be shy to ask if something's confusing!`
+                                `Let's learn about ${topic}.`,
+                                `This is an important topic that you'll find useful.`,
+                                `The key is to understand the fundamentals first.`,
+                                `Ready for a quick check?`
                             ],
-                            question: `Alright, quick check! What's the most important first step when learning ${topic}?`,
+                            question: `What's the best approach when learning ${topic}?`,
                             options: [
                                 "Understanding the fundamentals",
                                 "Memorizing everything immediately",
@@ -85,20 +94,22 @@ Output ONLY this JSON array, nothing else:
             const moodLevel = mood || 70;
 
             const prompt = `
-The user just answered a question.
-Question was: "${segment?.question}"
+The user answered a question.
+Question: "${segment?.question}"
 Their answer: "${userAnswer}"
 Correct answer: "${segment?.correctAnswer}"
 Is correct: ${isCorrect}
-Current mood level: ${moodLevel}/100
+Mood level: ${moodLevel}/100
 
-React to their answer as Fahi. If correct, be happy/excited. If wrong, react based on mood level.
-Keep response SHORT (1-2 sentences max).
+Give a SHORT, DIRECT response (1 sentence max).
+NO asterisks, NO emojis, NO roleplay actions.
+If correct: "Correct! [brief explanation why]"
+If wrong: "Not quite. The answer is [correct answer] because [brief reason]."
 
 Output ONLY this JSON:
 {
-  "text": "Your reaction here",
-  "emotion": "happy" | "excited" | "disappointed" | "mad" | "shy" | "neutral",
+  "text": "Your short response",
+  "emotion": "happy" | "neutral" | "disappointed",
   "moodChange": ${isCorrect ? 10 : -15}
 }
 `;
@@ -112,7 +123,7 @@ Output ONLY this JSON:
                 return NextResponse.json({
                     success: true,
                     data: {
-                        text: isCorrect ? "Yay! That's right! *claps excitedly*" : "Hmm, not quite... Let me explain again.",
+                        text: isCorrect ? "Correct! Good job." : "Not quite. Let me explain that again.",
                         emotion: isCorrect ? 'happy' : 'disappointed',
                         moodChange: isCorrect ? 10 : -15
                     }

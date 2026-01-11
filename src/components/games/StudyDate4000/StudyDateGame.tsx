@@ -42,10 +42,10 @@ const SPRITES: Record<FahiEmotion, any> = {
 };
 
 const INTRO_DIALOGUE = [
-    { text: "Oh! Hello there~ 💕", emotion: 'happy' as FahiEmotion },
-    { text: "Welcome to Study Date 4000! I'm Fahi, your personal study buddy!", emotion: 'excited' as FahiEmotion },
-    { text: "*adjusts glasses* I'll help you learn anything you want in a fun way~", emotion: 'happy-neutral' as FahiEmotion },
-    { text: "But first... what should I call you?", emotion: 'shy' as FahiEmotion }
+    { text: "Hey there! Welcome to Study Date 4000.", emotion: 'happy' as FahiEmotion },
+    { text: "I'm Fahi, your study buddy. I'll help you learn any topic you want!", emotion: 'excited' as FahiEmotion },
+    { text: "We'll go through the material step by step, and I'll quiz you along the way.", emotion: 'happy-neutral' as FahiEmotion },
+    { text: "First, what's your name?", emotion: 'neutral' as FahiEmotion }
 ];
 
 const TEXT_INPUT_LIMIT = 150;
@@ -136,16 +136,18 @@ export default function StudyDateGame() {
         return screenSize === 'sm' ? sm : screenSize === 'md' ? md : lg;
     };
 
-    // Typewriter
+    // Typewriter - Fixed index bug
     useEffect(() => {
         if (!currentText) { setDisplayedText(''); return; }
         setIsTyping(true);
         setDisplayedText('');
-        let i = 0;
+        let charIndex = 0;
+        const textToType = currentText;
+
         const interval = setInterval(() => {
-            if (i < currentText.length) {
-                setDisplayedText(prev => prev + currentText[i]);
-                i++;
+            if (charIndex < textToType.length) {
+                setDisplayedText(textToType.substring(0, charIndex + 1));
+                charIndex++;
             } else {
                 setIsTyping(false);
                 clearInterval(interval);
@@ -170,13 +172,13 @@ export default function StudyDateGame() {
         const inputIndices = [1, 4, 7, 10, 13];
         return subtopics.map((topicName, i) => ({
             explanation: [
-                `*opens notebook* Alright, let's talk about ${topicName}!`,
-                `This is really important, so pay close attention~`,
-                `*points at notes* The key thing to remember here is...`,
-                `Got it? Let me check if you understood!`
+                `Let's learn about ${topicName}.`,
+                `This is an important concept you'll want to understand well.`,
+                `The key point here is to focus on the fundamentals first.`,
+                `Alright, let me check if you got that!`
             ],
             question: inputIndices.includes(i)
-                ? `In your own words, tell me what you understand about ${topicName}:`
+                ? `In your own words, explain what you understand about ${topicName}:`
                 : `What's the most important aspect of ${topicName}?`,
             options: inputIndices.includes(i) ? [] : [
                 'Understanding the fundamentals first', 'Memorizing without understanding',
@@ -210,7 +212,7 @@ export default function StudyDateGame() {
         if (!textInput.trim()) return;
         setUserName(textInput.trim());
         setTextInput('');
-        setCurrentText(`Nice to meet you, ${textInput.trim()}! 💕 So... what would you like to learn today?`);
+        setCurrentText(`Great to meet you, ${textInput.trim()}! What topic would you like to learn today?`);
         setEmotion('happy');
         setTimeout(() => setPhase('SETUP'), 100);
     };
@@ -218,7 +220,7 @@ export default function StudyDateGame() {
     const handleStart = async () => {
         if (!topic.trim()) return;
         setPhase('LOADING');
-        setCurrentText(`*excited* Ooh, ${topic}! Let me prepare something special for you, ${userName}...`);
+        setCurrentText(`${topic}! Great choice, ${userName}. Let me prepare the lesson...`);
         setEmotion('excited');
         const gameSegments = generateSegments(topic);
         setSegments(gameSegments);
@@ -274,14 +276,14 @@ export default function StudyDateGame() {
         const isCorrect = answer === segment.correctAnswer;
 
         if (isCorrect) {
-            setCurrentText(`*happy* Great job, ${userName}! That's exactly right! 💕`);
+            setCurrentText(`Correct, ${userName}! That's exactly right.`);
             setEmotion('happy');
             setMood(prev => Math.min(100, prev + 5));
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
             setShowStars(true);
             setTimeout(() => setShowStars(false), 1000);
         } else {
-            setCurrentText(`*sighs* Not quite, ${userName}... Let me explain that again.`);
+            setCurrentText(`Not quite, ${userName}. Let me go over that again.`);
             setEmotion('disappointed');
             setMood(prev => Math.max(0, prev - 10));
             setShowFrustration(true);
@@ -314,13 +316,13 @@ export default function StudyDateGame() {
     const handleTextSubmit = () => {
         if (!textInput.trim()) return;
         setPhase('FEEDBACK');
-        setCurrentText(`*thinking* Hmm, interesting perspective, ${userName}!`);
+        setCurrentText(`Good answer, ${userName}. Let me review that.`);
         setEmotion('neutral');
         setShowStars(true);
         setTimeout(() => setShowStars(false), 1000);
 
         setTimeout(() => {
-            setCurrentText(`I like how you explained that! 💕`);
+            setCurrentText(`Nice explanation! Let's move on to the next topic.`);
             setEmotion('happy');
             setMood(prev => Math.min(100, prev + 3));
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
