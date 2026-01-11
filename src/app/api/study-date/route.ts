@@ -30,30 +30,31 @@ export async function POST(request: NextRequest) {
 Topic: ${topic}
 ${notes ? `Study Notes: ${notes}` : ''}
 
-Create a curriculum with 6 DISTINCT subsections for this topic.
-Each subsection should cover a DIFFERENT concept (not repetitive).
+Create a teaching curriculum with 4 subsections for this topic.
+This is for LEARNING - each subsection should TEACH before testing.
 
 Example for "C++ Programming":
 - Subsection 1: Variables & Data Types
-- Subsection 2: Control Flow (if/else, loops)
+- Subsection 2: Control Flow
 - Subsection 3: Functions
 - Subsection 4: Classes & Objects
-- Subsection 5: Pointers & Memory
-- Subsection 6: Standard Template Library
 
 For EACH subsection provide:
 1. title: Short subsection name (3-5 words)
-2. keyPoints: Array of 2 bullet points (under 40 chars each)
-3. question: A specific question about THIS subsection
-4. options: 4 answer options
+2. explanation: Array of 3 SHORT teaching sentences that explain this concept clearly
+   - First sentence: Introduce the concept
+   - Second sentence: Explain how it works
+   - Third sentence: Give a practical example or why it matters
+3. question: A question to test understanding of THIS subsection
+4. options: 4 answer options (only if isTextInput is false)
 5. correctAnswer: The exact correct option string
-6. isTextInput: true for subsections 2 and 5 (open-ended questions)
+6. isTextInput: true for subsection 2 only (open-ended)
 
 RULES:
-- Each subsection MUST be about a different concept
-- NO repetition between subsections
-- Questions should be specific to each subsection
-- Keep everything SHORT and DIRECT
+- Each subsection MUST have real teaching content
+- Explanations should be educational, not filler
+- Each explanation line under 80 characters
+- NO asterisks, NO emojis, NO roleplay
 
 Output ONLY valid JSON:
 {
@@ -62,8 +63,12 @@ Output ONLY valid JSON:
     {
       "id": 1,
       "title": "Subsection Name",
-      "keyPoints": ["Point 1", "Point 2"],
-      "question": "Specific question?",
+      "explanation": [
+        "First teaching point about this concept.",
+        "Second point explaining how it works.",
+        "Third point with an example or application."
+      ],
+      "question": "Question testing this concept?",
       "options": ["A", "B", "C", "D"],
       "correctAnswer": "A",
       "isTextInput": false
@@ -78,15 +83,15 @@ Output ONLY valid JSON:
                 return NextResponse.json({ success: true, data: parsed });
             } catch (parseError) {
                 console.error('Curriculum parse error:', parseError);
-                // Fallback curriculum
+                // Fallback curriculum with explanations
                 return NextResponse.json({
                     success: true,
                     data: {
                         courseName: topic,
                         subsections: [
-                            { id: 1, title: `${topic} Basics`, keyPoints: ['Core concepts', 'Foundation'], question: `What is the foundation of ${topic}?`, options: ['Understanding basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Understanding basics', isTextInput: false },
-                            { id: 2, title: `${topic} In Practice`, keyPoints: ['Real applications', 'Hands-on'], question: `Explain how you would apply ${topic}:`, options: [], correctAnswer: '', isTextInput: true },
-                            { id: 3, title: `Advanced ${topic}`, keyPoints: ['Deep concepts', 'Mastery'], question: `What comes after mastering basics?`, options: ['Practice', 'Quit', 'Skip', 'Rush'], correctAnswer: 'Practice', isTextInput: false }
+                            { id: 1, title: `${topic} Basics`, explanation: [`Let's start with the fundamentals of ${topic}.`, `Understanding the basics is crucial for building knowledge.`, `Once you grasp these concepts, everything else becomes easier.`], question: `What is the foundation of ${topic}?`, options: ['Understanding basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Understanding basics', isTextInput: false },
+                            { id: 2, title: `${topic} In Practice`, explanation: [`Now let's see how ${topic} works in real scenarios.`, `Practical application helps cement your understanding.`, `Try to think of examples from your own experience.`], question: `Explain how you would apply ${topic}:`, options: [], correctAnswer: '', isTextInput: true },
+                            { id: 3, title: `Advanced ${topic}`, explanation: [`Building on what we learned, let's go deeper.`, `Advanced concepts build on the foundation you now have.`, `This is where you start to see the bigger picture.`], question: `What helps achieve mastery?`, options: ['Consistent practice', 'Rushing', 'Skipping', 'Avoiding'], correctAnswer: 'Consistent practice', isTextInput: false }
                         ]
                     }
                 });

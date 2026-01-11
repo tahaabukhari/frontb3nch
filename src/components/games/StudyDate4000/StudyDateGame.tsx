@@ -21,7 +21,7 @@ type FahiEmotion = 'neutral' | 'happy' | 'mad' | 'disappointed' | 'shy' | 'excit
 interface Segment {
     id: number;
     title: string;
-    keyPoints: string[];
+    explanation: string[];
     question: string;
     options: string[];
     correctAnswer: string;
@@ -285,7 +285,7 @@ export default function StudyDateGame() {
                 const curriculum = result.data.subsections.map((sub: any) => ({
                     id: sub.id,
                     title: sub.title,
-                    keyPoints: sub.keyPoints || [],
+                    explanation: sub.explanation || [`Let's learn about ${sub.title}.`, 'This is an important concept.', 'Understanding this will help you progress.'],
                     question: sub.question,
                     options: sub.isTextInput ? [] : (sub.options || []),
                     correctAnswer: sub.isTextInput ? '' : (sub.correctAnswer || ''),
@@ -294,34 +294,32 @@ export default function StudyDateGame() {
                 setSegments(curriculum);
                 setCurrentSegmentIndex(0);
                 setDialogueIndex(0);
-                // Show first subsection title and key points
+                // Show first subsection title then start teaching
                 const first = curriculum[0];
                 setCurrentText(`Let's start with: ${first.title}`);
+                setPhase('TEACHING');
                 setTimeout(() => {
-                    setCurrentText(first.keyPoints.join(' • ') || 'Let me explain this concept.');
+                    setCurrentText(first.explanation[0] || 'Let me explain this concept.');
                     setTextKey(prev => prev + 1);
-                    setTimeout(() => {
-                        setCurrentText(first.question);
-                        setPhase(first.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
-                    }, 2000);
                 }, 2000);
             } else {
                 throw new Error('Invalid curriculum');
             }
         } catch (e) {
             console.error('Curriculum generation error:', e);
-            // Fallback
+            // Fallback with explanations
             const fallback: Segment[] = [
-                { id: 1, title: `${topic} Basics`, keyPoints: ['Core concepts', 'Foundation'], question: `What is most important when learning ${topic}?`, options: ['Understanding basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Understanding basics', isTextInput: false },
-                { id: 2, title: `${topic} Practice`, keyPoints: ['Apply knowledge', 'Hands-on'], question: `Explain how you would use ${topic}:`, options: [], correctAnswer: '', isTextInput: true },
-                { id: 3, title: `${topic} Advanced`, keyPoints: ['Deep concepts', 'Mastery'], question: `What helps achieve mastery?`, options: ['Consistent practice', 'Rushing', 'Skipping', 'Avoiding'], correctAnswer: 'Consistent practice', isTextInput: false }
+                { id: 1, title: `${topic} Basics`, explanation: [`Let's start with the fundamentals of ${topic}.`, `Understanding the basics is crucial for building knowledge.`, `Once you grasp these concepts, everything else becomes easier.`], question: `What is most important when learning ${topic}?`, options: ['Understanding basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Understanding basics', isTextInput: false },
+                { id: 2, title: `${topic} Practice`, explanation: [`Now let's see how ${topic} works in practice.`, `Applying what you learn helps cement your understanding.`, `Think about real examples from your experience.`], question: `Explain how you would use ${topic}:`, options: [], correctAnswer: '', isTextInput: true },
+                { id: 3, title: `${topic} Advanced`, explanation: [`Building on what we've learned, let's go deeper.`, `Advanced concepts connect to the foundation you now have.`, `This is where you start to see the bigger picture.`], question: `What helps achieve mastery?`, options: ['Consistent practice', 'Rushing', 'Skipping', 'Avoiding'], correctAnswer: 'Consistent practice', isTextInput: false }
             ];
             setSegments(fallback);
             setCurrentSegmentIndex(0);
+            setDialogueIndex(0);
             setCurrentText(`Let's start with: ${fallback[0].title}`);
+            setPhase('TEACHING');
             setTimeout(() => {
-                setCurrentText(fallback[0].question);
-                setPhase('QUIZ');
+                setCurrentText(fallback[0].explanation[0]);
             }, 2000);
         }
     };
@@ -330,10 +328,19 @@ export default function StudyDateGame() {
         if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
         const segment = segments[currentSegmentIndex];
         if (!segment) return;
-        // With new curriculum, we go straight to question - no explanation loop
-        setCurrentText(segment.question);
-        setEmotion('happy-neutral');
-        setPhase(segment.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
+
+        // Loop through explanations, then show question
+        const next = dialogueIndex + 1;
+        if (next < segment.explanation.length) {
+            setDialogueIndex(next);
+            setCurrentText(segment.explanation[next]);
+            setExplainFrame(prev => (prev + 1) % 2);
+        } else {
+            // Done with explanations, show question
+            setCurrentText(segment.question);
+            setEmotion('happy-neutral');
+            setPhase(segment.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
+        }
     };
 
     const handleAnswer = (answer: string) => {
