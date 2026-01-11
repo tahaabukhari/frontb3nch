@@ -131,6 +131,65 @@ Output ONLY this JSON:
             }
         }
 
+        if (action === 'evaluate_text') {
+            const { topicName, userText, userName: studentName, currentMood } = body;
+
+            const prompt = `
+You are Fahi, a tutor evaluating a student's text response.
+
+Topic: "${topicName}"
+Student "${studentName || 'the student'}" wrote: "${userText}"
+Current mood level: ${currentMood || 70}/100
+
+Evaluate their answer and respond:
+1. How well did they understand the topic? (score 1-10)
+2. Give a SHORT, personalized comment on their specific answer
+3. What emotion should Fahi show?
+
+Score guide:
+- 8-10: Excellent understanding, shows insight → mood +10
+- 5-7: Decent attempt, got the basics → mood +3
+- 3-4: Weak but tried → mood -5
+- 1-2: Completely wrong or nonsense → mood -15
+
+RULES:
+- Reference something specific from their answer
+- Keep comment under 60 characters
+- NO asterisks, NO emojis
+- Be direct and natural
+
+Output ONLY valid JSON:
+{"score": 7, "comment": "Your specific feedback here", "emotion": "happy|neutral|disappointed|mad", "moodChange": 3}
+`;
+            try {
+                const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
+                const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+                const parsed = JSON.parse(text);
+
+                return NextResponse.json({
+                    success: true,
+                    data: {
+                        score: parsed.score || 5,
+                        comment: parsed.comment || 'Okay, not bad.',
+                        emotion: parsed.emotion || 'neutral',
+                        moodChange: parsed.moodChange || 0
+                    }
+                });
+            } catch {
+                // Simple fallback based on text length
+                const hasContent = userText.trim().length > 20;
+                return NextResponse.json({
+                    success: true,
+                    data: {
+                        score: hasContent ? 6 : 3,
+                        comment: hasContent ? 'Decent effort. Moving on.' : 'That was a bit short.',
+                        emotion: hasContent ? 'neutral' : 'disappointed',
+                        moodChange: hasContent ? 3 : -5
+                    }
+                });
+            }
+        }
+
         if (action === 're_explain') {
             const { topicName, failCount: loopCount, previousAnswer, correctAnswer, userName: studentName } = body;
 

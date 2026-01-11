@@ -444,24 +444,81 @@ export default function StudyDateGame() {
         }, 2000);
     };
 
-    const handleTextSubmit = () => {
+    const handleTextSubmit = async () => {
         if (!textInput.trim()) return;
-        setPhase('FEEDBACK');
-        setCurrentText(`Good answer, ${userName}. Let me review that.`);
-        setEmotion('neutral');
-        setShowStars(true);
-        setTimeout(() => setShowStars(false), 1000);
+        const segment = segments[currentSegmentIndex];
+        if (!segment) return;
 
-        setTimeout(() => {
-            setCurrentText(`Nice explanation! Let's move on to the next topic.`);
-            setEmotion('happy');
-            setMood(prev => Math.min(100, prev + 3));
+        setPhase('FEEDBACK');
+        setCurrentText(`Hmm, let me think about that...`);
+        setEmotion('neutral');
+
+        try {
+            const response = await fetch('/api/study-date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'evaluate_text',
+                    topicName: segment.topicName,
+                    userText: textInput,
+                    userName,
+                    currentMood: mood
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const { comment, emotion: newEmotion, moodChange, score } = result.data;
+
+                // Show personalized feedback
+                setCurrentText(comment);
+                setEmotion(newEmotion as FahiEmotion);
+                setMood(prev => Math.max(0, Math.min(100, prev + moodChange)));
+
+                // Visual effect based on score
+                if (score >= 7) {
+                    setShowStars(true);
+                    setTimeout(() => setShowStars(false), 1000);
+                } else if (score <= 3) {
+                    setShowFrustration(true);
+                    setTimeout(() => setShowFrustration(false), 1000);
+                }
+
+                // Progress and move on
+                setProgress(prev => Math.min(100, prev + (100 / segments.length)));
+
+                setTimeout(() => {
+                    const next = currentSegmentIndex + 1;
+                    if (next >= segments.length) {
+                        setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
+                        setPhase('ENDING');
+                    } else {
+                        setCurrentSegmentIndex(next);
+                        setDialogueIndex(0);
+                        setExplainFrame(0);
+                        setFailCount(0);
+                        setCurrentText(segments[next].explanation[0]);
+                        setTextKey(prev => prev + 1);
+                        setPhase('TEACHING');
+                    }
+                }, 2000);
+            } else {
+                throw new Error('API failed');
+            }
+        } catch (error) {
+            console.error('Evaluate text error:', error);
+            // Fallback
+            setCurrentText('Okay, noted. Moving on.');
+            setEmotion('neutral');
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
 
             setTimeout(() => {
                 const next = currentSegmentIndex + 1;
-                if (next >= segments.length) { setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL'); setPhase('ENDING'); }
-                else {
+                if (next >= segments.length) {
+                    setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
+                    setPhase('ENDING');
+                } else {
                     setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
@@ -469,7 +526,8 @@ export default function StudyDateGame() {
                     setPhase('TEACHING');
                 }
             }, 1500);
-        }, 1500);
+        }
+
         setTextInput('');
     };
 
