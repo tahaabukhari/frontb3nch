@@ -70,22 +70,12 @@ export default function StudyDateGame() {
     const [goals, setGoals] = useState('');
     const [textInput, setTextInput] = useState('');
 
-    // Animation State
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [animFrame, setAnimFrame] = useState(0);
+    // Animation State - Alternates on dialogue advance, not continuously
+    const [explainFrame, setExplainFrame] = useState(0); // 0 = explaining, 1 = explaining2
 
     // Typewriter State
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
-
-    // Animation loop
-    useEffect(() => {
-        if (!isAnimating) return;
-        const interval = setInterval(() => {
-            setAnimFrame(prev => (prev + 1) % 2);
-        }, 300);
-        return () => clearInterval(interval);
-    }, [isAnimating]);
 
     // Typewriter effect
     useEffect(() => {
@@ -111,9 +101,10 @@ export default function StudyDateGame() {
         return () => clearInterval(interval);
     }, [currentText]);
 
+    // Get current sprite - alternates on dialogue change, not continuously
     const getCurrentSprite = () => {
-        if (isAnimating) {
-            return animFrame === 0 ? SPRITES['explaining'] : SPRITES['explaining2'];
+        if (phase === 'TEACHING') {
+            return explainFrame === 0 ? SPRITES['explaining'] : SPRITES['explaining2'];
         }
         return SPRITES[emotion] || SPRITES['happy-neutral'];
     };
@@ -132,7 +123,6 @@ export default function StudyDateGame() {
             setCurrentText(INTRO_DIALOGUE[nextIndex].text);
             setEmotion(INTRO_DIALOGUE[nextIndex].emotion);
         } else {
-            // Move to name input
             setPhase('ASK_NAME');
         }
     };
@@ -153,7 +143,6 @@ export default function StudyDateGame() {
 
         setPhase('LOADING');
         setCurrentText(`*excited* Ooh, ${topic}! Let me prepare something special for you, ${userName}...`);
-        setIsAnimating(true);
         setEmotion('excited');
 
         try {
@@ -169,10 +158,9 @@ export default function StudyDateGame() {
                 setSegments(result.data);
                 setCurrentSegmentIndex(0);
                 setDialogueIndex(0);
+                setExplainFrame(0);
                 setCurrentText(result.data[0].explanation[0]);
                 setPhase('TEACHING');
-                setIsAnimating(true);
-                setEmotion('explaining');
             } else {
                 // Fallback content
                 const fallback: Segment[] = [{
@@ -189,9 +177,9 @@ export default function StudyDateGame() {
                 setSegments(fallback);
                 setCurrentSegmentIndex(0);
                 setDialogueIndex(0);
+                setExplainFrame(0);
                 setCurrentText(fallback[0].explanation[0]);
                 setPhase('TEACHING');
-                setIsAnimating(true);
             }
         } catch (error) {
             console.error('Failed to generate:', error);
@@ -200,7 +188,7 @@ export default function StudyDateGame() {
         }
     };
 
-    // Advance teaching dialogue
+    // Advance teaching dialogue - alternates sprite on each advance
     const advanceDialogue = () => {
         if (isTyping) {
             setDisplayedText(currentText);
@@ -216,13 +204,13 @@ export default function StudyDateGame() {
         if (nextIndex < segment.explanation.length) {
             setDialogueIndex(nextIndex);
             setCurrentText(segment.explanation[nextIndex]);
+            // Alternate sprite on each dialogue advance
+            setExplainFrame(prev => (prev + 1) % 2);
         } else {
             // Show question
             setCurrentText(segment.question);
-            setIsAnimating(false);
             setEmotion('happy-neutral');
 
-            // Decide if this needs text input or choices
             if (segment.requiresTextInput) {
                 setPhase('TEXT_INPUT');
             } else {
@@ -237,7 +225,6 @@ export default function StudyDateGame() {
         if (!segment) return;
 
         setPhase('FEEDBACK');
-        setIsAnimating(false);
 
         try {
             const response = await fetch('/api/study-date', {
@@ -277,18 +264,17 @@ export default function StudyDateGame() {
                         } else {
                             setCurrentSegmentIndex(nextSegment);
                             setDialogueIndex(0);
+                            setExplainFrame(0);
                             setCurrentText(segments[nextSegment].explanation[0]);
                             setPhase('TEACHING');
-                            setIsAnimating(true);
-                            setEmotion('explaining');
                         }
                     } else {
                         setDialogueIndex(0);
+                        setExplainFrame(0);
                         setCurrentText(`Let me explain that again, ${userName}...`);
                         setTimeout(() => {
                             setCurrentText(segment.explanation[0]);
                             setPhase('TEACHING');
-                            setIsAnimating(true);
                         }, 2000);
                     }
                 }, 2500);
@@ -306,7 +292,6 @@ export default function StudyDateGame() {
         setCurrentText(`*thinking* Hmm, "${textInput}"... Let me think about that, ${userName}~`);
         setEmotion('neutral');
 
-        // For now, treat text inputs more leniently
         setTimeout(() => {
             setCurrentText(`That's an interesting perspective! I appreciate you sharing that with me. 💕`);
             setEmotion('happy');
@@ -321,9 +306,9 @@ export default function StudyDateGame() {
                 } else {
                     setCurrentSegmentIndex(nextSegment);
                     setDialogueIndex(0);
+                    setExplainFrame(0);
                     setCurrentText(segments[nextSegment].explanation[0]);
                     setPhase('TEACHING');
-                    setIsAnimating(true);
                 }
             }, 2000);
         }, 1500);
@@ -336,267 +321,273 @@ export default function StudyDateGame() {
     return (
         <div className="fixed inset-0 w-screen h-screen overflow-hidden font-sans select-none bg-black">
 
-            {/* BACKGROUND - Full Screen */}
+            {/* BACKGROUND */}
             <img
                 src={bgImg.src}
                 className="absolute inset-0 w-full h-full object-cover"
                 alt="Background"
             />
 
-            {/* TABLE - Bottom Layer */}
+            {/* TABLE - Bottom */}
             <div className="absolute bottom-0 left-0 right-0 h-[25vh] z-10">
                 <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* CHARACTER - Center */}
-            <div className="absolute inset-0 z-20 flex items-end justify-center pointer-events-none" style={{ paddingBottom: '15vh' }}>
-                <motion.img
-                    key={getCurrentSprite()?.src}
-                    src={getCurrentSprite()?.src}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="h-[65vh] object-contain drop-shadow-2xl"
-                    alt="Fahi"
-                />
-            </div>
+            {/* MAIN CONTENT AREA - Fahi Left-Center, UI Right */}
+            <div className="absolute inset-0 z-20 flex">
 
-            {/* UI OVERLAY */}
-            <div className="absolute inset-0 z-30 pointer-events-none">
+                {/* LEFT SECTION: Bars + Fahi */}
+                <div className="flex-1 flex items-end justify-center relative" style={{ paddingBottom: '15vh' }}>
 
-                {/* Back Button */}
-                <button
-                    onClick={handleExit}
-                    className="pointer-events-auto absolute top-4 left-4 bg-black/40 hover:bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full text-white font-bold text-sm transition-all border border-white/20"
-                >
-                    ← Exit
-                </button>
-
-                {/* Progress Bars - Left Side, Centered Vertically */}
-                {phase !== 'INTRO' && phase !== 'ASK_NAME' && phase !== 'SETUP' && (
-                    <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 w-16">
-                        {/* Content Bar */}
-                        <div className="text-center">
-                            <span className="text-white text-[10px] font-bold drop-shadow-md">CC</span>
-                            <div className="h-32 bg-black/40 backdrop-blur-sm rounded-full p-1 border border-white/30 mt-1">
-                                <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
-                                    <motion.div
-                                        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-full"
-                                        animate={{ height: `${progress}%` }}
-                                        transition={{ duration: 0.5 }}
-                                    />
+                    {/* Progress Bars - Positioned next to Fahi on her left */}
+                    {phase !== 'INTRO' && phase !== 'ASK_NAME' && phase !== 'SETUP' && (
+                        <div className="absolute left-[10%] bottom-[20vh] flex flex-col gap-4 z-30">
+                            {/* Content Bar */}
+                            <div className="text-center">
+                                <span className="text-white text-xs font-bold drop-shadow-lg">Content</span>
+                                <div className="h-40 w-8 bg-black/40 backdrop-blur-sm rounded-full p-1 border border-white/30 mt-1">
+                                    <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
+                                        <motion.div
+                                            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-full"
+                                            animate={{ height: `${progress}%` }}
+                                            transition={{ duration: 0.5 }}
+                                        />
+                                    </div>
                                 </div>
+                                <span className="text-white text-xs font-bold mt-1 block">{Math.round(progress)}%</span>
                             </div>
-                            <span className="text-white text-[10px] font-bold">{Math.round(progress)}%</span>
-                        </div>
 
-                        {/* Mood Bar */}
-                        <div className="text-center">
-                            <span className="text-white text-[10px] font-bold drop-shadow-md">💕</span>
-                            <div className="h-32 bg-black/40 backdrop-blur-sm rounded-full p-1 border border-white/30 mt-1">
-                                <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
-                                    <motion.div
-                                        className={`absolute bottom-0 left-0 right-0 rounded-full ${mood >= 70 ? 'bg-gradient-to-t from-pink-500 to-pink-300' :
-                                                mood >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-300' :
-                                                    'bg-gradient-to-t from-red-600 to-red-400'
-                                            }`}
-                                        animate={{ height: `${mood}%` }}
-                                        transition={{ duration: 0.5 }}
-                                    />
+                            {/* Mood Bar */}
+                            <div className="text-center">
+                                <span className="text-white text-xs font-bold drop-shadow-lg">Mood</span>
+                                <div className="h-40 w-8 bg-black/40 backdrop-blur-sm rounded-full p-1 border border-white/30 mt-1">
+                                    <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
+                                        <motion.div
+                                            className={`absolute bottom-0 left-0 right-0 rounded-full ${mood >= 70 ? 'bg-gradient-to-t from-pink-500 to-pink-300' :
+                                                    mood >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-300' :
+                                                        'bg-gradient-to-t from-red-600 to-red-400'
+                                                }`}
+                                            animate={{ height: `${mood}%` }}
+                                            transition={{ duration: 0.5 }}
+                                        />
+                                    </div>
                                 </div>
+                                <span className="text-white text-xs font-bold mt-1 block">{mood}%</span>
                             </div>
-                            <span className="text-white text-[10px] font-bold">{mood}%</span>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* DIALOGUE BOX - Bottom Center */}
-                {(phase === 'INTRO' || phase === 'ASK_NAME' || phase === 'TEACHING' || phase === 'QUIZ' || phase === 'TEXT_INPUT' || phase === 'FEEDBACK' || phase === 'LOADING') && (
-                    <div className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white/95 backdrop-blur-md rounded-2xl p-5 shadow-2xl border-4 border-pink-300 relative"
-                        >
-                            {/* Speaker Name */}
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-pink-500 font-black text-base">Fahi</span>
-                                <span className="text-pink-300 text-sm">💕</span>
-                            </div>
+                    {/* CHARACTER - Center of left section */}
+                    <motion.img
+                        key={getCurrentSprite()?.src}
+                        src={getCurrentSprite()?.src}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="h-[65vh] object-contain drop-shadow-2xl pointer-events-none"
+                        alt="Fahi"
+                    />
+                </div>
 
-                            {/* Dialogue Text */}
-                            <p className="text-slate-700 text-base leading-relaxed min-h-[50px]">
-                                {displayedText}
-                                {isTyping && <span className="animate-pulse text-pink-400">▌</span>}
-                            </p>
+                {/* RIGHT SECTION: Dialogue Box */}
+                <div className="w-[45%] flex flex-col justify-end items-start pb-[18vh] pr-8">
 
-                            {/* Advance Button */}
-                            {(phase === 'INTRO' || phase === 'TEACHING') && !isTyping && (
-                                <button
-                                    onClick={phase === 'INTRO' ? advanceIntro : advanceDialogue}
-                                    className="absolute top-4 right-4 bg-pink-100 hover:bg-pink-200 text-pink-500 px-3 py-1 rounded-full text-xs font-bold transition-all"
-                                >
-                                    ▶
-                                </button>
-                            )}
-                        </motion.div>
-
-                        {/* NAME INPUT */}
-                        {phase === 'ASK_NAME' && (
+                    {/* DIALOGUE BOX */}
+                    {(phase === 'INTRO' || phase === 'ASK_NAME' || phase === 'TEACHING' || phase === 'QUIZ' || phase === 'TEXT_INPUT' || phase === 'FEEDBACK' || phase === 'LOADING') && (
+                        <div className="w-full max-w-md">
                             <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="mt-3 flex gap-2"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="bg-white/95 backdrop-blur-md rounded-2xl rounded-bl-none p-5 shadow-2xl border-4 border-pink-300 relative"
                             >
-                                <input
-                                    type="text"
-                                    value={textInput}
-                                    onChange={e => setTextInput(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && submitName()}
-                                    placeholder="Enter your name..."
-                                    className="flex-1 bg-white/90 border-2 border-pink-200 rounded-xl px-4 py-3 text-slate-700 font-medium focus:outline-none focus:border-pink-400"
-                                    autoFocus
-                                />
-                                <button
-                                    onClick={submitName}
-                                    disabled={!textInput.trim()}
-                                    className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-bold transition-all"
-                                >
-                                    Confirm
-                                </button>
-                            </motion.div>
-                        )}
+                                {/* Speaker Name */}
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-pink-500 font-black text-base">Fahi</span>
+                                    <span className="text-pink-300 text-sm">💕</span>
+                                </div>
 
-                        {/* QUIZ OPTIONS */}
-                        <AnimatePresence>
-                            {phase === 'QUIZ' && segments[currentSegmentIndex] && (
+                                {/* Dialogue Text */}
+                                <p className="text-slate-700 text-base leading-relaxed min-h-[60px]">
+                                    {displayedText}
+                                    {isTyping && <span className="animate-pulse text-pink-400">▌</span>}
+                                </p>
+
+                                {/* Advance Button */}
+                                {(phase === 'INTRO' || phase === 'TEACHING') && !isTyping && (
+                                    <button
+                                        onClick={phase === 'INTRO' ? advanceIntro : advanceDialogue}
+                                        className="absolute top-4 right-4 bg-pink-100 hover:bg-pink-200 text-pink-500 px-3 py-1 rounded-full text-xs font-bold transition-all"
+                                    >
+                                        ▶
+                                    </button>
+                                )}
+                            </motion.div>
+
+                            {/* NAME INPUT */}
+                            {phase === 'ASK_NAME' && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    className="mt-3 grid grid-cols-2 gap-2"
+                                    className="mt-3 flex gap-2"
                                 >
-                                    {segments[currentSegmentIndex].options.map((option, i) => (
-                                        <motion.button
-                                            key={i}
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: i * 0.05 }}
-                                            onClick={() => handleAnswer(option)}
-                                            className="bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 p-3 rounded-xl text-left font-medium text-slate-700 text-sm transition-all active:scale-95"
-                                        >
-                                            {option}
-                                        </motion.button>
-                                    ))}
+                                    <input
+                                        type="text"
+                                        value={textInput}
+                                        onChange={e => setTextInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && submitName()}
+                                        placeholder="Enter your name..."
+                                        className="flex-1 bg-white/90 border-2 border-pink-200 rounded-xl px-4 py-3 text-slate-700 font-medium focus:outline-none focus:border-pink-400"
+                                        autoFocus
+                                    />
+                                    <button
+                                        onClick={submitName}
+                                        disabled={!textInput.trim()}
+                                        className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white px-5 py-3 rounded-xl font-bold transition-all"
+                                    >
+                                        ✓
+                                    </button>
                                 </motion.div>
                             )}
-                        </AnimatePresence>
 
-                        {/* TEXT INPUT FOR QUESTIONS */}
-                        {phase === 'TEXT_INPUT' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="mt-3 flex gap-2"
-                            >
-                                <input
-                                    type="text"
-                                    value={textInput}
-                                    onChange={e => setTextInput(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleTextSubmit()}
-                                    placeholder="Type your answer..."
-                                    className="flex-1 bg-white/90 border-2 border-pink-200 rounded-xl px-4 py-3 text-slate-700 font-medium focus:outline-none focus:border-pink-400"
-                                    autoFocus
-                                />
-                                <button
-                                    onClick={handleTextSubmit}
-                                    disabled={!textInput.trim()}
-                                    className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-bold transition-all"
+                            {/* QUIZ OPTIONS */}
+                            <AnimatePresence>
+                                {phase === 'QUIZ' && segments[currentSegmentIndex] && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="mt-3 space-y-2"
+                                    >
+                                        {segments[currentSegmentIndex].options.map((option, i) => (
+                                            <motion.button
+                                                key={i}
+                                                initial={{ opacity: 0, x: 10 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                onClick={() => handleAnswer(option)}
+                                                className="w-full bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 p-3 rounded-xl text-left font-medium text-slate-700 text-sm transition-all active:scale-98"
+                                            >
+                                                {option}
+                                            </motion.button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {/* TEXT INPUT FOR QUESTIONS */}
+                            {phase === 'TEXT_INPUT' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mt-3 flex gap-2"
                                 >
-                                    Send
-                                </button>
-                            </motion.div>
-                        )}
-                    </div>
-                )}
-
-                {/* SETUP MODAL */}
-                <AnimatePresence>
-                    {phase === 'SETUP' && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-                        >
-                            <motion.div
-                                initial={{ scale: 0.9, y: 20 }}
-                                animate={{ scale: 1, y: 0 }}
-                                className="bg-white border-4 border-pink-300 p-6 rounded-2xl max-w-md w-[90%] shadow-2xl"
-                            >
-                                <label className="block text-sm font-bold text-slate-700 mb-1">What do you want to learn?</label>
-                                <input
-                                    className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 focus:outline-none focus:border-pink-400 text-slate-700"
-                                    placeholder="e.g., Photosynthesis, JavaScript..."
-                                    value={topic}
-                                    onChange={e => setTopic(e.target.value)}
-                                    autoFocus
-                                />
-
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Any notes or goals? (Optional)</label>
-                                <textarea
-                                    className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 h-20 focus:outline-none focus:border-pink-400 text-slate-700 resize-none"
-                                    placeholder="Paste notes here..."
-                                    value={goals}
-                                    onChange={e => setGoals(e.target.value)}
-                                />
-
-                                <button
-                                    onClick={handleStart}
-                                    disabled={!topic.trim()}
-                                    className="w-full py-3 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all"
-                                >
-                                    Let's Study! 💕
-                                </button>
-                            </motion.div>
-                        </motion.div>
+                                    <input
+                                        type="text"
+                                        value={textInput}
+                                        onChange={e => setTextInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleTextSubmit()}
+                                        placeholder="Type your answer..."
+                                        className="flex-1 bg-white/90 border-2 border-pink-200 rounded-xl px-4 py-3 text-slate-700 font-medium focus:outline-none focus:border-pink-400"
+                                        autoFocus
+                                    />
+                                    <button
+                                        onClick={handleTextSubmit}
+                                        disabled={!textInput.trim()}
+                                        className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white px-5 py-3 rounded-xl font-bold transition-all"
+                                    >
+                                        Send
+                                    </button>
+                                </motion.div>
+                            )}
+                        </div>
                     )}
-                </AnimatePresence>
-
-                {/* ENDING SCREEN */}
-                <AnimatePresence>
-                    {phase === 'ENDING' && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/80"
-                        >
-                            <motion.div
-                                initial={{ scale: 0.8 }}
-                                animate={{ scale: 1 }}
-                                className="text-center p-8"
-                            >
-                                <h1 className="text-5xl font-black text-white mb-4">
-                                    {endingType === 'GOOD' && '💖 Perfect Study Date! 💖'}
-                                    {endingType === 'NEUTRAL' && '📚 Study Complete!'}
-                                    {endingType === 'BAD' && '💔 Date Over...'}
-                                </h1>
-                                <p className="text-xl text-white/80 mb-6 max-w-md mx-auto">
-                                    {endingType === 'GOOD' && `Amazing, ${userName}! Fahi had the best time learning with you~`}
-                                    {endingType === 'NEUTRAL' && `Good job, ${userName}! Maybe bring flowers next time?`}
-                                    {endingType === 'BAD' && `Fahi got too frustrated and left... Try again, ${userName}?`}
-                                </p>
-                                <button
-                                    onClick={() => window.location.reload()}
-                                    className="bg-white text-pink-500 px-8 py-3 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl"
-                                >
-                                    Play Again
-                                </button>
-                            </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                </div>
             </div>
+
+            {/* Back Button - Top Left */}
+            <button
+                onClick={handleExit}
+                className="absolute top-4 left-4 z-50 bg-black/40 hover:bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full text-white font-bold text-sm transition-all border border-white/20"
+            >
+                ← Exit
+            </button>
+
+            {/* SETUP MODAL */}
+            <AnimatePresence>
+                {phase === 'SETUP' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="bg-white border-4 border-pink-300 p-6 rounded-2xl max-w-md w-[90%] shadow-2xl"
+                        >
+                            <label className="block text-sm font-bold text-slate-700 mb-1">What do you want to learn?</label>
+                            <input
+                                className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 focus:outline-none focus:border-pink-400 text-slate-700"
+                                placeholder="e.g., Photosynthesis, JavaScript..."
+                                value={topic}
+                                onChange={e => setTopic(e.target.value)}
+                                autoFocus
+                            />
+
+                            <label className="block text-sm font-bold text-slate-700 mb-1">Any notes or goals? (Optional)</label>
+                            <textarea
+                                className="w-full p-3 rounded-xl border-2 border-pink-200 mb-4 h-20 focus:outline-none focus:border-pink-400 text-slate-700 resize-none"
+                                placeholder="Paste notes here..."
+                                value={goals}
+                                onChange={e => setGoals(e.target.value)}
+                            />
+
+                            <button
+                                onClick={handleStart}
+                                disabled={!topic.trim()}
+                                className="w-full py-3 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all"
+                            >
+                                Let's Study! 💕
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ENDING SCREEN */}
+            <AnimatePresence>
+                {phase === 'ENDING' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/80"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: 1 }}
+                            className="text-center p-8"
+                        >
+                            <h1 className="text-5xl font-black text-white mb-4">
+                                {endingType === 'GOOD' && '💖 Perfect Study Date! 💖'}
+                                {endingType === 'NEUTRAL' && '📚 Study Complete!'}
+                                {endingType === 'BAD' && '💔 Date Over...'}
+                            </h1>
+                            <p className="text-xl text-white/80 mb-6 max-w-md mx-auto">
+                                {endingType === 'GOOD' && `Amazing, ${userName}! Fahi had the best time learning with you~`}
+                                {endingType === 'NEUTRAL' && `Good job, ${userName}! Maybe bring flowers next time?`}
+                                {endingType === 'BAD' && `Fahi got too frustrated and left... Try again, ${userName}?`}
+                            </p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-white text-pink-500 px-8 py-3 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl"
+                            >
+                                Play Again
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
