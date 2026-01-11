@@ -294,14 +294,10 @@ export default function StudyDateGame() {
                 setSegments(curriculum);
                 setCurrentSegmentIndex(0);
                 setDialogueIndex(0);
-                // Show first subsection title then start teaching
+                // Show first subsection title (user clicks to see explanations)
                 const first = curriculum[0];
                 setCurrentText(`Let's start with: ${first.title}`);
                 setPhase('TEACHING');
-                setTimeout(() => {
-                    setCurrentText(first.explanation[0] || 'Let me explain this concept.');
-                    setTextKey(prev => prev + 1);
-                }, 2000);
             } else {
                 throw new Error('Invalid curriculum');
             }
@@ -318,9 +314,6 @@ export default function StudyDateGame() {
             setDialogueIndex(0);
             setCurrentText(`Let's start with: ${fallback[0].title}`);
             setPhase('TEACHING');
-            setTimeout(() => {
-                setCurrentText(fallback[0].explanation[0]);
-            }, 2000);
         }
     };
 
@@ -329,11 +322,12 @@ export default function StudyDateGame() {
         const segment = segments[currentSegmentIndex];
         if (!segment) return;
 
-        // Loop through explanations, then show question
-        const next = dialogueIndex + 1;
-        if (next < segment.explanation.length) {
-            setDialogueIndex(next);
-            setCurrentText(segment.explanation[next]);
+        // dialogueIndex 0 = showing title, 1+ = showing explanations
+        // After all explanations, show question
+        if (dialogueIndex < segment.explanation.length) {
+            // Show next explanation
+            setCurrentText(segment.explanation[dialogueIndex]);
+            setDialogueIndex(dialogueIndex + 1);
             setExplainFrame(prev => (prev + 1) % 2);
         } else {
             // Done with explanations, show question
@@ -374,14 +368,12 @@ export default function StudyDateGame() {
                     setEndingType(mood >= 90 ? 'GOOD' : 'NEUTRAL');
                     setPhase('ENDING');
                 } else {
+                    // Move to next segment - show title first, user clicks to see explanations
                     setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
-                    setCurrentText(`Next: ${segments[next].title}`);
-                    setTimeout(() => {
-                        setCurrentText(segments[next].question);
-                        setPhase(segments[next].isTextInput ? 'TEXT_INPUT' : 'QUIZ');
-                    }, 1500);
+                    setCurrentText(`Next topic: ${segments[next].title}`);
+                    setPhase('TEACHING');
                 }
             } else {
                 // Increment fail count and call API for AI-generated re-explanation
@@ -407,28 +399,19 @@ export default function StudyDateGame() {
 
                     if (result.success && result.data?.explanation) {
                         const lines = result.data.explanation;
-                        // Show first line (reaction)
-                        setCurrentText(lines[0] || 'Wrong.');
+                        // Store re-explanation and show first line - user clicks to continue
+                        setSegments(prev => prev.map((s, i) =>
+                            i === currentSegmentIndex ? { ...s, explanation: lines } : s
+                        ));
+                        setDialogueIndex(0);
+                        setCurrentText(lines[0] || 'Wrong. Let me explain again.');
                         setTextKey(prev => prev + 1);
                         if (result.data.emotion) {
                             setEmotion(result.data.emotion as FahiEmotion);
                         }
-
-                        // After a pause, show second line then immediately go to question
-                        setTimeout(() => {
-                            if (lines[1]) {
-                                setCurrentText(lines[1]);
-                                setTextKey(prev => prev + 1);
-                            }
-                            // Go directly to question after brief delay
-                            setTimeout(() => {
-                                setCurrentText(segment.question);
-                                setEmotion('neutral');
-                                setPhase(segment.isTextInput ? 'TEXT_INPUT' : 'QUIZ');
-                            }, 1500);
-                        }, 1500);
+                        setPhase('TEACHING'); // User clicks to advance through re-explanation
                     } else {
-                        // Fallback - go straight to question with brief feedback
+                        // Fallback - show feedback then go to TEACHING
                         setCurrentText(`Wrong. The answer was "${segment.correctAnswer}".`);
                         setTextKey(prev => prev + 1);
                         setTimeout(() => {
@@ -494,6 +477,7 @@ export default function StudyDateGame() {
                 // Progress and move on
                 setProgress(prev => Math.min(100, prev + (100 / segments.length)));
 
+                // After feedback, move to next segment (user clicks to advance)
                 setTimeout(() => {
                     const next = currentSegmentIndex + 1;
                     if (next >= segments.length) {
@@ -504,12 +488,8 @@ export default function StudyDateGame() {
                         setDialogueIndex(0);
                         setExplainFrame(0);
                         setFailCount(0);
-                        setCurrentText(`Next: ${segments[next].title}`);
-                        setTextKey(prev => prev + 1);
-                        setTimeout(() => {
-                            setCurrentText(segments[next].question);
-                            setPhase(segments[next].isTextInput ? 'TEXT_INPUT' : 'QUIZ');
-                        }, 1500);
+                        setCurrentText(`Next topic: ${segments[next].title}`);
+                        setPhase('TEACHING'); // User clicks to see explanations
                     }
                 }, 2000);
             } else {
@@ -531,11 +511,8 @@ export default function StudyDateGame() {
                     setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
-                    setCurrentText(`Next: ${segments[next].title}`);
-                    setTimeout(() => {
-                        setCurrentText(segments[next].question);
-                        setPhase(segments[next].isTextInput ? 'TEXT_INPUT' : 'QUIZ');
-                    }, 1500);
+                    setCurrentText(`Next topic: ${segments[next].title}`);
+                    setPhase('TEACHING'); // User clicks to see explanations
                 }
             }, 1500);
         }
