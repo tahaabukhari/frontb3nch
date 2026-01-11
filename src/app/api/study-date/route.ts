@@ -244,52 +244,60 @@ Output ONLY pure valid JSON:
             const { tone, emotion } = toneDescriptions[Math.min(loopCount, 4)];
 
             const prompt = `
-You are Fahi, a colleague reacting to a friend's wrong answer.
+You are Fahi, a colleague correcting a friend's wrong answer.
 Topic: "${topicName}"
-Friend said: "${previousAnswer}" (which is WRONG)
+Friend said: "${previousAnswer}" (WRONG)
 Correct answer: "${correctAnswer}"
-Times wrong in a row: ${loopCount}
+Times wrong: ${loopCount}
 Tone: ${tone}
 
-Generate EXACTLY 2 unique lines:
-1. A quick reaction to the mistake.
-2. A fresh way to explain WHY "${correctAnswer}" is correct
+Generate EXACTLY 4 UNIQUE lines (each different, no repetition):
+1. Quick reaction to their mistake
+2. Why their answer was wrong
+3. Clear explanation of why "${correctAnswer}" is correct
+4. Encouragement or hint to try again
 
-RULES:
-- Each line under 50 characters
-- NO asterisks, NO emojis, NO actions like *sighs*
-- Be direct, no fluff
-- Make each line feel like natural speech
-- Don't say "Let me explain" or similar filler phrases
+CRITICAL RULES:
+- Each line MUST be different wording
+- Each line under 60 characters
+- NO asterisks, NO emojis
+- Sound like natural conversation
+- NEVER repeat phrases between lines
+- Generate fresh content each time
 
 Output ONLY valid JSON:
-{"lines": ["reaction line", "explanation line"], "emotion": "${emotion}"}
+{"lines": ["reaction", "why wrong", "correct explanation", "encouragement"], "emotion": "${emotion}"}
 `;
             try {
                 const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-                const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+                const text = result.response.text().replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
                 const parsed = JSON.parse(text);
 
-                // Combine into a single flowing response
+                // Ensure we have exactly 4 lines
+                const lines = parsed.lines || [];
+                while (lines.length < 4) {
+                    lines.push(`The answer is "${correctAnswer}".`);
+                }
+
                 return NextResponse.json({
                     success: true,
                     data: {
-                        explanation: parsed.lines || [`Wrong. The answer is ${correctAnswer}.`, 'Try again.'],
+                        explanation: lines.slice(0, 4),
                         emotion: parsed.emotion || emotion
                     }
                 });
             } catch {
-                // Simple fallback
-                const fallbackReactions = [
-                    `That's not right. It's "${correctAnswer}".`,
-                    `No. The answer is "${correctAnswer}".`,
-                    `Wrong again. "${correctAnswer}" is correct.`,
-                    `How is this hard? It's "${correctAnswer}".`
+                // Fallback with 4 varied lines
+                const fallbacks = [
+                    [`Nope, that's not it.`, `"${previousAnswer}" doesn't work here.`, `It's "${correctAnswer}" because of how it functions.`, `Give it another shot.`],
+                    [`Not quite right.`, `That answer misses the key point.`, `"${correctAnswer}" fits because it matches the concept.`, `Try again!`],
+                    [`Wrong answer.`, `"${previousAnswer}" doesn't apply here.`, `The correct one is "${correctAnswer}".`, `Think about it.`],
+                    [`Come on, really?`, `That's way off.`, `It's obviously "${correctAnswer}".`, `Focus.`]
                 ];
                 return NextResponse.json({
                     success: true,
                     data: {
-                        explanation: [fallbackReactions[Math.min(loopCount - 1, 3)], 'Think about it and try again.'],
+                        explanation: fallbacks[Math.min(loopCount - 1, 3)],
                         emotion
                     }
                 });

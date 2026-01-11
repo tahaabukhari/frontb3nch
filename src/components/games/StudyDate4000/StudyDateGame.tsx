@@ -151,6 +151,11 @@ export default function StudyDateGame() {
     const [mistakes, setMistakes] = useState<{ topic: string; userAnswer: string; correct: string }[]>([]);
     const [waitingForClick, setWaitingForClick] = useState(false); // Require user click to proceed
 
+    // Final quiz specific states
+    const [finalQuizRetry, setFinalQuizRetry] = useState(0); // 0 = first attempt, 1 = retry after explanation
+    const [finalQuizExplanation, setFinalQuizExplanation] = useState<string[]>([]); // Re-explanation lines
+    const [finalQuizExplanationIndex, setFinalQuizExplanationIndex] = useState(0); // Current explanation line
+
     // Sanitize text to remove JSON artifacts
     const sanitizeText = (text: string): string => {
         return text
@@ -388,6 +393,13 @@ export default function StudyDateGame() {
 
     const advanceDialogue = () => {
         if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
+
+        // Check if we're in final quiz explanation mode
+        if (finalQuizExplanation.length > 0) {
+            advanceFinalQuizExplanation();
+            return;
+        }
+
         const segment = segments[currentSegmentIndex];
         if (!segment) return;
 
@@ -604,15 +616,38 @@ export default function StudyDateGame() {
         // Show the current question for review
         const seg = segments[finalQuizIndex];
         if (seg) {
-            setCurrentText(`Quick check on ${seg.title}: ${seg.question}`);
+            setCurrentText(sanitizeText(`Quick check on ${seg.title}: ${seg.question}`));
             setEmotion('happy-neutral');
+        }
+    };
+
+    // Advance through final quiz re-explanation (4 lines)
+    const advanceFinalQuizExplanation = () => {
+        if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
+
+        const nextIndex = finalQuizExplanationIndex + 1;
+        if (nextIndex < finalQuizExplanation.length) {
+            setFinalQuizExplanationIndex(nextIndex);
+            setCurrentText(sanitizeText(finalQuizExplanation[nextIndex]));
+        } else {
+            // Done with explanation, ask the question again
+            const seg = segments[finalQuizIndex];
+            setFinalQuizExplanation([]);
+            setFinalQuizExplanationIndex(0);
+            setCurrentText(sanitizeText(`Okay, try again: ${seg?.question || ''}`));
+            setPhase('FINAL_QUIZ');
         }
     };
 
     const handleFinalQuizSubmit = async () => {
         if (!textInput.trim()) return;
+        const seg = segments[finalQuizIndex];
+        if (!seg) return;
+
         setPhase('FEEDBACK');
-        setCurrentText(`Let me see...`);
+        setCurrentText(`Hmm, let me think...`);
+        const userAnswer = textInput;
+        setTextInput('');
 
         try {
             const response = await fetch('/api/study-date', {
@@ -620,8 +655,8 @@ export default function StudyDateGame() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'evaluate_text',
-                    topicName: segments[finalQuizIndex]?.title || topic,
-                    userText: textInput,
+                    topicName: seg.title,
+                    userText: userAnswer,
                     userName,
                     currentMood: mood
                 })
@@ -629,30 +664,113 @@ export default function StudyDateGame() {
             const result = await response.json();
 
             if (result.success && result.data) {
-                setCurrentText(result.data.comment);
+                const score = result.data.score || 5;
+                const isCorrect = score >= 5;
+
+                setCurrentText(sanitizeText(result.data.comment));
                 setEmotion(result.data.emotion as FahiEmotion);
+
+                if (isCorrect) {
+                    // Correct! Track and move to next
+                    setCorrectAnswers(prev => [...prev, seg.title]);
+                    setShowStars(true);
+                    setTimeout(() => setShowStars(false), 1000);
+
+                    setTimeout(() => {
+                        const next = finalQuizIndex + 1;
+                        setFinalQuizRetry(0); // Reset retry for next question
+                        if (next >= segments.length) {
+                            setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
+                            setCurrentText(`Done! Great work, ${userName}!`);
+                            setEmotion('excited');
+                            setPhase('ENDING');
+                        } else {
+                            setFinalQuizIndex(next);
+                            setCurrentText(sanitizeText(`Next: ${segments[next].title} - ${segments[next].question}`));
+                            setPhase('FINAL_QUIZ');
+                        }
+                    }, 2000);
+                } else {
+                    // Wrong answer
+                    setMistakes(prev => [...prev, { topic: seg.title, userAnswer, correct: seg.correctAnswer || 'concepts covered' }]);
+
+                    if (finalQuizRetry === 0) {
+                        // First attempt was wrong - get re-explanation and retry once
+                        setFinalQuizRetry(1);
+
+                        // Get 4-line re-explanation
+                        try {
+                            const reExplainResponse = await fetch('/api/study-date', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    action: 're_explain',
+                                    topicName: seg.title,
+                                    failCount: 1,
+                                    previousAnswer: userAnswer,
+                                    correctAnswer: seg.correctAnswer || seg.title,
+                                    userName
+                                })
+                            });
+                            const reExplainResult = await reExplainResponse.json();
+
+                            if (reExplainResult.success && reExplainResult.data?.explanation?.length > 0) {
+                                const lines = reExplainResult.data.explanation.map(sanitizeText);
+                                setFinalQuizExplanation(lines);
+                                setFinalQuizExplanationIndex(0);
+                                setTimeout(() => {
+                                    setCurrentText(lines[0]);
+                                    setEmotion(reExplainResult.data.emotion || 'neutral');
+                                    setPhase('TEACHING'); // Use TEACHING phase to show explanation lines
+                                }, 1500);
+                            } else {
+                                // Fallback - just retry
+                                setTimeout(() => {
+                                    setCurrentText(`Not quite. Let's try that again: ${seg.question}`);
+                                    setPhase('FINAL_QUIZ');
+                                }, 2000);
+                            }
+                        } catch {
+                            setTimeout(() => {
+                                setCurrentText(`Let's try that one more time: ${seg.question}`);
+                                setPhase('FINAL_QUIZ');
+                            }, 2000);
+                        }
+                    } else {
+                        // Already retried once - move on
+                        setTimeout(() => {
+                            const next = finalQuizIndex + 1;
+                            setFinalQuizRetry(0);
+                            if (next >= segments.length) {
+                                setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
+                                setCurrentText(`That's everything! Let's see how you did.`);
+                                setPhase('ENDING');
+                            } else {
+                                setFinalQuizIndex(next);
+                                setCurrentText(sanitizeText(`Moving on: ${segments[next].title} - ${segments[next].question}`));
+                                setPhase('FINAL_QUIZ');
+                            }
+                        }, 2000);
+                    }
+                }
+            } else {
+                throw new Error('API failed');
             }
         } catch {
-            setCurrentText(`Okay, got that!`);
-            setEmotion('happy');
+            // Fallback - just move on
+            setCurrentText(`Got it. Moving on.`);
+            setTimeout(() => {
+                const next = finalQuizIndex + 1;
+                setFinalQuizRetry(0);
+                if (next >= segments.length) {
+                    setPhase('ENDING');
+                } else {
+                    setFinalQuizIndex(next);
+                    setCurrentText(sanitizeText(`Next: ${segments[next].title} - ${segments[next].question}`));
+                    setPhase('FINAL_QUIZ');
+                }
+            }, 1500);
         }
-
-        setTimeout(() => {
-            const next = finalQuizIndex + 1;
-            if (next >= segments.length) {
-                // Final quiz complete - end game
-                setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
-                setCurrentText(`That's it! Great job getting through everything, ${userName}!`);
-                setEmotion('excited');
-                setPhase('ENDING');
-            } else {
-                setFinalQuizIndex(next);
-                setCurrentText(`Next: ${segments[next].title} - ${segments[next].question}`);
-                setPhase('FINAL_QUIZ');
-            }
-        }, 2000);
-
-        setTextInput('');
     };
 
     const coveredTopics = segments.slice(0, currentSegmentIndex).map(s => s.title);
