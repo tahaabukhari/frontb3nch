@@ -50,6 +50,46 @@ const INTRO_DIALOGUE = [
 
 const TEXT_INPUT_LIMIT = 150;
 
+// Star particle component
+const StarBurst = ({ show }: { show: boolean }) => {
+    if (!show) return null;
+    return (
+        <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center">
+            {[...Array(8)].map((_, i) => (
+                <motion.div
+                    key={i}
+                    initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
+                    animate={{
+                        scale: [0, 1, 0.5],
+                        opacity: [1, 1, 0],
+                        x: Math.cos((i * 45) * Math.PI / 180) * 100,
+                        y: Math.sin((i * 45) * Math.PI / 180) * 100
+                    }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="absolute text-3xl"
+                >
+                    ⭐
+                </motion.div>
+            ))}
+        </div>
+    );
+};
+
+// Frustration effect
+const FrustrationEffect = ({ show }: { show: boolean }) => {
+    if (!show) return null;
+    return (
+        <motion.div
+            initial={{ scale: 0, opacity: 0, y: 0 }}
+            animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 0], y: -50 }}
+            transition={{ duration: 0.8 }}
+            className="absolute top-10 left-1/2 -translate-x-1/2 z-50 text-5xl pointer-events-none"
+        >
+            💢
+        </motion.div>
+    );
+};
+
 export default function StudyDateGame() {
     const [phase, setPhase] = useState<GamePhase>('INTRO');
     const [previousPhase, setPreviousPhase] = useState<GamePhase>('INTRO');
@@ -72,14 +112,29 @@ export default function StudyDateGame() {
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
-    // Responsive check
+    // Effect states
+    const [showStars, setShowStars] = useState(false);
+    const [showFrustration, setShowFrustration] = useState(false);
+
+    // Responsive
     const [isMobile, setIsMobile] = useState(false);
+    const [screenSize, setScreenSize] = useState<'sm' | 'md' | 'lg'>('md');
+
     useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768);
+        const check = () => {
+            const w = window.innerWidth;
+            setIsMobile(w < 768);
+            setScreenSize(w < 768 ? 'sm' : w < 1280 ? 'md' : 'lg');
+        };
         check();
         window.addEventListener('resize', check);
         return () => window.removeEventListener('resize', check);
     }, []);
+
+    // Responsive sizing helper
+    const getSize = (sm: number, md: number, lg: number) => {
+        return screenSize === 'sm' ? sm : screenSize === 'md' ? md : lg;
+    };
 
     // Typewriter
     useEffect(() => {
@@ -223,10 +278,14 @@ export default function StudyDateGame() {
             setEmotion('happy');
             setMood(prev => Math.min(100, prev + 5));
             setProgress(prev => Math.min(100, prev + (100 / segments.length)));
+            setShowStars(true);
+            setTimeout(() => setShowStars(false), 1000);
         } else {
             setCurrentText(`*sighs* Not quite, ${userName}... Let me explain that again.`);
             setEmotion('disappointed');
             setMood(prev => Math.max(0, prev - 10));
+            setShowFrustration(true);
+            setTimeout(() => setShowFrustration(false), 1000);
         }
 
         setTimeout(() => {
@@ -257,6 +316,8 @@ export default function StudyDateGame() {
         setPhase('FEEDBACK');
         setCurrentText(`*thinking* Hmm, interesting perspective, ${userName}!`);
         setEmotion('neutral');
+        setShowStars(true);
+        setTimeout(() => setShowStars(false), 1000);
 
         setTimeout(() => {
             setCurrentText(`I like how you explained that! 💕`);
@@ -293,47 +354,62 @@ export default function StudyDateGame() {
             <img src={bgImg.src} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
 
             {/* TABLE */}
-            <div className="absolute bottom-0 left-0 right-0 h-[20vh] z-10">
+            <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: isMobile ? '18vh' : '20vh' }}>
                 <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
             </div>
 
-            {/* FAHI - Centered */}
-            <div className="absolute inset-0 z-20 flex items-end justify-center pointer-events-none" style={{ paddingBottom: '12vh' }}>
-                <motion.img
-                    key={getCurrentSprite()?.src}
-                    src={getCurrentSprite()?.src}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="object-contain drop-shadow-2xl"
-                    style={{
-                        height: isMobile ? '50vh' : '65vh',
-                        transform: 'scale(1.25)'
-                    }}
-                    alt="Fahi"
-                />
+            {/* FAHI - Centered (higher on mobile) */}
+            <div
+                className="absolute inset-0 z-20 flex items-end justify-center pointer-events-none"
+                style={{ paddingBottom: isMobile ? '20vh' : '12vh' }}
+            >
+                <div className="relative">
+                    <motion.img
+                        key={getCurrentSprite()?.src}
+                        src={getCurrentSprite()?.src}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="object-contain drop-shadow-2xl"
+                        style={{
+                            height: isMobile ? '45vh' : '65vh',
+                            transform: 'scale(1.25)'
+                        }}
+                        alt="Fahi"
+                    />
+                    {/* Effects on Fahi */}
+                    <StarBurst show={showStars} />
+                    <FrustrationEffect show={showFrustration} />
+                </div>
             </div>
 
-            {/* BARS - Left of center (100px gap) - Desktop only beside Fahi, mobile hidden during gameplay */}
+            {/* BARS - Left of center (Desktop) */}
             {showBars && !isMobile && (
                 <div
-                    className="absolute z-30 flex flex-col gap-4"
+                    className="absolute z-30 flex flex-col"
                     style={{
                         left: 'calc(50% - 280px)',
-                        bottom: '30vh'
+                        bottom: '30vh',
+                        gap: `${getSize(12, 16, 20)}px`
                     }}
                 >
                     <div className="text-center">
-                        <span className="text-white font-bold drop-shadow-lg block mb-1" style={{ fontSize: '13px' }}>CC</span>
-                        <div style={{ height: '110px', width: '24px', padding: '2px' }} className="bg-black/50 backdrop-blur-sm rounded-full border border-white/30">
+                        <span className="text-white font-bold drop-shadow-lg block mb-1" style={{ fontSize: `${getSize(11, 13, 16)}px` }}>CC</span>
+                        <div
+                            className="bg-black/50 backdrop-blur-sm rounded-full border border-white/30"
+                            style={{ height: `${getSize(90, 110, 140)}px`, width: `${getSize(20, 24, 30)}px`, padding: '2px' }}
+                        >
                             <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
                                 <motion.div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-full" animate={{ height: `${progress}%` }} />
                             </div>
                         </div>
-                        <span className="text-white font-bold" style={{ fontSize: '12px' }}>{Math.round(progress)}%</span>
+                        <span className="text-white font-bold" style={{ fontSize: `${getSize(10, 12, 14)}px` }}>{Math.round(progress)}%</span>
                     </div>
                     <div className="text-center">
-                        <span className="text-white font-bold drop-shadow-lg block mb-1" style={{ fontSize: '13px' }}>💕</span>
-                        <div style={{ height: '110px', width: '24px', padding: '2px' }} className="bg-black/50 backdrop-blur-sm rounded-full border border-white/30">
+                        <span className="text-white font-bold drop-shadow-lg block mb-1" style={{ fontSize: `${getSize(11, 13, 16)}px` }}>💕</span>
+                        <div
+                            className="bg-black/50 backdrop-blur-sm rounded-full border border-white/30"
+                            style={{ height: `${getSize(90, 110, 140)}px`, width: `${getSize(20, 24, 30)}px`, padding: '2px' }}
+                        >
                             <div className="h-full w-full rounded-full bg-white/10 relative overflow-hidden">
                                 <motion.div
                                     className={`absolute bottom-0 left-0 right-0 rounded-full ${mood >= 70 ? 'bg-gradient-to-t from-pink-500 to-pink-300' : mood >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-300' : 'bg-gradient-to-t from-red-600 to-red-400'}`}
@@ -341,52 +417,52 @@ export default function StudyDateGame() {
                                 />
                             </div>
                         </div>
-                        <span className="text-white font-bold" style={{ fontSize: '12px' }}>{mood}%</span>
+                        <span className="text-white font-bold" style={{ fontSize: `${getSize(10, 12, 14)}px` }}>{mood}%</span>
                     </div>
                 </div>
             )}
 
-            {/* Mobile Bars - Top of screen */}
+            {/* Mobile Bars - Lower position */}
             {showBars && isMobile && (
-                <div className="absolute top-16 left-4 right-4 z-30 flex justify-center gap-4">
-                    <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
-                        <span className="text-white text-[10px] font-bold">CC</span>
-                        <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
+                <div className="absolute bottom-24 left-4 right-4 z-30 flex justify-center gap-6">
+                    <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2">
+                        <span className="text-white text-xs font-bold">CC</span>
+                        <div className="w-20 h-3 bg-white/20 rounded-full overflow-hidden">
                             <motion.div className="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 rounded-full" animate={{ width: `${progress}%` }} />
                         </div>
-                        <span className="text-white text-[10px]">{Math.round(progress)}%</span>
+                        <span className="text-white text-xs font-bold">{Math.round(progress)}%</span>
                     </div>
-                    <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
-                        <span className="text-[10px]">💕</span>
-                        <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2">
+                        <span className="text-sm">💕</span>
+                        <div className="w-20 h-3 bg-white/20 rounded-full overflow-hidden">
                             <motion.div className={`h-full rounded-full ${mood >= 70 ? 'bg-gradient-to-r from-pink-500 to-pink-300' : mood >= 40 ? 'bg-gradient-to-r from-yellow-500 to-yellow-300' : 'bg-gradient-to-r from-red-600 to-red-400'}`} animate={{ width: `${mood}%` }} />
                         </div>
-                        <span className="text-white text-[10px]">{mood}%</span>
+                        <span className="text-white text-xs font-bold">{mood}%</span>
                     </div>
                 </div>
             )}
 
-            {/* DIALOGUE BOX - Desktop: Right of center (100px gap), Mobile: Bottom center */}
+            {/* DIALOGUE BOX */}
             {showUI && (
                 <div
                     className={`absolute z-30 ${isMobile ? 'bottom-4 left-4 right-4' : ''}`}
                     style={!isMobile ? {
                         right: 'calc(50% - 520px)',
                         bottom: '35vh',
-                        width: '340px'
+                        width: `${getSize(300, 340, 400)}px`
                     } : {}}
                 >
                     <motion.div
                         initial={{ opacity: 0, x: isMobile ? 0 : 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="bg-white/95 backdrop-blur-md rounded-xl rounded-bl-none shadow-2xl border-2 border-pink-300 relative"
-                        style={{ padding: isMobile ? '14px 16px' : '20px 24px' }}
+                        style={{ padding: isMobile ? '14px 16px' : `${getSize(18, 20, 24)}px ${getSize(20, 24, 28)}px` }}
                     >
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="text-pink-500 font-black" style={{ fontSize: isMobile ? '14px' : '18px' }}>Fahi</span>
-                            <span className="text-pink-300" style={{ fontSize: isMobile ? '12px' : '14px' }}>💕</span>
+                            <span className="text-pink-500 font-black" style={{ fontSize: `${getSize(14, 18, 22)}px` }}>Fahi</span>
+                            <span className="text-pink-300" style={{ fontSize: `${getSize(12, 14, 16)}px` }}>💕</span>
                         </div>
-                        <p className="text-slate-700 leading-relaxed" style={{ fontSize: isMobile ? '14px' : '17px', minHeight: isMobile ? '45px' : '60px' }}>
+                        <p className="text-slate-700 leading-relaxed" style={{ fontSize: `${getSize(14, 17, 20)}px`, minHeight: `${getSize(45, 60, 75)}px` }}>
                             {displayedText}
                             {isTyping && <span className="animate-pulse text-pink-400">▌</span>}
                         </p>
@@ -395,7 +471,7 @@ export default function StudyDateGame() {
                             <button
                                 onClick={phase === 'INTRO' ? advanceIntro : advanceDialogue}
                                 className="absolute top-3 right-3 bg-pink-100 hover:bg-pink-200 text-pink-500 rounded-full font-bold transition-all flex items-center justify-center"
-                                style={{ width: isMobile ? '26px' : '32px', height: isMobile ? '26px' : '32px', fontSize: isMobile ? '12px' : '14px' }}
+                                style={{ width: `${getSize(26, 32, 38)}px`, height: `${getSize(26, 32, 38)}px`, fontSize: `${getSize(12, 14, 16)}px` }}
                             >
                                 ▶
                             </button>
@@ -411,13 +487,13 @@ export default function StudyDateGame() {
                                 onChange={e => setTextInput(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && submitName()}
                                 placeholder="Your name..."
-                                className="flex-1 bg-white/90 border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400"
-                                style={{ padding: isMobile ? '10px 14px' : '12px 16px', fontSize: isMobile ? '14px' : '16px' }}
+                                className="flex-1 bg-white border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400"
+                                style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(14, 16, 18)}px` }}
                                 autoFocus
                             />
                             <button onClick={submitName} disabled={!textInput.trim()}
                                 className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
-                                style={{ padding: isMobile ? '10px 16px' : '12px 18px', fontSize: isMobile ? '14px' : '16px' }}>
+                                style={{ padding: `${getSize(10, 12, 14)}px ${getSize(14, 18, 22)}px`, fontSize: `${getSize(14, 16, 18)}px` }}>
                                 ✓
                             </button>
                         </motion.div>
@@ -429,8 +505,8 @@ export default function StudyDateGame() {
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3 space-y-2">
                                 {segments[currentSegmentIndex].options.map((option, i) => (
                                     <button key={i} onClick={() => handleAnswer(option)}
-                                        className="w-full bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 rounded-lg text-left font-medium text-slate-700 transition-all"
-                                        style={{ padding: isMobile ? '10px 14px' : '12px 16px', fontSize: isMobile ? '13px' : '15px' }}>
+                                        className="w-full bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 rounded-lg text-left font-medium text-slate-700 transition-all active:scale-98"
+                                        style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
                                         {option}
                                     </button>
                                 ))}
@@ -448,15 +524,15 @@ export default function StudyDateGame() {
                                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleTextSubmit()}
                                     placeholder="Type your answer..."
                                     maxLength={TEXT_INPUT_LIMIT}
-                                    className="w-full bg-white/90 border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400 resize-none"
-                                    style={{ padding: isMobile ? '10px 14px' : '12px 16px', fontSize: isMobile ? '13px' : '15px', height: isMobile ? '60px' : '70px' }}
+                                    className="w-full bg-white border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400 resize-none"
+                                    style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(13, 15, 17)}px`, height: `${getSize(60, 70, 85)}px` }}
                                     autoFocus
                                 />
-                                <span className="absolute bottom-2 right-3 text-gray-400" style={{ fontSize: isMobile ? '10px' : '11px' }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
+                                <span className="absolute bottom-2 right-3 text-gray-400" style={{ fontSize: `${getSize(10, 11, 12)}px` }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
                             </div>
                             <button onClick={handleTextSubmit} disabled={!textInput.trim()}
                                 className="w-full mt-2 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
-                                style={{ padding: isMobile ? '10px' : '12px', fontSize: isMobile ? '13px' : '15px' }}>
+                                style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
                                 Send
                             </button>
                         </motion.div>
@@ -464,77 +540,103 @@ export default function StudyDateGame() {
                 </div>
             )}
 
-            {/* TOP RIGHT: Pause & Exit */}
-            <div className="absolute top-3 right-3 z-50 flex flex-col gap-1">
-                {!['INTRO', 'ASK_NAME', 'SETUP', 'ENDING'].includes(phase) && (
-                    <button onClick={togglePause}
-                        className="bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg text-white font-bold transition-all border border-white/20"
-                        style={{ padding: isMobile ? '6px 10px' : '8px 14px', fontSize: isMobile ? '10px' : '12px' }}>
-                        {phase === 'PAUSED' ? '▶ Resume' : '⏸ Pause'}
-                    </button>
-                )}
-                <button onClick={handleExit}
-                    className="bg-red-500/80 hover:bg-red-600 backdrop-blur-sm rounded-lg text-white font-bold transition-all border border-white/20"
-                    style={{ padding: isMobile ? '6px 10px' : '8px 14px', fontSize: isMobile ? '10px' : '12px' }}>
-                    ✕ Exit
+            {/* PAUSE BUTTON ONLY (no exit button on main screen) */}
+            {!['INTRO', 'ASK_NAME', 'SETUP', 'ENDING', 'PAUSED'].includes(phase) && (
+                <button
+                    onClick={togglePause}
+                    className="absolute top-3 right-3 z-50 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-lg text-white font-bold transition-all border border-white/20"
+                    style={{
+                        padding: `${getSize(8, 10, 14)}px ${getSize(12, 16, 22)}px`,
+                        fontSize: `${getSize(11, 13, 16)}px`
+                    }}
+                >
+                    ⏸ Pause
                 </button>
-            </div>
+            )}
 
             {/* PAUSE MENU */}
             <AnimatePresence>
                 {phase === 'PAUSED' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white/95 rounded-xl shadow-2xl border-2 border-pink-300"
-                            style={{ padding: isMobile ? '16px' : '20px', width: isMobile ? '90%' : '400px', maxWidth: '90%' }}>
-                            <h2 className="font-black text-pink-500 mb-3 text-center" style={{ fontSize: isMobile ? '18px' : '20px' }}>⏸ Game Paused</h2>
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            className="bg-white/95 rounded-xl shadow-2xl border-2 border-pink-300"
+                            style={{
+                                padding: `${getSize(16, 24, 32)}px`,
+                                width: isMobile ? '90%' : `${getSize(380, 450, 520)}px`,
+                                maxWidth: '90%'
+                            }}
+                        >
+                            <h2 className="font-black text-pink-500 mb-4 text-center" style={{ fontSize: `${getSize(18, 22, 26)}px` }}>⏸ Game Paused</h2>
 
-                            <div className="mb-3">
-                                <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '11px' : '12px' }}>📍 Current:</h3>
-                                <p className="text-pink-500 font-medium bg-pink-50 rounded-lg" style={{ padding: '6px 8px', fontSize: isMobile ? '11px' : '12px' }}>{currentTopic}</p>
+                            <div className="mb-4">
+                                <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: `${getSize(11, 13, 15)}px` }}>📍 Current:</h3>
+                                <p className="text-pink-500 font-medium bg-pink-50 rounded-lg" style={{ padding: `${getSize(6, 8, 10)}px`, fontSize: `${getSize(11, 13, 15)}px` }}>{currentTopic}</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 mb-3">
+                            <div className="grid grid-cols-2 gap-3 mb-4">
                                 <div>
-                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '10px' : '11px' }}>✅ Done ({coveredTopics.length})</h3>
-                                    <div className="bg-green-50 rounded-lg overflow-y-auto" style={{ padding: '6px', height: isMobile ? '80px' : '100px' }}>
-                                        {coveredTopics.length === 0 ? <p className="text-gray-400" style={{ fontSize: '10px' }}>None</p> :
-                                            coveredTopics.map((t, i) => <p key={i} className="text-green-600" style={{ fontSize: '10px', marginBottom: '2px' }}>• {t}</p>)}
+                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: `${getSize(10, 12, 14)}px` }}>✅ Done ({coveredTopics.length})</h3>
+                                    <div className="bg-green-50 rounded-lg overflow-y-auto" style={{ padding: `${getSize(6, 8, 10)}px`, height: `${getSize(80, 100, 120)}px` }}>
+                                        {coveredTopics.length === 0 ? <p className="text-gray-400" style={{ fontSize: `${getSize(10, 11, 12)}px` }}>None</p> :
+                                            coveredTopics.map((t, i) => <p key={i} className="text-green-600" style={{ fontSize: `${getSize(10, 11, 12)}px`, marginBottom: '2px' }}>• {t}</p>)}
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '10px' : '11px' }}>📋 Next ({upcomingTopics.length})</h3>
-                                    <div className="bg-blue-50 rounded-lg overflow-y-auto" style={{ padding: '6px', height: isMobile ? '80px' : '100px' }}>
-                                        {upcomingTopics.map((t, i) => <p key={i} className="text-blue-600" style={{ fontSize: '10px', marginBottom: '2px' }}>• {t}</p>)}
+                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: `${getSize(10, 12, 14)}px` }}>📋 Next ({upcomingTopics.length})</h3>
+                                    <div className="bg-blue-50 rounded-lg overflow-y-auto" style={{ padding: `${getSize(6, 8, 10)}px`, height: `${getSize(80, 100, 120)}px` }}>
+                                        {upcomingTopics.map((t, i) => <p key={i} className="text-blue-600" style={{ fontSize: `${getSize(10, 11, 12)}px`, marginBottom: '2px' }}>• {t}</p>)}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
-                                <button onClick={togglePause} className="flex-1 bg-pink-400 hover:bg-pink-500 text-white rounded-lg font-bold transition-all" style={{ padding: isMobile ? '8px' : '10px', fontSize: isMobile ? '12px' : '13px' }}>▶ Resume</button>
-                                <button onClick={handleExit} className="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg font-bold transition-all" style={{ padding: isMobile ? '8px' : '10px', fontSize: isMobile ? '12px' : '13px' }}>Exit</button>
+                            <div className="flex gap-3">
+                                <button onClick={togglePause} className="flex-1 bg-pink-400 hover:bg-pink-500 text-white rounded-lg font-bold transition-all" style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>▶ Resume</button>
+                                <button onClick={handleExit} className="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg font-bold transition-all" style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>Exit</button>
                             </div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* SETUP MODAL */}
+            {/* SETUP MODAL - Fixed visibility */}
             <AnimatePresence>
                 {phase === 'SETUP' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white border-2 border-pink-300 rounded-xl shadow-2xl"
-                            style={{ padding: isMobile ? '16px' : '18px', width: isMobile ? '90%' : '320px', maxWidth: '90%' }}>
-                            <label className="block font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '12px' : '13px' }}>What to learn?</label>
-                            <input className="w-full border border-pink-200 rounded-lg mb-2 focus:outline-none focus:border-pink-400 text-slate-700"
-                                style={{ padding: isMobile ? '8px 10px' : '10px 12px', fontSize: isMobile ? '12px' : '13px' }}
-                                placeholder="e.g., Photosynthesis..." value={topic} onChange={e => setTopic(e.target.value)} autoFocus />
-                            <label className="block font-bold text-slate-700 mb-1" style={{ fontSize: isMobile ? '12px' : '13px' }}>Notes? (Optional)</label>
-                            <textarea className="w-full border border-pink-200 rounded-lg mb-2 focus:outline-none focus:border-pink-400 text-slate-700 resize-none"
-                                style={{ padding: isMobile ? '8px 10px' : '10px 12px', fontSize: isMobile ? '12px' : '13px', height: isMobile ? '50px' : '60px' }}
-                                placeholder="Paste notes..." value={goals} onChange={e => setGoals(e.target.value)} />
-                            <button onClick={handleStart} disabled={!topic.trim()}
-                                className="w-full bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white font-bold rounded-lg transition-all"
-                                style={{ padding: isMobile ? '10px' : '12px', fontSize: isMobile ? '13px' : '14px' }}>
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            className="bg-white border-4 border-pink-300 rounded-2xl shadow-2xl"
+                            style={{ padding: `${getSize(20, 24, 32)}px`, width: isMobile ? '90%' : `${getSize(340, 400, 480)}px`, maxWidth: '90%' }}
+                        >
+                            <h2 className="text-pink-500 font-black text-center mb-4" style={{ fontSize: `${getSize(20, 24, 28)}px` }}>📚 What to Study?</h2>
+
+                            <label className="block font-bold text-slate-700 mb-2" style={{ fontSize: `${getSize(13, 15, 17)}px` }}>Topic</label>
+                            <input
+                                className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl mb-4 focus:outline-none focus:border-pink-400 text-slate-800 placeholder-slate-400"
+                                style={{ padding: `${getSize(12, 14, 16)}px`, fontSize: `${getSize(14, 16, 18)}px` }}
+                                placeholder="e.g., Photosynthesis, JavaScript..."
+                                value={topic}
+                                onChange={e => setTopic(e.target.value)}
+                                autoFocus
+                            />
+
+                            <label className="block font-bold text-slate-700 mb-2" style={{ fontSize: `${getSize(13, 15, 17)}px` }}>Notes (Optional)</label>
+                            <textarea
+                                className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl mb-4 focus:outline-none focus:border-pink-400 text-slate-800 placeholder-slate-400 resize-none"
+                                style={{ padding: `${getSize(12, 14, 16)}px`, fontSize: `${getSize(14, 16, 18)}px`, height: `${getSize(70, 90, 110)}px` }}
+                                placeholder="Paste your notes or learning goals here..."
+                                value={goals}
+                                onChange={e => setGoals(e.target.value)}
+                            />
+
+                            <button
+                                onClick={handleStart}
+                                disabled={!topic.trim()}
+                                className="w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all shadow-lg"
+                                style={{ padding: `${getSize(14, 16, 20)}px`, fontSize: `${getSize(15, 17, 20)}px` }}
+                            >
                                 Let's Study! 💕
                             </button>
                         </motion.div>
@@ -547,19 +649,21 @@ export default function StudyDateGame() {
                 {phase === 'ENDING' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
                         <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center">
-                            <h1 className="font-black text-white mb-2" style={{ fontSize: isMobile ? '28px' : '36px' }}>
+                            <h1 className="font-black text-white mb-3" style={{ fontSize: `${getSize(28, 40, 52)}px` }}>
                                 {endingType === 'GOOD' && '💖 Perfect! 💖'}
                                 {endingType === 'NEUTRAL' && '📚 Complete!'}
                                 {endingType === 'BAD' && '💔 Over...'}
                             </h1>
-                            <p className="text-white/80 mb-4 max-w-xs mx-auto" style={{ fontSize: isMobile ? '14px' : '16px' }}>
-                                {endingType === 'GOOD' && `Amazing, ${userName}!`}
-                                {endingType === 'NEUTRAL' && `Good job, ${userName}!`}
-                                {endingType === 'BAD' && `Try again, ${userName}?`}
+                            <p className="text-white/80 mb-5 max-w-sm mx-auto" style={{ fontSize: `${getSize(14, 18, 22)}px` }}>
+                                {endingType === 'GOOD' && `Amazing, ${userName}! Fahi had the best time~`}
+                                {endingType === 'NEUTRAL' && `Good job, ${userName}! Maybe next time?`}
+                                {endingType === 'BAD' && `Fahi left... Try again, ${userName}?`}
                             </p>
-                            <button onClick={() => window.location.reload()}
+                            <button
+                                onClick={() => window.location.reload()}
                                 className="bg-white text-pink-500 rounded-full font-bold hover:scale-105 transition-all shadow-xl"
-                                style={{ padding: isMobile ? '10px 20px' : '12px 24px', fontSize: isMobile ? '14px' : '16px' }}>
+                                style={{ padding: `${getSize(12, 14, 18)}px ${getSize(24, 30, 40)}px`, fontSize: `${getSize(14, 18, 22)}px` }}
+                            >
                                 Play Again
                             </button>
                         </motion.div>
