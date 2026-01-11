@@ -131,6 +131,72 @@ Output ONLY this JSON:
             }
         }
 
+        if (action === 're_explain') {
+            const { topicName, failCount: loopCount, previousAnswer, correctAnswer } = body;
+
+            let toneInstruction = '';
+            let emotionHint = 'neutral';
+
+            switch (loopCount) {
+                case 1:
+                    toneInstruction = 'Explain this topic in a SIMPLER way. Use basic terms and analogies. Be patient but a bit concerned they didnt get it.';
+                    emotionHint = 'concerned';
+                    break;
+                case 2:
+                    toneInstruction = 'You are getting slightly irritated. Explain it VERY simply, almost like explaining to a child. Show some confusion about why they dont understand.';
+                    emotionHint = 'confused';
+                    break;
+                case 3:
+                    toneInstruction = 'You are frustrated now. Be a bit condescending. Make it VERY obvious what the answer should be. Question their intelligence subtly.';
+                    emotionHint = 'frustrated';
+                    break;
+                default:
+                    toneInstruction = 'You are MAD. Be curt, direct, and slightly insulting. Make it stupidly simple. Show your annoyance clearly.';
+                    emotionHint = 'mad';
+            }
+
+            const prompt = `
+Topic to explain: "${topicName}"
+The user got the previous question WRONG. Their answer was: "${previousAnswer}"
+The correct answer was: "${correctAnswer}"
+This is attempt #${loopCount + 1} explaining this topic.
+
+${toneInstruction}
+
+Generate 4 SHORT explanation lines (under 60 chars each) that:
+1. Acknowledge they got it wrong (with ${emotionHint} tone)
+2. Re-explain the concept with new wording
+3. Emphasize the key point differently
+4. Lead into the question again
+
+NO asterisks, NO emojis, NO roleplay actions.
+
+Output ONLY this JSON:
+{
+  "explanation": ["line1", "line2", "line3", "line4"],
+  "emotion": "${loopCount >= 3 ? 'mad' : loopCount >= 2 ? 'disappointed' : 'neutral'}"
+}
+`;
+            const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
+            const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+
+            try {
+                const parsed = JSON.parse(text);
+                return NextResponse.json({ success: true, data: parsed });
+            } catch {
+                // Fallback with frustrated preset
+                const fallbacks = [
+                    { explanation: [`Let me explain ${topicName} again.`, `The key concept is very simple.`, `Focus on understanding the basics.`, `Try the question again.`], emotion: 'neutral' },
+                    { explanation: [`Okay, ${topicName} one more time...`, `Think of it this way - keep it simple.`, `The answer is really straightforward.`, `Please try again.`], emotion: 'disappointed' },
+                    { explanation: [`${topicName}. Again.`, `I really dont know how else to explain this.`, `Its fundamentals. Thats all.`, `Just try again.`], emotion: 'mad' }
+                ];
+                return NextResponse.json({
+                    success: true,
+                    data: fallbacks[Math.min(loopCount - 1, 2)]
+                });
+            }
+        }
+
         return NextResponse.json({ success: false, error: 'Unknown action' });
     } catch (error) {
         console.error('StudyDate API Error:', error);

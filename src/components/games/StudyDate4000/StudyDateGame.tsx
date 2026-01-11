@@ -361,7 +361,7 @@ export default function StudyDateGame() {
             setTimeout(() => setShowFrustration(false), 1000);
         }
 
-        setTimeout(() => {
+        setTimeout(async () => {
             if (mood <= 10) { setEndingType('BAD'); setPhase('ENDING'); return; }
             if (isCorrect) {
                 // Reset fail count and move to next segment
@@ -378,19 +378,65 @@ export default function StudyDateGame() {
                     setPhase('TEACHING');
                 }
             } else {
-                // Increment fail count and regenerate explanation with new tone
+                // Increment fail count and call API for AI-generated re-explanation
                 const newFailCount = failCount + 1;
                 setFailCount(newFailCount);
-                const newExplanation = getFrustrationExplanation(segment.topicName, newFailCount);
-                // Update the segment with new explanation
-                setSegments(prev => prev.map((s, i) =>
-                    i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
-                ));
-                setDialogueIndex(0);
-                setExplainFrame(0);
-                setCurrentText(newExplanation[0]);
-                setTextKey(prev => prev + 1); // Force typewriter to restart
+
+                // Show loading state
+                setCurrentText('Let me think about how to explain this differently...');
                 setPhase('TEACHING');
+
+                // Call API for AI-generated frustrated re-explanation
+                try {
+                    const response = await fetch('/api/study-date', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 're_explain',
+                            topicName: segment.topicName,
+                            failCount: newFailCount,
+                            previousAnswer: answer,
+                            correctAnswer: segment.correctAnswer
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success && result.data?.explanation) {
+                        const newExplanation = result.data.explanation;
+                        setSegments(prev => prev.map((s, i) =>
+                            i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
+                        ));
+                        setDialogueIndex(0);
+                        setExplainFrame(0);
+                        setCurrentText(newExplanation[0]);
+                        setTextKey(prev => prev + 1);
+                        if (result.data.emotion) {
+                            setEmotion(result.data.emotion as FahiEmotion);
+                        }
+                    } else {
+                        // Fallback to preset if API fails
+                        const newExplanation = getFrustrationExplanation(segment.topicName, newFailCount);
+                        setSegments(prev => prev.map((s, i) =>
+                            i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
+                        ));
+                        setDialogueIndex(0);
+                        setExplainFrame(0);
+                        setCurrentText(newExplanation[0]);
+                        setTextKey(prev => prev + 1);
+                    }
+                } catch (error) {
+                    console.error('Re-explain API error:', error);
+                    // Fallback to preset
+                    const newExplanation = getFrustrationExplanation(segment.topicName, newFailCount);
+                    setSegments(prev => prev.map((s, i) =>
+                        i === currentSegmentIndex ? { ...s, explanation: newExplanation } : s
+                    ));
+                    setDialogueIndex(0);
+                    setExplainFrame(0);
+                    setCurrentText(newExplanation[0]);
+                    setTextKey(prev => prev + 1);
+                }
             }
         }, 2000);
     };
