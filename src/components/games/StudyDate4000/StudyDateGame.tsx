@@ -1,7 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Sound paths (relative to component's public folder)
+const SOUNDS = {
+    click: '/games/study-date-4000/sounds/click.mp3',
+    correct: '/games/study-date-4000/sounds/correct.mp3',
+    incorrect: '/games/study-date-4000/sounds/incorrect.mp3',
+    gametrack: '/games/study-date-4000/sounds/gametrack.mp3',
+    nextStage: '/games/study-date-4000/sounds/next-stage.mp3',
+};
 
 // Asset Imports
 import bgImg from './public/background.jpg';
@@ -126,6 +135,55 @@ export default function StudyDateGame() {
     const [mood, setMood] = useState(70);
     const [progress, setProgress] = useState(0);
     const [userName, setUserName] = useState('');
+
+    // Audio refs
+    const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+    const [musicStarted, setMusicStarted] = useState(false);
+
+    // Play sound effect utility
+    const playSound = useCallback((soundKey: keyof typeof SOUNDS, volume: number = 0.5) => {
+        try {
+            const audio = new Audio(SOUNDS[soundKey]);
+            audio.volume = volume;
+            audio.play().catch(() => { }); // Ignore autoplay errors
+        } catch (e) {
+            console.log('Sound play error:', e);
+        }
+    }, []);
+
+    // Play click sound on UI interactions
+    const playClick = useCallback(() => playSound('click', 0.3), [playSound]);
+
+    // Start/stop background music based on phase
+    useEffect(() => {
+        if (phase === 'TITLE' && !musicStarted) {
+            // Will start on first user interaction
+        } else if (phase !== 'TITLE' && bgMusicRef.current) {
+            // Fade out and stop music when leaving title
+            const music = bgMusicRef.current;
+            const fadeOut = setInterval(() => {
+                if (music.volume > 0.05) {
+                    music.volume -= 0.05;
+                } else {
+                    music.pause();
+                    music.currentTime = 0;
+                    clearInterval(fadeOut);
+                }
+            }, 100);
+        }
+    }, [phase, musicStarted]);
+
+    // Start music on first click in title screen
+    const startTitleMusic = useCallback(() => {
+        if (!musicStarted && phase === 'TITLE') {
+            const music = new Audio(SOUNDS.gametrack);
+            music.loop = true;
+            music.volume = 0.4;
+            music.play().catch(() => { });
+            bgMusicRef.current = music;
+            setMusicStarted(true);
+        }
+    }, [musicStarted, phase]);
 
     const [introIndex, setIntroIndex] = useState(0);
     const [segments, setSegments] = useState<Segment[]>([]);
@@ -478,6 +536,9 @@ export default function StudyDateGame() {
         setPhase('FEEDBACK');
         const isCorrect = answer === segment.correctAnswer;
 
+        // Play sound based on answer
+        playSound(isCorrect ? 'correct' : 'incorrect', 0.5);
+
         const feedback = getFrustrationFeedback(failCount, isCorrect);
         setCurrentText(sanitizeText(feedback.text));
         setEmotion(feedback.emotion);
@@ -511,9 +572,11 @@ export default function StudyDateGame() {
                     setFinalQuizIndex(0);
                     setCurrentText(`Nice! That covers all the main parts. Now let's do a quick review~`);
                     setEmotion('excited');
+                    playSound('nextStage', 0.4);
                     setPhase('FINAL_QUIZ');
                 } else {
                     // Move to next segment
+                    playSound('nextStage', 0.4);
                     setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
@@ -898,7 +961,11 @@ export default function StudyDateGame() {
                             transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setPhase('SETUP')}
+                            onClick={() => {
+                                playClick();
+                                startTitleMusic();
+                                setPhase('SETUP');
+                            }}
                             className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden"
                             style={{
                                 background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
