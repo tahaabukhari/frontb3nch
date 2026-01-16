@@ -333,6 +333,7 @@ export default function StudyDateGame() {
     // Effect states
     const [showStars, setShowStars] = useState(false);
     const [showFrustration, setShowFrustration] = useState(false);
+    const [showMoodPopup, setShowMoodPopup] = useState(false);
 
     // Responsive
     const [isMobile, setIsMobile] = useState(false);
@@ -569,6 +570,10 @@ export default function StudyDateGame() {
 
             // Set start emotion based on mood
             setEmotion(mood < 50 ? 'disappointed' : 'happy');
+
+            // Show Mood Popup
+            setShowMoodPopup(true);
+            setTimeout(() => setShowMoodPopup(false), 4000);
         }
     }, [contentReady, pendingCurriculum, phase, pendingIntroData, pendingFinalQuizQuestions, userName, topic, mood]);
 
@@ -1102,10 +1107,11 @@ export default function StudyDateGame() {
                                 <motion.div
                                     key={i}
                                     className="absolute text-pink-300/30 select-none pointer-events-none"
-                                    initial={{ x: `${startX}vw`, y: `${startY}vh`, rotate: 0 }}
+                                    initial={{ x: `${startX}vw`, y: `${startY}vh`, opacity: 0 }}
                                     animate={{
-                                        y: [null, `${startY - 10}vh`, `${startY + 10}vh`, `${startY}vh`],
-                                        rotate: 360
+                                        x: [`${startX}vw`, `${startX + 20}vw`],
+                                        y: [`${startY}vh`, `${startY + (Math.random() * 10 - 5)}vh`],
+                                        opacity: [0, 1, 0]
                                     }}
                                     transition={{
                                         duration: duration,
@@ -1166,8 +1172,8 @@ export default function StudyDateGame() {
                 )}
             </AnimatePresence>
 
-            {/* GAME ENVIRONMENT (Table & Fahi) - Only show after setup */}
-            {!['TITLE', 'ASK_NAME', 'SETUP'].includes(phase) && (
+            {/* GAME ENVIRONMENT (Table & Fahi) - Always visible basically */}
+            {true && (
                 <>
                     {/* TABLE */}
                     <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: isMobile ? '18vh' : '20vh' }}>
@@ -1676,6 +1682,28 @@ export default function StudyDateGame() {
                                 </button>
                             </div>
                         </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* MOOD POPUP */}
+            <AnimatePresence>
+                {showMoodPopup && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -50, x: '-50%' }}
+                        animate={{ opacity: 1, y: 0, x: '-50%' }}
+                        exit={{ opacity: 0, y: -20, x: '-50%' }}
+                        className="absolute top-24 left-1/2 z-[100] bg-white/90 backdrop-blur border-2 border-pink-300 px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3"
+                    >
+                        <span className="text-2xl">{mood > 50 ? '😊' : '😟'}</span>
+                        <div>
+                            <h3 className="font-bold text-pink-600 text-sm uppercase tracking-wider">Current Mood: {mood}%</h3>
+                            <p className="text-slate-700 text-sm font-medium">
+                                {mood > 50
+                                    ? "Fahi is in a good mood! Keep it up!"
+                                    : "Fahi is annoyed... Watch your answers!"}
+                            </p>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
