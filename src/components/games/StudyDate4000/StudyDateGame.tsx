@@ -1098,103 +1098,52 @@ export default function StudyDateGame() {
                             const startY = Math.random() * 100;
                             const icon = ['♥', '★', '✦', '✨'][Math.floor(Math.random() * 4)];
 
-                            return (
-                                <motion.div
-                                    key={i}
-                                    className="absolute select-none pointer-events-none"
-                                    style={{
-                                        color: Math.random() > 0.5 ? 'rgba(255, 182, 193, 0.6)' : 'rgba(255, 105, 180, 0.3)',
-                                        fontSize: `${size}px`,
-                                        left: `${startX}%`,
-                                        top: `${startY}%`,
-                                    }}
-                                    animate={{
-                                        x: ['10vw', '-100vw'],
-                                        y: ['-10vh', '110vh'],
-                                        rotate: [0, 360],
-                                    }}
-                                    transition={{
-                                        duration: duration,
-                                        repeat: Infinity,
-                                        ease: "linear",
-                                        delay: delay
-                                    }}
-                                >
-                                    {icon}
-                                </motion.div>
-                            );
-                        })}
+                            {/* TITLE SCREEN CONTENT */ }
+                            {
+                                phase === 'TITLE' && (
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        exit={{ y: -20, opacity: 0 }}
+                                        className="text-center z-10 flex flex-col items-center"
+                                    >
+                                        <h1
+                                            className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-sm mb-2"
+                                            style={{
+                                                fontSize: isMobile ? '42px' : '72px',
+                                                filter: 'drop-shadow(0 4px 0 rgba(255,255,255,0.8))'
+                                            }}
+                                        >
+                                            StudyDate 4000
+                                        </h1>
+                                        <p className="text-pink-500/80 mb-8 font-bold tracking-widest uppercase" style={{ fontSize: isMobile ? '14px' : '18px' }}>
+                                            Learn with Fahi
+                                        </p>
 
-                        {/* TITLE SCREEN CONTENT */}
-                        {phase === 'TITLE' && (
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                exit={{ y: -20, opacity: 0 }}
-                                className="text-center z-10 flex flex-col items-center"
-                            >
-                                <h1
-                                    className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-sm mb-2"
-                                    style={{
-                                        fontSize: isMobile ? '42px' : '72px',
-                                        filter: 'drop-shadow(0 4px 0 rgba(255,255,255,0.8))'
-                                    }}
-                                >
-                                    StudyDate 4000
-                                </h1>
-                                <p className="text-pink-500/80 mb-8 font-bold tracking-widest uppercase" style={{ fontSize: isMobile ? '14px' : '18px' }}>
-                                    Learn with Fahi
-                                </p>
+                                        <motion.button
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => {
+                                                playClick();
+                                                setPhase('SETUP'); // Correct Flow: Setup First
+                                            }}
+                                            className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden shadow-xl"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
+                                                backgroundSize: '200% 200%',
+                                                animation: 'shimmer 3s ease infinite',
+                                                fontSize: isMobile ? '18px' : '22px'
+                                            }}
+                                        >
+                                            <span className="relative z-10">♥ Start Journey ♥</span>
+                                        </motion.button>
+                                    </motion.div>
+                                )
+                            }
 
-                                <motion.button
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => {
-                                        playClick();
-                                        setPhase('ASK_NAME'); // Go to Name Input first
-                                    }}
-                                    className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden shadow-xl"
-                                    style={{
-                                        background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
-                                        backgroundSize: '200% 200%',
-                                        animation: 'shimmer 3s ease infinite',
-                                        fontSize: isMobile ? '18px' : '22px'
-                                    }}
-                                >
-                                    <span className="relative z-10">♥ Start Journey ♥</span>
-                                </motion.button>
-                            </motion.div>
-                        )}
 
-                        {/* ASK NAME SCREEN */}
-                        {phase === 'ASK_NAME' && (
-                            <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                                className="z-10 bg-white/40 backdrop-blur-md p-8 rounded-3xl border-2 border-white/50 shadow-xl flex flex-col items-center gap-4 max-w-md w-[90%]"
-                            >
-                                <h2 className="text-2xl font-bold text-pink-600">What's your name?</h2>
-                                <input
-                                    type="text"
-                                    value={userName}
-                                    onChange={e => setUserName(e.target.value)}
-                                    placeholder="Enter your name..."
-                                    className="w-full px-4 py-3 rounded-xl bg-white/80 border-2 border-pink-200 focus:border-pink-500 outline-none text-lg text-pink-900 placeholder:text-pink-300 text-center font-bold"
-                                    autoFocus
-                                    onKeyDown={e => e.key === 'Enter' && userName.trim() && setPhase('SETUP')}
-                                />
-                                <button
-                                    onClick={() => { playClick(); setPhase('SETUP'); }}
-                                    disabled={!userName.trim()}
-                                    className="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                                >
-                                    Continue
-                                </button>
-                            </motion.div>
-                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -1555,12 +1504,8 @@ export default function StudyDateGame() {
             {/* LOADING SCREENS */}
             <AnimatePresence>
                 {(phase === 'LOADING' || phase === 'LOADING_WAIT') && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-md">
-                        <div className="text-center">
-                            <div className="text-6xl mb-4 animate-bounce">🤔</div>
-                            <h2 className="text-pink-500 font-bold text-2xl mb-2">Thinking...</h2>
-                            <p className="text-pink-400">Fahi is preparing her notes about {topic}...</p>
-                        </div>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-sm">
+                        <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -1612,6 +1557,39 @@ export default function StudyDateGame() {
                                 style={{ padding: `${getSize(12, 14, 18)}px`, fontSize: `${getSize(14, 16, 18)}px` }}
                             >
                                 Let's Go! 💕
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ASK NAME MODAL (New) */}
+            <AnimatePresence>
+                {phase === 'ASK_NAME' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            className="bg-white border-4 border-pink-300 rounded-2xl shadow-2xl p-8 text-center max-w-sm w-[90%]"
+                        >
+                            <h2 className="text-2xl font-black text-pink-500 mb-4">One last thing!</h2>
+                            <p className="text-slate-600 mb-4 font-bold">What should I call you?</p>
+
+                            <input
+                                autoFocus
+                                value={textInput}
+                                onChange={(e) => setTextInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && submitName()}
+                                placeholder="Enter your name..."
+                                className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl px-4 py-3 text-lg font-bold text-slate-700 outline-none focus:border-pink-500 mb-6 text-center"
+                            />
+
+                            <button
+                                onClick={submitName}
+                                disabled={!textInput.trim()}
+                                className="w-full bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-lg text-lg"
+                            >
+                                Start Date 💕
                             </button>
                         </motion.div>
                     </motion.div>

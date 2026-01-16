@@ -102,8 +102,30 @@ const StarBackground = () => {
                     finalY -= moveY;
                 }
 
+                // Draw Star (Vector-like)
+                const spikes = 5;
+                const outerRadius = star.radius * 2;
+                const innerRadius = star.radius;
+                let rot = Math.PI / 2 * 3;
+                let x = finalX;
+                let y = finalY;
+                let step = Math.PI / spikes;
+
                 ctx.beginPath();
-                ctx.arc(finalX, finalY, star.radius, 0, Math.PI * 2);
+                ctx.moveTo(finalX, finalY - outerRadius);
+                for (let i = 0; i < spikes; i++) {
+                    x = finalX + Math.cos(rot) * outerRadius;
+                    y = finalY + Math.sin(rot) * outerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+
+                    x = finalX + Math.cos(rot) * innerRadius;
+                    y = finalY + Math.sin(rot) * innerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+                }
+                ctx.lineTo(finalX, finalY - outerRadius);
+                ctx.closePath();
                 ctx.globalAlpha = star.alpha;
                 ctx.fillStyle = star.color;
                 ctx.fill();
