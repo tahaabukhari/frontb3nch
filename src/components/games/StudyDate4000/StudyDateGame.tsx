@@ -37,6 +37,21 @@ interface Segment {
     isTextInput: boolean;
 }
 
+interface FinalQuizQuestion {
+    question: string;
+    isTextInput: boolean;
+    options?: string[];
+    correctAnswer?: string;
+    expectedAnswer?: string;
+}
+
+interface IntroData {
+    greeting: string;
+    funFact: string;
+    passionReason: string;
+    opinionQuestion: string;
+}
+
 type GamePhase = 'TITLE' | 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'FINAL_QUIZ' | 'ENDING' | 'PAUSED';
 
 const SPRITES: Record<FahiEmotion, any> = {
@@ -262,8 +277,8 @@ export default function StudyDateGame() {
 
     // Stop music when entering game phases (INTRO/TEACHING)
     useEffect(() => {
-        // Keep music playing during TITLE, ASK_NAME, SETUP
-        const musicPhases = ['TITLE', 'ASK_NAME', 'SETUP'];
+        // Keep music playing during TITLE, ASK_NAME, SETUP and PAUSED (menu)
+        const musicPhases = ['TITLE', 'ASK_NAME', 'SETUP', 'PAUSED'];
         if (!musicPhases.includes(phase) && musicPlaying) {
             stopMusic();
         }
@@ -435,35 +450,116 @@ export default function StudyDateGame() {
 
     const advanceIntro = () => {
         if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
-        const next = introIndex + 1;
-        if (next < INTRO_DIALOGUE.length) {
-            setIntroIndex(next);
-            setCurrentText(INTRO_DIALOGUE[next].text);
-            setEmotion(INTRO_DIALOGUE[next].emotion);
-        } else setPhase('SETUP'); // Go to topic setup first
+
+        // Step 3 is input, user must type
+        if (introStep === 3) return;
+
+        const next = introStep + 1;
+        setIntroStep(next);
+
+        if (next === 1) { setCurrentText(introData?.funFact || ''); setEmotion('happy'); }
+        else if (next === 2) { setCurrentText(introData?.passionReason || ''); setEmotion('excited'); }
+        else if (next === 3) { setCurrentText(introData?.opinionQuestion || ''); setEmotion('happy-neutral'); }
+    };
+
+    const handleIntroInputSubmit = () => {
+        if (!textInput.trim()) return;
+        setTextInput('');
+
+        // Transition to Teaching
+        setCurrentText("That's an interesting perspective! Let's get into the details.");
+        setEmotion('excited');
+        setPhase('TEACHING');
+        // Reset teaching state
+        setCurrentSegmentIndex(0);
+        setDialogueIndex(0);
+    };
+
+    // Handle MCQ answer in Final Quiz
+    const handleFinalQuizChoice = (choice: string) => {
+        const q = finalQuizQuestions[finalQuizIndex];
+        const isCorrect = choice === q.correctAnswer;
+
+        if (isCorrect) {
+            setCorrectAnswers(prev => [...prev, `Q${finalQuizIndex}`]);
+            setShowStars(true);
+            setTimeout(() => setShowStars(false), 1000);
+            playClick();
+
+            setTimeout(() => {
+                const next = finalQuizIndex + 1;
+                if (next >= finalQuizQuestions.length) {
+                    setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
+                    setCurrentText(`That's everything! Let's see how you did.`);
+                    setPhase('ENDING');
+                } else {
+                    setFinalQuizIndex(next);
+                    setCurrentText(sanitizeText(finalQuizQuestions[next].question));
+                    setPhase('FINAL_QUIZ');
+                }
+            }, 1000);
+        } else {
+            setMistakes(prev => [...prev, { topic: `Q${finalQuizIndex}`, userAnswer: choice, correct: q.correctAnswer || '' }]);
+            setMood(prev => Math.max(0, prev - 10)); // Mood down
+            playClick(); // Fail sound
+
+            // Immediate feedback then move on
+            setTimeout(() => {
+                const next = finalQuizIndex + 1;
+
+                if (next >= finalQuizQuestions.length) {
+                    setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
+                    setCurrentText(`That's everything!`);
+                    setPhase('ENDING');
+                } else {
+                    setFinalQuizIndex(next);
+                    setCurrentText(sanitizeText(finalQuizQuestions[next].question));
+                    setPhase('FINAL_QUIZ');
+                }
+            }, 1000);
+        }
     };
 
     // State for background content generation
     const [contentReady, setContentReady] = useState(false);
-    const [pendingCurriculum, setPendingCurriculum] = useState<any>(null);
+    const [pendingCurriculum, setPendingCurriculum] = useState<Segment[] | null>(null);
+    const [pendingIntroData, setPendingIntroData] = useState<IntroData | null>(null);
+    const [pendingFinalQuizQuestions, setPendingFinalQuizQuestions] = useState<FinalQuizQuestion[] | null>(null);
+    const [introData, setIntroData] = useState<IntroData | null>(null);
+    const [introStep, setIntroStep] = useState(0); // 0: Greeting, 1: FunFact, 2: Passion, 3: Opinion
+    const [finalQuizQuestions, setFinalQuizQuestions] = useState<FinalQuizQuestion[]>([]);
+
+
+    // Transition to INTRO when content is ready
+    useEffect(() => {
+        if (contentReady && pendingCurriculum && phase === 'LOADING') {
+            setSegments(pendingCurriculum);
+            setIntroData(pendingIntroData);
+            setFinalQuizQuestions(pendingFinalQuizQuestions || []);
+
+            // Start the natural conversation
+            setPhase('INTRO');
+            setIntroStep(0);
+            setEmotion('happy');
+            if (pendingIntroData) {
+                setCurrentText(pendingIntroData.greeting);
+            } else {
+                // Fallback
+                setCurrentText(`Alright ${userName}, let's talk about ${topic}!`);
+            }
+        }
+    }, [contentReady, pendingCurriculum, phase, pendingIntroData, pendingFinalQuizQuestions, userName, topic]);
 
     const submitSetup = async () => {
         if (!topic.trim()) return;
 
         // Show Fahi's excited reaction
-        setPhase('LOADING'); // Using LOADING as intermediate "reaction" phase
-        setCurrentText(`${topic}! Oh that's a fun one~`);
+        setPhase('LOADING');
+        setCurrentText(`${topic}! Oh I love that topic!`);
         setEmotion('excited');
 
-        // Start generating content in background immediately
+        // Start generating content
         generateCurriculumInBackground();
-
-        // After reaction, ask for name
-        setTimeout(() => {
-            setCurrentText(`By the way, what should I call you?`);
-            setEmotion('happy-neutral');
-            setPhase('ASK_NAME');
-        }, 1500);
     };
 
     const generateCurriculumInBackground = async () => {
@@ -471,21 +567,49 @@ export default function StudyDateGame() {
             const response = await fetch('/api/study-date', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals, clos })
+                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals, clos, userName })
             });
             const result = await response.json();
 
-            if (result.success && result.data?.subsections?.length > 0) {
-                const curriculum = result.data.subsections.map((sub: any) => ({
-                    id: sub.id,
-                    title: sanitizeText(sub.title || ''),
-                    explanation: (sub.explanation || [`So let's talk about this.`, 'Pretty straightforward.', 'Makes sense?']).map(sanitizeText),
-                    question: sanitizeText(sub.question || ''),
-                    options: sub.options || [],
-                    correctAnswer: sub.correctAnswer || sub.expectedAnswer || '',
-                    isTextInput: sub.isTextInput === true
-                }));
-                setPendingCurriculum(curriculum);
+            if (result.success && result.data) {
+                const data = result.data;
+
+                // Parse Segments
+                if (data.subsections?.length > 0) {
+                    const curriculum = data.subsections.map((sub: any) => ({
+                        id: sub.id,
+                        title: sanitizeText(sub.title || ''),
+                        explanation: (sub.explanation || [`So let's talk about this.`, 'Pretty straightforward.', 'Makes sense?']).map(sanitizeText),
+                        question: sanitizeText(sub.question || ''),
+                        options: sub.options || [],
+                        correctAnswer: sub.correctAnswer || sub.expectedAnswer || '',
+                        isTextInput: sub.isTextInput === true
+                    }));
+                    setPendingCurriculum(curriculum);
+                }
+
+                // Parse Intro
+                if (data.intro) {
+                    setPendingIntroData({
+                        greeting: sanitizeText(data.intro.greeting),
+                        funFact: sanitizeText(data.intro.funFact),
+                        passionReason: sanitizeText(data.intro.passionReason),
+                        opinionQuestion: sanitizeText(data.intro.opinionQuestion)
+                    });
+                }
+
+                // Parse Final Quiz
+                if (data.finalQuizQuestions?.length > 0) {
+                    const fq = data.finalQuizQuestions.map((q: any) => ({
+                        question: sanitizeText(q.question),
+                        isTextInput: q.isTextInput === true,
+                        options: q.options || [],
+                        correctAnswer: q.correctAnswer,
+                        expectedAnswer: q.expectedAnswer
+                    }));
+                    setPendingFinalQuizQuestions(fq);
+                }
+
                 setContentReady(true);
             }
         } catch (e) {
@@ -497,6 +621,12 @@ export default function StudyDateGame() {
                 { id: 3, title: `${topic} Discussion`, explanation: [`Let's wrap up.`, `Put it in your own words.`, `Show me what you got.`], question: `How would you explain ${topic}?`, options: [], correctAnswer: '', isTextInput: true }
             ];
             setPendingCurriculum(fallback);
+            setPendingIntroData({
+                greeting: `Hey ${userName}, let's dive into ${topic}!`,
+                funFact: "It's a huge topic with lots to explore.",
+                passionReason: "I love how it challenges the way we think.",
+                opinionQuestion: "What's the hardest part about it for you?"
+            });
             setContentReady(true);
         }
     };
@@ -841,13 +971,11 @@ export default function StudyDateGame() {
 
     const handleFinalQuizSubmit = async () => {
         if (!textInput.trim()) return;
-        const seg = segments[finalQuizIndex];
-        if (!seg) return;
+        const userAnswer = textInput.trim();
+        const q = finalQuizQuestions[finalQuizIndex];
 
-        setPhase('FEEDBACK');
-        setCurrentText(`Hmm, let me think...`);
-        const userAnswer = textInput;
         setTextInput('');
+        setPhase('LOADING'); // Show loading while evaluating
 
         try {
             const response = await fetch('/api/study-date', {
@@ -855,7 +983,7 @@ export default function StudyDateGame() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'evaluate_text',
-                    topicName: seg.title,
+                    topicName: `Final Quiz Q${finalQuizIndex + 1}`,
                     userText: userAnswer,
                     userName,
                     currentMood: mood
@@ -867,109 +995,64 @@ export default function StudyDateGame() {
                 const score = result.data.score || 5;
                 const isCorrect = score >= 5;
 
+                // Current text is feedback
                 setCurrentText(sanitizeText(result.data.comment));
                 setEmotion(result.data.emotion as FahiEmotion);
 
                 if (isCorrect) {
-                    // Correct! Track and move to next
-                    setCorrectAnswers(prev => [...prev, seg.title]);
+                    setCorrectAnswers(prev => [...prev, `Q${finalQuizIndex}`]);
                     setShowStars(true);
                     setTimeout(() => setShowStars(false), 1000);
 
                     setTimeout(() => {
                         const next = finalQuizIndex + 1;
-                        setFinalQuizRetry(0); // Reset retry for next question
-                        if (next >= segments.length) {
+                        if (next >= finalQuizQuestions.length) {
                             setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
-                            setCurrentText(`Done! Great work, ${userName}!`);
-                            setEmotion('excited');
+                            setCurrentText(`That's everything!`);
                             setPhase('ENDING');
                         } else {
                             setFinalQuizIndex(next);
-                            setCurrentText(sanitizeText(`Next: ${segments[next].title} - ${segments[next].question}`));
+                            setCurrentText(sanitizeText(finalQuizQuestions[next].question));
                             setPhase('FINAL_QUIZ');
                         }
                     }, 2000);
                 } else {
-                    // Wrong answer
-                    setMistakes(prev => [...prev, { topic: seg.title, userAnswer, correct: seg.correctAnswer || 'concepts covered' }]);
+                    setMistakes(prev => [...prev, { topic: `Q${finalQuizIndex}`, userAnswer, correct: q.correctAnswer || 'concept' }]);
+                    setMood(prev => Math.max(0, prev - 10));
 
-                    if (finalQuizRetry === 0) {
-                        // First attempt was wrong - get re-explanation and retry once
-                        setFinalQuizRetry(1);
+                    // Simple retry logic or proceed
+                    // User wanted re-explain. But pure text input evaluation might have "comment" as explanation.
+                    // The API returns "comment" which is usually feedback.
+                    // I'll proceed after displaying the comment.
 
-                        // Get 4-line re-explanation
-                        try {
-                            const reExplainResponse = await fetch('/api/study-date', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    action: 're_explain',
-                                    topicName: seg.title,
-                                    failCount: 1,
-                                    previousAnswer: userAnswer,
-                                    correctAnswer: seg.correctAnswer || seg.title,
-                                    userName
-                                })
-                            });
-                            const reExplainResult = await reExplainResponse.json();
-
-                            if (reExplainResult.success && reExplainResult.data?.explanation?.length > 0) {
-                                const lines = reExplainResult.data.explanation.map(sanitizeText);
-                                setFinalQuizExplanation(lines);
-                                setFinalQuizExplanationIndex(0);
-                                setTimeout(() => {
-                                    setCurrentText(lines[0]);
-                                    setEmotion(reExplainResult.data.emotion || 'neutral');
-                                    setPhase('TEACHING'); // Use TEACHING phase to show explanation lines
-                                }, 1500);
-                            } else {
-                                // Fallback - just retry
-                                setTimeout(() => {
-                                    setCurrentText(`Not quite. Let's try that again: ${seg.question}`);
-                                    setPhase('FINAL_QUIZ');
-                                }, 2000);
-                            }
-                        } catch {
-                            setTimeout(() => {
-                                setCurrentText(`Let's try that one more time: ${seg.question}`);
-                                setPhase('FINAL_QUIZ');
-                            }, 2000);
+                    setTimeout(() => {
+                        const next = finalQuizIndex + 1;
+                        if (next >= finalQuizQuestions.length) {
+                            setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
+                            setCurrentText(`That's everything!`);
+                            setPhase('ENDING');
+                        } else {
+                            setFinalQuizIndex(next);
+                            setCurrentText(sanitizeText(finalQuizQuestions[next].question));
+                            setPhase('FINAL_QUIZ');
                         }
-                    } else {
-                        // Already retried once - move on
-                        setTimeout(() => {
-                            const next = finalQuizIndex + 1;
-                            setFinalQuizRetry(0);
-                            if (next >= segments.length) {
-                                setEndingType(mood >= 90 ? 'GOOD' : mood >= 50 ? 'NEUTRAL' : 'BAD');
-                                setCurrentText(`That's everything! Let's see how you did.`);
-                                setPhase('ENDING');
-                            } else {
-                                setFinalQuizIndex(next);
-                                setCurrentText(sanitizeText(`Moving on: ${segments[next].title} - ${segments[next].question}`));
-                                setPhase('FINAL_QUIZ');
-                            }
-                        }, 2000);
-                    }
+                    }, 3000);
                 }
-            } else {
-                throw new Error('API failed');
             }
-        } catch {
-            // Fallback - just move on
-            setCurrentText(`Got it. Moving on.`);
+        } catch (e) {
+            console.error(e);
+            // Fallback
             setTimeout(() => {
                 const next = finalQuizIndex + 1;
-                setFinalQuizRetry(0);
-                if (next >= segments.length) {
+                if (next >= finalQuizQuestions.length) {
+                    setEndingType('NEUTRAL');
                     setPhase('ENDING');
                 } else {
                     setFinalQuizIndex(next);
-                    setCurrentText(sanitizeText(`Next: ${segments[next].title} - ${segments[next].question}`));
+                    setCurrentText(sanitizeText(finalQuizQuestions[next].question));
                     setPhase('FINAL_QUIZ');
                 }
-            }, 1500);
+            }, 2000);
         }
     };
 
@@ -1049,14 +1132,14 @@ export default function StudyDateGame() {
                         className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
                         style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fad0c4 100%)' }}
                     >
-                        {/* Parallax Background Icons - Increased density */}
+                        {/* Parallax Background Icons - Hearts and Stars only */}
                         {[...Array(50)].map((_, i) => {
                             const size = 15 + Math.random() * 30;
                             const duration = 20 + Math.random() * 20;
                             const delay = Math.random() * -40;
                             const startX = Math.random() * 100;
                             const startY = Math.random() * 100;
-                            const icon = ['♥', '★', '✦', '✿', '🌸', '🌹'][Math.floor(Math.random() * 6)];
+                            const icon = ['♥', '★', '✦', '✨'][Math.floor(Math.random() * 4)];
 
                             return (
                                 <motion.div
@@ -1319,29 +1402,62 @@ export default function StudyDateGame() {
                         )}
                     </AnimatePresence>
 
-                    {/* TEXT INPUT */}
-                    {phase === 'TEXT_INPUT' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3">
-                            <div className="relative">
-                                <textarea
-                                    value={textInput}
-                                    onChange={e => setTextInput(e.target.value.slice(0, TEXT_INPUT_LIMIT))}
-                                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleTextSubmit()}
-                                    placeholder="Type your answer..."
-                                    maxLength={TEXT_INPUT_LIMIT}
-                                    className="w-full bg-white border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400 resize-none"
-                                    style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(13, 15, 17)}px`, height: `${getSize(60, 70, 85)}px` }}
-                                    autoFocus
-                                />
-                                <span className="absolute bottom-2 right-3 text-gray-400" style={{ fontSize: `${getSize(10, 11, 12)}px` }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
-                            </div>
-                            <button onClick={() => { playClick(); handleTextSubmit(); }} disabled={!textInput.trim()}
-                                className="w-full mt-2 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
-                                style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
-                                Send
-                            </button>
-                        </motion.div>
-                    )}
+                    {/* FINAL QUIZ MC OPTIONS */}
+                    <AnimatePresence>
+                        {(phase === 'FINAL_QUIZ' && finalQuizQuestions[finalQuizIndex] && !finalQuizQuestions[finalQuizIndex].isTextInput) && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className={`mt-3 ${isMobile ? 'grid grid-cols-2 gap-2' : 'space-y-2'}`}
+                            >
+                                {finalQuizQuestions[finalQuizIndex].options?.map((option, i) => (
+                                    <button key={i} onClick={() => { playClick(); handleFinalQuizChoice(option); }}
+                                        className={`bg-white hover:bg-pink-50 border-2 border-pink-200 hover:border-pink-400 rounded-lg font-medium text-slate-700 transition-all active:scale-98 ${isMobile ? 'text-center' : 'w-full text-left'}`}
+                                        style={{ padding: isMobile ? '10px 8px' : `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: isMobile ? '12px' : `${getSize(13, 15, 17)}px` }}>
+                                        {option}
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* TEXT INPUT - Updated for Intro/FinalQuiz */}
+                    {(phase === 'TEXT_INPUT' ||
+                        (phase === 'INTRO' && introStep === 3) ||
+                        (phase === 'FINAL_QUIZ' && finalQuizQuestions[finalQuizIndex]?.isTextInput)) && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3">
+                                <div className="relative">
+                                    <textarea
+                                        value={textInput}
+                                        onChange={e => setTextInput(e.target.value.slice(0, TEXT_INPUT_LIMIT))}
+                                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (
+                                            phase === 'INTRO' ? handleIntroInputSubmit() :
+                                                phase === 'FINAL_QUIZ' ? handleFinalQuizSubmit() :
+                                                    handleTextSubmit()
+                                        )}
+                                        placeholder="Type your answer..."
+                                        maxLength={TEXT_INPUT_LIMIT}
+                                        className="w-full bg-white border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400 resize-none"
+                                        style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(13, 15, 17)}px`, height: `${getSize(60, 70, 85)}px` }}
+                                        autoFocus
+                                    />
+                                    <span className="absolute bottom-2 right-3 text-gray-400" style={{ fontSize: `${getSize(10, 11, 12)}px` }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        playClick();
+                                        if (phase === 'INTRO') handleIntroInputSubmit();
+                                        else if (phase === 'FINAL_QUIZ') handleFinalQuizSubmit();
+                                        else handleTextSubmit();
+                                    }}
+                                    disabled={!textInput.trim()}
+                                    className="w-full mt-2 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white rounded-lg font-bold transition-all"
+                                    style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
+                                    Submit Answer
+                                </button>
+                            </motion.div>
+                        )}
 
                     {/* FINAL QUIZ INPUT */}
                     {phase === 'FINAL_QUIZ' && (
@@ -1376,13 +1492,13 @@ export default function StudyDateGame() {
 
 
             {/* PAUSE BUTTON ONLY (no exit button on main screen) */}
-            {!['INTRO', 'ASK_NAME', 'SETUP', 'ENDING', 'PAUSED'].includes(phase) && (
+            {!['TITLE', 'INTRO', 'ASK_NAME', 'SETUP', 'ENDING', 'PAUSED'].includes(phase) && (
                 <button
                     onClick={togglePause}
-                    className="absolute top-3 right-3 z-50 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-lg text-white font-bold transition-all border border-white/20"
+                    className="absolute top-3 right-3 z-50 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white font-bold transition-all border border-white/50 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                     style={{
-                        padding: `${getSize(8, 10, 14)}px ${getSize(12, 16, 22)}px`,
-                        fontSize: `${getSize(11, 13, 16)}px`
+                        padding: `${getSize(8, 10, 12)}px ${getSize(16, 20, 24)}px`,
+                        fontSize: `${getSize(12, 14, 16)}px`
                     }}
                 >
                     ⏸ Pause
@@ -1392,43 +1508,51 @@ export default function StudyDateGame() {
             {/* PAUSE MENU */}
             <AnimatePresence>
                 {phase === 'PAUSED' && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md">
                         <motion.div
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
-                            className="bg-white/95 rounded-xl shadow-2xl border-2 border-pink-300"
+                            className="bg-white border-4 border-pink-300 rounded-2xl shadow-2xl overflow-hidden"
                             style={{
-                                padding: `${getSize(16, 24, 32)}px`,
+                                padding: `${getSize(20, 24, 32)}px`,
                                 width: isMobile ? '90%' : `${getSize(380, 450, 520)}px`,
                                 maxWidth: '90%'
                             }}
                         >
-                            <h2 className="font-black text-pink-500 mb-4 text-center" style={{ fontSize: `${getSize(18, 22, 26)}px` }}>⏸ Game Paused</h2>
+                            <h2 className="font-black text-pink-500 mb-6 text-center" style={{ fontSize: `${getSize(22, 26, 30)}px` }}>⏸ Game Paused</h2>
 
-                            <div className="mb-4">
-                                <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: `${getSize(11, 13, 15)}px` }}>📍 Current:</h3>
-                                <p className="text-pink-500 font-medium bg-pink-50 rounded-lg" style={{ padding: `${getSize(6, 8, 10)}px`, fontSize: `${getSize(11, 13, 15)}px` }}>{currentTopic}</p>
+                            <div className="mb-4 bg-pink-50 rounded-xl p-4 border border-pink-100">
+                                <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: `${getSize(11, 13, 15)}px` }}>📍 Current Topic:</h3>
+                                <p className="text-pink-600 font-bold" style={{ fontSize: `${getSize(14, 16, 18)}px` }}>{currentTopic}</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="grid grid-cols-2 gap-3 mb-6">
                                 <div>
-                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: `${getSize(10, 12, 14)}px` }}>✅ Done ({coveredTopics.length})</h3>
-                                    <div className="bg-green-50 rounded-lg overflow-y-auto" style={{ padding: `${getSize(6, 8, 10)}px`, height: `${getSize(80, 100, 120)}px` }}>
-                                        {coveredTopics.length === 0 ? <p className="text-gray-400" style={{ fontSize: `${getSize(10, 11, 12)}px` }}>None</p> :
-                                            coveredTopics.map((t, i) => <p key={i} className="text-green-600" style={{ fontSize: `${getSize(10, 11, 12)}px`, marginBottom: '2px' }}>• {t}</p>)}
+                                    <h3 className="font-bold text-slate-700 mb-2 pl-1" style={{ fontSize: `${getSize(12, 14, 16)}px` }}>✅ Done ({coveredTopics.length})</h3>
+                                    <div className="bg-green-50/50 rounded-xl border border-green-100 overflow-y-auto custom-scrollbar" style={{ padding: '10px', height: `${getSize(80, 100, 120)}px` }}>
+                                        {coveredTopics.length === 0 ? <p className="text-gray-400 text-sm">None yet</p> :
+                                            coveredTopics.map((t, i) => <p key={i} className="text-green-700 font-medium text-sm mb-1">• {t}</p>)}
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-700 mb-1" style={{ fontSize: `${getSize(10, 12, 14)}px` }}>📋 Next ({upcomingTopics.length})</h3>
-                                    <div className="bg-blue-50 rounded-lg overflow-y-auto" style={{ padding: `${getSize(6, 8, 10)}px`, height: `${getSize(80, 100, 120)}px` }}>
-                                        {upcomingTopics.map((t, i) => <p key={i} className="text-blue-600" style={{ fontSize: `${getSize(10, 11, 12)}px`, marginBottom: '2px' }}>• {t}</p>)}
+                                    <h3 className="font-bold text-slate-700 mb-2 pl-1" style={{ fontSize: `${getSize(12, 14, 16)}px` }}>📋 Next ({upcomingTopics.length})</h3>
+                                    <div className="bg-blue-50/50 rounded-xl border border-blue-100 overflow-y-auto custom-scrollbar" style={{ padding: '10px', height: `${getSize(80, 100, 120)}px` }}>
+                                        {upcomingTopics.map((t, i) => <p key={i} className="text-blue-700 font-medium text-sm mb-1">• {t}</p>)}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3">
-                                <button onClick={() => { playClick(); togglePause(); }} className="flex-1 bg-pink-400 hover:bg-pink-500 text-white rounded-lg font-bold transition-all" style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>▶ Resume</button>
-                                <button onClick={() => { playClick(); handleExit(); }} className="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg font-bold transition-all" style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>Exit</button>
+                            <div className="flex gap-4">
+                                <button onClick={() => { playClick(); togglePause(); }}
+                                    className="flex-1 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95"
+                                    style={{ padding: `${getSize(12, 14, 16)}px`, fontSize: `${getSize(14, 16, 18)}px` }}>
+                                    ▶ Resume
+                                </button>
+                                <button onClick={() => { playClick(); handleExit(); }}
+                                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-slate-600 border-2 border-gray-200 hover:border-gray-300 rounded-xl font-bold transition-all active:scale-95"
+                                    style={{ padding: `${getSize(12, 14, 16)}px`, fontSize: `${getSize(14, 16, 18)}px` }}>
+                                    Exit
+                                </button>
                             </div>
                         </motion.div>
                     </motion.div>

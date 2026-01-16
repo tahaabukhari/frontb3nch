@@ -16,24 +16,66 @@ export async function POST(request: NextRequest) {
         if (action === 'generate_curriculum') {
             const { notes, clos } = body;
             const prompt = `
-Topic: ${topic}${clos ? ` | Goals: ${clos}` : ''}${notes ? ` | Notes: ${notes}` : ''}
+Topic: ${topic}
+${clos ? `Goals: ${clos}` : ''}
+${notes ? `Notes: ${notes}` : ''}
+User: ${userName || 'friend'}
 
-Make 5 chat segments about this. First 3-4 have quiz options, last 1-2 are open discussion.
+Roleplay as Fahi. You are on a study date. 
+Vibe: Flirty, intellectual, genuinely excited. NOT a teacher. THIS IS A CONVERSATION.
 
-Each segment needs:
-- title (catchy, 3-5 words)
-- explanation (3 short lines, casual like texting a friend)
-- question
-- isTextInput (false for quiz, true for discussion)
-- options (4 choices if quiz, empty if discussion)
-- correctAnswer (exact match from options)
-- expectedAnswer (for discussion type)
+Task:
+1. Create a natural INTRO flow:
+   - Greeting (use name, show happy excitement)
+   - A random FUN FACT about the topic
+   - Why you personally LOVE this topic (passion)
+   - A question asking the user's opinion on the general concept
 
-Vibe: Friend explaining over coffee. No "let me teach you" energy.
-Vary your phrasing. Each line different.
+2. Create 5-7 study segments (subsections).
+   - Conversational titles.
+   - Explanations should sound like speaking, not reading a textbook. No "First segment is...". Just start talking about it.
+   - 3 short lines of dialogue per segment.
 
-JSON only:
-{"courseName":"","subsections":[{"id":1,"title":"","explanation":["","",""],"question":"","isTextInput":false,"options":["","","",""],"correctAnswer":"","expectedAnswer":""}]}
+3. Create FINAL QUIZ questions.
+   - Generate EXACTLY 2 questions per segment. (e.g. if 5 segments, 10 questions).
+   - These will be asked consecutively at the end.
+   - Mix of multiple choice (4 options) and open-ended. s
+
+JSON Output Format (Strictly adhere to this):
+{
+  "intro": {
+    "greeting": "Hey [Name]! I am SO hyped to talk about [Topic]...",
+    "funFact": "Did you know that...",
+    "passionReason": "I honestly love this because...",
+    "opinionQuestion": "What's your take on...?"
+  },
+  "subsections": [
+    {
+      "id": 1,
+      "title": "Creative Title",
+      "explanation": ["Line 1", "Line 2", "Line 3"],
+      "question": "Quick check question?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A",
+      "isTextInput": false
+    }
+  ],
+  "finalQuizQuestions": [
+    {
+      "question": "Question 1 related to seg 1",
+      "isTextInput": false,
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A"
+    },
+    {
+      "question": "Question 2 related to seg 1",
+      "isTextInput": true,
+      "expectedAnswer": "Concept keywords"
+    }
+  ]
+}
+
+Ensure "finalQuizQuestions" length is exactly 2 * subsections.length.
 `;
             try {
                 const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
@@ -42,16 +84,20 @@ JSON only:
                 return NextResponse.json({ success: true, data: parsed });
             } catch (parseError) {
                 console.error('Curriculum parse error:', parseError);
-                // Fallback curriculum with explanations
+                // Fallback
                 return NextResponse.json({
                     success: true,
                     data: {
-                        courseName: topic,
+                        intro: {
+                            greeting: `Hey ${userName}, let's look at ${topic}!`,
+                            funFact: `${topic} is actually really cool once you get into it.`,
+                            passionReason: "It connects so many things together.",
+                            opinionQuestion: "What do you think about it so far?"
+                        },
                         subsections: [
-                            { id: 1, title: `${topic} Basics`, explanation: [`Let's start with the fundamentals of ${topic}.`, `Understanding the basics is crucial for building knowledge.`, `Once you grasp these concepts, everything else becomes easier.`], question: `What is the foundation of ${topic}?`, options: ['Understanding basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Understanding basics', isTextInput: false },
-                            { id: 2, title: `${topic} In Practice`, explanation: [`Now let's see how ${topic} works in real scenarios.`, `Practical application helps cement your understanding.`, `Try to think of examples from your own experience.`], question: `Explain how you would apply ${topic}:`, options: [], correctAnswer: '', isTextInput: true },
-                            { id: 3, title: `Advanced ${topic}`, explanation: [`Building on what we learned, let's go deeper.`, `Advanced concepts build on the foundation you now have.`, `This is where you start to see the bigger picture.`], question: `What helps achieve mastery?`, options: ['Consistent practice', 'Rushing', 'Skipping', 'Avoiding'], correctAnswer: 'Consistent practice', isTextInput: false }
-                        ]
+                            { id: 1, title: 'The Basics', explanation: ['Starting simple.', 'Key concepts.', 'easy peasy.'], question: 'Ready?', options: ['Yes', 'No'], correctAnswer: 'Yes', isTextInput: false }
+                        ],
+                        finalQuizQuestions: []
                     }
                 });
             }
