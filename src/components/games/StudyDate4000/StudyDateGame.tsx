@@ -52,7 +52,7 @@ interface IntroData {
     opinionQuestion: string;
 }
 
-type GamePhase = 'TITLE' | 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'FINAL_QUIZ' | 'ENDING' | 'PAUSED';
+type GamePhase = 'TITLE' | 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'LOADING_WAIT' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'FINAL_QUIZ' | 'ENDING' | 'PAUSED';
 
 const SPRITES: Record<FahiEmotion, any> = {
     'neutral': fahiNeutral,
@@ -671,90 +671,7 @@ export default function StudyDateGame() {
         }
     };
 
-    const submitName = async () => {
-        if (!textInput.trim()) return;
-        const name = textInput.trim();
-        setUserName(name);
-        setTextInput('');
 
-        // Show personalized greeting
-        setCurrentText(`Nice to meet you, ${name}!`);
-        setEmotion('happy');
-
-        // Wait for content to be ready, then start
-        const startTeaching = () => {
-            if (pendingCurriculum) {
-                setSegments(pendingCurriculum);
-                setCurrentSegmentIndex(0);
-                setDialogueIndex(0);
-                setCorrectAnswers([]);
-                setMistakes([]);
-                const first = pendingCurriculum[0];
-                setTimeout(() => {
-                    setCurrentText(`Alright, let's start with ${first.title}!`);
-                    setEmotion('explaining');
-                    setPhase('TEACHING');
-                }, 1500);
-            } else {
-                // Content not ready yet, wait a bit more
-                setTimeout(startTeaching, 500);
-            }
-        };
-
-        setTimeout(startTeaching, 1000);
-    };
-
-    const handleStart = async () => {
-        setCurrentText(`Okay, let me set up the lesson...`);
-        setEmotion('excited');
-
-        try {
-            const response = await fetch('/api/study-date', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals, clos })
-            });
-            const result = await response.json();
-
-            if (result.success && result.data?.subsections?.length > 0) {
-                const curriculum = result.data.subsections.map((sub: any) => ({
-                    id: sub.id,
-                    title: sanitizeText(sub.title || ''),
-                    explanation: (sub.explanation || [`So let's talk about this.`, 'This is pretty important.', 'Once you get this, the rest makes sense.']).map(sanitizeText),
-                    question: sanitizeText(sub.question || ''),
-                    options: sub.options || [],
-                    correctAnswer: sub.correctAnswer || sub.expectedAnswer || '',
-                    isTextInput: sub.isTextInput === true
-                }));
-                setSegments(curriculum);
-                setCurrentSegmentIndex(0);
-                setDialogueIndex(0);
-                setCorrectAnswers([]);
-                setMistakes([]);
-                // Show first subsection title (user clicks to see explanations)
-                const first = curriculum[0];
-                setCurrentText(`Alright, let's start with ${first.title}!`);
-                setPhase('TEACHING');
-            } else {
-                throw new Error('Invalid curriculum');
-            }
-        } catch (e) {
-            console.error('Curriculum generation error:', e);
-            // Fallback with mixed MCQ and text input
-            const fallback: Segment[] = [
-                { id: 1, title: `${topic} Basics`, explanation: [`So ${topic} - let's start simple.`, `The basics are pretty straightforward.`, `Once you get this, everything else builds on it.`], question: `What's the most important thing about ${topic}?`, options: ['Understanding the fundamentals', 'Memorizing everything', 'Skipping to advanced topics', 'Guessing randomly'], correctAnswer: 'Understanding the fundamentals', isTextInput: false },
-                { id: 2, title: `${topic} Core Concepts`, explanation: [`Now for the core ideas.`, `This connects to what we just covered.`, `Think about why this matters.`], question: `Which approach helps most with learning?`, options: ['Practice regularly', 'Cram before tests', 'Avoid difficult parts', 'Only read notes'], correctAnswer: 'Practice regularly', isTextInput: false },
-                { id: 3, title: `${topic} In Depth`, explanation: [`Let's go a bit deeper now.`, `This part is where it gets interesting.`, `Real examples help make it click.`], question: `How would you explain ${topic} to a friend?`, options: [], correctAnswer: '', isTextInput: true }
-            ];
-            setSegments(fallback);
-            setCurrentSegmentIndex(0);
-            setDialogueIndex(0);
-            setCorrectAnswers([]);
-            setMistakes([]);
-            setCurrentText(`Let's start with ${fallback[0].title}!`);
-            setPhase('TEACHING');
-        }
-    };
 
     const advanceDialogue = () => {
         if (isTyping) { setDisplayedText(currentText); setIsTyping(false); return; }
