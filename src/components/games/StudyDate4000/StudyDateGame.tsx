@@ -28,7 +28,7 @@ interface Segment {
     isTextInput: boolean;
 }
 
-type GamePhase = 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'FINAL_QUIZ' | 'ENDING' | 'PAUSED';
+type GamePhase = 'TITLE' | 'INTRO' | 'ASK_NAME' | 'SETUP' | 'LOADING' | 'TEACHING' | 'QUIZ' | 'TEXT_INPUT' | 'FEEDBACK' | 'FINAL_QUIZ' | 'ENDING' | 'PAUSED';
 
 const SPRITES: Record<FahiEmotion, any> = {
     'neutral': fahiNeutral,
@@ -121,8 +121,8 @@ const FrustrationEffect = ({ show }: { show: boolean }) => {
 };
 
 export default function StudyDateGame() {
-    const [phase, setPhase] = useState<GamePhase>('INTRO');
-    const [previousPhase, setPreviousPhase] = useState<GamePhase>('INTRO');
+    const [phase, setPhase] = useState<GamePhase>('TITLE');
+    const [previousPhase, setPreviousPhase] = useState<GamePhase>('TITLE');
     const [mood, setMood] = useState(70);
     const [progress, setProgress] = useState(0);
     const [userName, setUserName] = useState('');
@@ -784,6 +784,92 @@ export default function StudyDateGame() {
         <div className="fixed inset-0 w-screen h-screen overflow-hidden font-sans select-none bg-black">
             {/* BACKGROUND */}
             <img src={bgImg.src} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
+
+            {/* TITLE SCREEN */}
+            <AnimatePresence>
+                {phase === 'TITLE' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-50 flex flex-col items-center justify-center"
+                        style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(139,69,140,0.5) 50%, rgba(0,0,0,0.7) 100%)' }}
+                    >
+                        {/* Floating particles effect */}
+                        {[...Array(20)].map((_, i) => (
+                            <motion.div
+                                key={i}
+                                className="absolute text-pink-300/40"
+                                style={{
+                                    left: `${Math.random() * 100}%`,
+                                    top: `${Math.random() * 100}%`,
+                                    fontSize: `${10 + Math.random() * 20}px`
+                                }}
+                                animate={{
+                                    y: [0, -30, 0],
+                                    opacity: [0.2, 0.6, 0.2],
+                                    scale: [1, 1.2, 1]
+                                }}
+                                transition={{
+                                    duration: 3 + Math.random() * 2,
+                                    repeat: Infinity,
+                                    delay: Math.random() * 2
+                                }}
+                            >
+                                {['♥', '✧', '♡', '✦'][Math.floor(Math.random() * 4)]}
+                            </motion.div>
+                        ))}
+
+                        {/* Title */}
+                        <motion.div
+                            initial={{ y: -50, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.3, type: 'spring' }}
+                            className="text-center mb-8"
+                        >
+                            <h1
+                                className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400"
+                                style={{ fontSize: isMobile ? '40px' : '64px', textShadow: '0 4px 30px rgba(219,112,147,0.5)' }}
+                            >
+                                StudyDate 4000
+                            </h1>
+                            <p className="text-pink-200/80 mt-2" style={{ fontSize: isMobile ? '14px' : '18px' }}>
+                                Learn with Fahi
+                            </p>
+                        </motion.div>
+
+                        {/* Play Button */}
+                        <motion.button
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setPhase('INTRO')}
+                            className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden"
+                            style={{
+                                background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
+                                backgroundSize: '200% 200%',
+                                animation: 'shimmer 3s ease infinite',
+                                fontSize: isMobile ? '18px' : '22px',
+                                boxShadow: '0 8px 32px rgba(236,72,153,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                            }}
+                        >
+                            <span className="relative z-10">♥ Start Playing ♥</span>
+                        </motion.button>
+
+                        {/* Credits */}
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1 }}
+                            className="absolute bottom-6 text-pink-200/50 text-sm"
+                        >
+                            A FrontB3nch Game
+                        </motion.p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* TABLE */}
             <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: isMobile ? '18vh' : '20vh' }}>

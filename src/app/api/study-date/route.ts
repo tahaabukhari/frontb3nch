@@ -5,22 +5,8 @@ const API_KEY = process.env.FAHI_GEN || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-const SYSTEM_PROMPT = `
-You are "Fahi", a smart, friendly colleague and study partner.
-Your personality:
-- You are a peer sharing cool info, NOT a teacher or tutor.
-- Relaxed, relatable, and human-like.
-- Speaks naturally, like a coworker explaining a concept over coffee.
-- Patient but direct. If they're wrong, say so casually.
-- NO "Hello student" or "Let's begin the lesson" vibes.
-- NO robotic or repetitive phrases.
-
-Your formatting:
-- SHORT, punchy responses.
-- NO roleplay actions (*smiles*), NO emojis, NO hashtags.
-- Output MUST be valid JSON only. ABSOLUTELY NO markdown code blocks (no \`\`\`json).
-- Do NOT include the JSON fence in your output string, just the raw JSON object.
-`;
+// Compact system prompt - saves tokens
+const SYSTEM_PROMPT = `You're Fahi, a chill friend who knows stuff. Chat naturally. No teaching vibes. Short replies. Pure JSON output only.`;
 
 export async function POST(request: NextRequest) {
     try {
@@ -30,50 +16,28 @@ export async function POST(request: NextRequest) {
         if (action === 'generate_curriculum') {
             const { notes, clos } = body;
             const prompt = `
-Topic: ${topic}
-${clos ? `Learning Objectives: ${clos}` : ''}
-${notes ? `Notes: ${notes}` : ''}
+Topic: ${topic}${clos ? ` | Goals: ${clos}` : ''}${notes ? ` | Notes: ${notes}` : ''}
 
-Create a study plan with 5 quick segments.
-Structure: First 3-4 are meaningful Multiple Choice (MCQ), last 1-2 are Open-Ended discussion.
+Make 5 chat segments about this. First 3-4 have quiz options, last 1-2 are open discussion.
 
-For EACH segment:
-1. title: Short, catchy name (3-5 words)
-2. explanation: Array of 3-4 SHORT sentences (max 70 chars each).
-   - Tone: "Check this out," "Here's the thing," "So basically..."
-   - Teach the actual concept, don't just fluff.
-3. question: A relevant question.
-4. isTextInput: false for first 3-4, true for last 1-2.
-5. options: Array of 4 text options (ONLY if isTextInput is false).
-   - Natural phrases, NOT "A)...".
-6. correctAnswer: The exact text of the right option.
-7. expectedAnswer: Summary of a good text answer (if text input).
+Each segment needs:
+- title (catchy, 3-5 words)
+- explanation (3 short lines, casual like texting a friend)
+- question
+- isTextInput (false for quiz, true for discussion)
+- options (4 choices if quiz, empty if discussion)
+- correctAnswer (exact match from options)
+- expectedAnswer (for discussion type)
 
-RULES:
-- Be a helpful colleague, not a professor.
-- Use variety in phrasing. NEVER repeat "Let's look at..."
-- No markdown formatting in the output.
+Vibe: Friend explaining over coffee. No "let me teach you" energy.
+Vary your phrasing. Each line different.
 
-Output ONLY valid pure JSON (no \`\`\` tags):
-{
-  "courseName": "Topic Name",
-  "subsections": [
-    {
-      "id": 1,
-      "title": "The Core Concept",
-      "explanation": ["So here's the deal with X.", "It's actually pretty simple.", "Think of it like this..."],
-      "question": "Which of these best describes X?",
-      "isTextInput": false,
-      "options": ["It's like a blueprint", "It's a random guess", "It's totally unrelated", "It's just noise"],
-      "correctAnswer": "It's like a blueprint",
-      "expectedAnswer": ""
-    }
-  ]
-}
+JSON only:
+{"courseName":"","subsections":[{"id":1,"title":"","explanation":["","",""],"question":"","isTextInput":false,"options":["","","",""],"correctAnswer":"","expectedAnswer":""}]}
 `;
             try {
                 const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-                const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+                const text = result.response.text().replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
                 const parsed = JSON.parse(text);
                 return NextResponse.json({ success: true, data: parsed });
             } catch (parseError) {
