@@ -150,37 +150,41 @@ export default function StudyDateGame() {
     useEffect(() => {
         const preloadAudio = async () => {
             const soundKeys = Object.keys(SOUNDS) as (keyof typeof SOUNDS)[];
-            let loaded = 0;
 
-            for (const key of soundKeys) {
-                try {
+            // Parallel loading for speed
+            const loadPromises = soundKeys.map(key => {
+                return new Promise<void>((resolve) => {
                     const audio = new Audio(SOUNDS[key]);
                     audio.preload = 'auto';
-                    // Force load by playing and immediately pausing (trick for some browsers)
                     audio.load();
 
-                    await new Promise<void>((resolve) => {
-                        // Use a shorter timeout or readyState check
-                        if (audio.readyState >= 3) {
-                            resolve();
-                        } else {
-                            audio.addEventListener('canplaythrough', () => resolve(), { once: true });
-                            // Fallback timeout to prevent hanging the loader
-                            setTimeout(resolve, 1000);
-                        }
-                    });
+                    const onReady = () => {
+                        audioCache.current[key] = audio;
+                        resolve();
+                    };
 
-                    audioCache.current[key] = audio;
-                    loaded++;
-                    setLoadingProgress(Math.round((loaded / soundKeys.length) * 100));
-                } catch (e) {
-                    console.log('Audio preload error:', key, e);
-                    loaded++;
-                }
-            }
+                    if (audio.readyState >= 3) {
+                        onReady();
+                    } else {
+                        audio.addEventListener('canplaythrough', onReady, { once: true });
+                        // Short timeout to prevent blocking
+                        setTimeout(() => {
+                            // If timeout, still resolve but maybe without caching (or cache what we have)
+                            // We cache it anyway, it might load later
+                            audioCache.current[key] = audio;
+                            resolve();
+                        }, 1000);
+                    }
+                });
+            });
+
+            let completed = 0;
+            await Promise.all(loadPromises.map(p => p.then(() => {
+                completed++;
+                setLoadingProgress(Math.round((completed / soundKeys.length) * 100));
+            })));
 
             // Setup background music ref
-            const musicDesc = Object.getOwnPropertyDescriptor(HTMLAudioElement.prototype, 'volume');
             bgMusicRef.current = new Audio(SOUNDS.gametrack);
             bgMusicRef.current.loop = true;
             bgMusicRef.current.volume = 0.4;
@@ -224,6 +228,11 @@ export default function StudyDateGame() {
                 if (playPromise !== undefined) {
                     playPromise.catch(() => { });
                 }
+            } else {
+                // Fallback if not cached (timeout case)
+                const audio = new Audio(SOUNDS[soundKey]);
+                audio.volume = volume;
+                audio.play().catch(() => { });
             }
         } catch (e) {
             console.log('Sound play error:', e);
@@ -251,10 +260,11 @@ export default function StudyDateGame() {
         }
     }, [musicPlaying]);
 
-    // Stop music when leaving title phase (transitioning to SETUP/INTRO)
+    // Stop music when entering game phases (INTRO/TEACHING)
     useEffect(() => {
-        // Only stop if we are leaving TITLE phase
-        if (phase !== 'TITLE' && musicPlaying) {
+        // Keep music playing during TITLE, ASK_NAME, SETUP
+        const musicPhases = ['TITLE', 'ASK_NAME', 'SETUP'];
+        if (!musicPhases.includes(phase) && musicPlaying) {
             stopMusic();
         }
     }, [phase, musicPlaying, stopMusic]);
@@ -1029,38 +1039,38 @@ export default function StudyDateGame() {
                 )}
             </AnimatePresence>
 
-            {/* TITLE SCREEN */}
+            {/* INTRO SEQUENCE (Title -> Ask Name -> Setup) */}
             <AnimatePresence>
-                {phase === 'TITLE' && assetsLoaded && audioInitialized && (
+                {(phase === 'TITLE' || phase === 'ASK_NAME' || phase === 'SETUP') && assetsLoaded && audioInitialized && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
-                        style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fad0c4 100%)' }} // Pastel pink gradient
+                        style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fad0c4 100%)' }}
                     >
-                        {/* Parallax Background Icons */}
-                        {[...Array(30)].map((_, i) => {
+                        {/* Parallax Background Icons - Increased density */}
+                        {[...Array(50)].map((_, i) => {
                             const size = 15 + Math.random() * 30;
-                            const duration = 15 + Math.random() * 20; // Slow floating
-                            const delay = Math.random() * -30; // Start instantly at random progress
+                            const duration = 20 + Math.random() * 20;
+                            const delay = Math.random() * -40;
                             const startX = Math.random() * 100;
                             const startY = Math.random() * 100;
-                            const icon = ['♥', '★', '✦', '✿'][Math.floor(Math.random() * 4)];
+                            const icon = ['♥', '★', '✦', '✿', '🌸', '🌹'][Math.floor(Math.random() * 6)];
 
                             return (
                                 <motion.div
                                     key={i}
                                     className="absolute select-none pointer-events-none"
                                     style={{
-                                        color: Math.random() > 0.5 ? 'rgba(255, 182, 193, 0.4)' : 'rgba(255, 105, 180, 0.2)', // Soft pastel icons
+                                        color: Math.random() > 0.5 ? 'rgba(255, 182, 193, 0.6)' : 'rgba(255, 105, 180, 0.3)',
                                         fontSize: `${size}px`,
                                         left: `${startX}%`,
                                         top: `${startY}%`,
                                     }}
                                     animate={{
-                                        x: ['10vw', '-100vw'], // Move left
-                                        y: ['-10vh', '110vh'], // Move down (simulating angle)
+                                        x: ['10vw', '-100vw'],
+                                        y: ['-10vh', '110vh'],
                                         rotate: [0, 360],
                                     }}
                                     transition={{
@@ -1075,91 +1085,113 @@ export default function StudyDateGame() {
                             );
                         })}
 
-                        {/* Content Container */}
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="text-center z-10"
-                        >
-                            <h1
-                                className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-sm"
-                                style={{
-                                    fontSize: isMobile ? '42px' : '72px',
-                                    filter: 'drop-shadow(0 4px 0 rgba(255,255,255,0.8))' // White outline effect
-                                }}
+                        {/* TITLE SCREEN CONTENT */}
+                        {phase === 'TITLE' && (
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: -20, opacity: 0 }}
+                                className="text-center z-10 flex flex-col items-center"
                             >
-                                StudyDate 4000
-                            </h1>
-                            <p className="text-pink-500/80 mt-2 font-bold tracking-widest uppercase" style={{ fontSize: isMobile ? '14px' : '18px' }}>
-                                Learn with Fahi
-                            </p>
-                        </motion.div>
+                                <h1
+                                    className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-sm mb-2"
+                                    style={{
+                                        fontSize: isMobile ? '42px' : '72px',
+                                        filter: 'drop-shadow(0 4px 0 rgba(255,255,255,0.8))'
+                                    }}
+                                >
+                                    StudyDate 4000
+                                </h1>
+                                <p className="text-pink-500/80 mb-8 font-bold tracking-widest uppercase" style={{ fontSize: isMobile ? '14px' : '18px' }}>
+                                    Learn with Fahi
+                                </p>
 
-                        {/* Play Button */}
-                        <motion.button
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                                playClick();
-                                setPhase('SETUP');
-                            }}
-                            className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden"
-                            style={{
-                                background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
-                                backgroundSize: '200% 200%',
-                                animation: 'shimmer 3s ease infinite',
-                                fontSize: isMobile ? '18px' : '22px',
-                                boxShadow: '0 8px 32px rgba(236,72,153,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
-                            }}
-                        >
-                            <span className="relative z-10">♥ Start Playing ♥</span>
-                        </motion.button>
+                                <motion.button
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        playClick();
+                                        setPhase('ASK_NAME'); // Go to Name Input first
+                                    }}
+                                    className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden shadow-xl"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
+                                        backgroundSize: '200% 200%',
+                                        animation: 'shimmer 3s ease infinite',
+                                        fontSize: isMobile ? '18px' : '22px'
+                                    }}
+                                >
+                                    <span className="relative z-10">♥ Start Journey ♥</span>
+                                </motion.button>
+                            </motion.div>
+                        )}
 
-                        {/* Credits */}
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 1 }}
-                            className="absolute bottom-6 text-pink-200/50 text-sm"
-                        >
-                            A FrontB3nch Game
-                        </motion.p>
+                        {/* ASK NAME SCREEN */}
+                        {phase === 'ASK_NAME' && (
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="z-10 bg-white/40 backdrop-blur-md p-8 rounded-3xl border-2 border-white/50 shadow-xl flex flex-col items-center gap-4 max-w-md w-[90%]"
+                            >
+                                <h2 className="text-2xl font-bold text-pink-600">What's your name?</h2>
+                                <input
+                                    type="text"
+                                    value={userName}
+                                    onChange={e => setUserName(e.target.value)}
+                                    placeholder="Enter your name..."
+                                    className="w-full px-4 py-3 rounded-xl bg-white/80 border-2 border-pink-200 focus:border-pink-500 outline-none text-lg text-pink-900 placeholder:text-pink-300 text-center font-bold"
+                                    autoFocus
+                                    onKeyDown={e => e.key === 'Enter' && userName.trim() && setPhase('SETUP')}
+                                />
+                                <button
+                                    onClick={() => { playClick(); setPhase('SETUP'); }}
+                                    disabled={!userName.trim()}
+                                    className="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                                >
+                                    Continue
+                                </button>
+                            </motion.div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* TABLE */}
-            <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: isMobile ? '18vh' : '20vh' }}>
-                <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
-            </div>
+            {/* GAME ENVIRONMENT (Table & Fahi) - Only show after setup */}
+            {!['TITLE', 'ASK_NAME', 'SETUP'].includes(phase) && (
+                <>
+                    {/* TABLE */}
+                    <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: isMobile ? '18vh' : '20vh' }}>
+                        <img src={tableImg.src} className="w-full h-full object-cover object-top" alt="Table" />
+                    </div>
 
-            {/* FAHI - Mobile: vertical center, Desktop: slightly above center */}
-            <div
-                className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-                style={{ paddingBottom: isMobile ? '0' : '5vh' }}
-            >
-                <div className="relative">
-                    <motion.img
-                        key={getCurrentSprite()?.src}
-                        src={getCurrentSprite()?.src}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="object-contain drop-shadow-2xl"
-                        style={{
-                            height: isMobile ? '40vh' : '65vh',
-                            transform: 'scale(1.25)'
-                        }}
-                        alt="Fahi"
-                    />
-                    {/* Effects on Fahi */}
-                    <StarBurst show={showStars} />
-                    <FrustrationEffect show={showFrustration} />
-                </div>
-            </div>
+                    {/* FAHI - Mobile: vertical center, Desktop: slightly above center */}
+                    <div
+                        className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+                        style={{ paddingBottom: isMobile ? '0' : '5vh' }}
+                    >
+                        <div className="relative">
+                            <motion.img
+                                key={getCurrentSprite()?.src}
+                                src={getCurrentSprite()?.src}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="object-contain drop-shadow-2xl"
+                                style={{
+                                    height: isMobile ? '40vh' : '65vh',
+                                    transform: 'scale(1.25)'
+                                }}
+                                alt="Fahi"
+                            />
+                            {/* Effects on Fahi */}
+                            <StarBurst show={showStars} />
+                            <FrustrationEffect show={showFrustration} />
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* BARS - Left of center (Desktop) */}
             {showBars && !isMobile && (
@@ -1266,27 +1298,6 @@ export default function StudyDateGame() {
                             </button>
                         )}
                     </motion.div>
-
-                    {/* NAME INPUT */}
-                    {phase === 'ASK_NAME' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 flex gap-2">
-                            <input
-                                type="text"
-                                value={textInput}
-                                onChange={e => setTextInput(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') { playClick(); submitName(); } }}
-                                placeholder="Your name..."
-                                className="flex-1 bg-white border-2 border-pink-200 rounded-lg text-slate-700 font-medium focus:outline-none focus:border-pink-400"
-                                style={{ padding: `${getSize(10, 12, 14)}px ${getSize(12, 16, 18)}px`, fontSize: `${getSize(14, 16, 18)}px` }}
-                                autoFocus
-                            />
-                            <button onClick={() => { playClick(); submitName(); }} disabled={!textInput.trim()}
-                                className="bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
-                                style={{ padding: `${getSize(10, 12, 14)}px ${getSize(14, 18, 22)}px`, fontSize: `${getSize(14, 16, 18)}px` }}>
-                                ✓
-                            </button>
-                        </motion.div>
-                    )}
 
                     {/* QUIZ OPTIONS - 2x2 grid on mobile, list on desktop */}
                     <AnimatePresence>
@@ -1427,7 +1438,7 @@ export default function StudyDateGame() {
             {/* SETUP MODAL - Fixed visibility */}
             <AnimatePresence>
                 {phase === 'SETUP' && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-sm">
                         <motion.div
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
