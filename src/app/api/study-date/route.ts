@@ -13,32 +13,19 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { action, topic, goals, segment, userAnswer, mood, userName } = body;
 
+        // Determine Tone based on Mood
+        let vibe = "Friend explaining over coffee. No 'let me teach you' energy.";
+        if (typeof mood === 'number') {
+            if (mood < 50) {
+                vibe = "Bored, uninterested, slightly annoyed. You don't really want to be here, but you're doing it. Short sentences. Sarcastic or aloof. Keep it brief.";
+            } else if (mood > 80) {
+                vibe = "Super excited, high energy, geeking out! You LOVE this topic. Use exclamation marks, maybe emojis. Very enthusiastic.";
+            }
+        }
+
         if (action === 'generate_curriculum') {
             const { notes, clos } = body;
             const prompt = `
-Topic: ${topic}
-${clos ? `Goals: ${clos}` : ''}
-${notes ? `Notes: ${notes}` : ''}
-User: ${userName || 'friend'}
-
-Roleplay as Fahi. You are on a study date. 
-Vibe: Flirty, intellectual, genuinely excited. NOT a teacher. THIS IS A CONVERSATION.
-
-Task:
-1. Create a natural INTRO flow:
-   - Greeting (use name, show happy excitement)
-   - A random FUN FACT about the topic
-   - Why you personally LOVE this topic (passion)
-   - A question asking the user's opinion on the general concept
-
-2. Create 5-7 study segments (subsections).
-   - Conversational titles.
-   - Explanations should sound like speaking, not reading a textbook. No "First segment is...". Just start talking about it.
-   - 3 short lines of dialogue per segment.
-
-3. Create FINAL QUIZ questions.
-   - Generate EXACTLY 2 questions per segment. (e.g. if 5 segments, 10 questions).
-   - These will be asked consecutively at the end.
    - Mix of multiple choice (4 options) and open-ended. s
 
 JSON Output Format (Strictly adhere to this):

@@ -147,9 +147,15 @@ const FrustrationEffect = ({ show }: { show: boolean }) => {
 export default function StudyDateGame() {
     const [phase, setPhase] = useState<GamePhase>('TITLE');
     const [previousPhase, setPreviousPhase] = useState<GamePhase>('TITLE');
-    const [mood, setMood] = useState(70);
+    const [mood, setMood] = useState(50); // Will be randomized
     const [progress, setProgress] = useState(0);
     const [userName, setUserName] = useState('');
+    const [processing, setProcessing] = useState(false); // UI blocker
+
+    // Randomize mood on mount
+    useEffect(() => {
+        setMood(Math.floor(Math.random() * (60 - 30 + 1)) + 30);
+    }, []);
 
     // Loading state
     const [assetsLoaded, setAssetsLoaded] = useState(false);
@@ -417,6 +423,12 @@ export default function StudyDateGame() {
     const getFrustrationFeedback = (loopCount: number, isCorrect: boolean): { text: string; emotion: FahiEmotion } => {
         const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
+        // Low Mood Feedback overrides
+        if (mood < 50) {
+            if (isCorrect) return { text: pick(["About time.", "Okay, moving on.", "Finally got one.", "I guess that works."]), emotion: 'neutral' };
+            return { text: pick(["Ugh, seriously?", "Wrong.", "Are you even listening?", "Come on..."]), emotion: 'mad' };
+        }
+
         if (isCorrect) {
             if (loopCount >= 3) {
                 return { text: pick(CORRECT_AFTER_STRUGGLE), emotion: 'neutral' };
@@ -477,8 +489,15 @@ export default function StudyDateGame() {
 
     // Handle MCQ answer in Final Quiz
     const handleFinalQuizChoice = (choice: string) => {
+        if (processing) return; // Prevent double click
+        setProcessing(true); // Lock
+
         const q = finalQuizQuestions[finalQuizIndex];
         const isCorrect = choice === q.correctAnswer;
+
+        // Mood adjust
+        if (isCorrect) setMood(prev => Math.min(100, prev + 5));
+        else setMood(prev => Math.max(0, prev - 5));
 
         if (isCorrect) {
             setCorrectAnswers(prev => [...prev, `Q${finalQuizIndex}`]);
@@ -497,10 +516,10 @@ export default function StudyDateGame() {
                     setCurrentText(sanitizeText(finalQuizQuestions[next].question));
                     setPhase('FINAL_QUIZ');
                 }
+                setProcessing(false); // Unlock
             }, 1000);
         } else {
             setMistakes(prev => [...prev, { topic: `Q${finalQuizIndex}`, userAnswer: choice, correct: q.correctAnswer || '' }]);
-            setMood(prev => Math.max(0, prev - 10)); // Mood down
             playClick(); // Fail sound
 
             // Immediate feedback then move on
@@ -516,7 +535,8 @@ export default function StudyDateGame() {
                     setCurrentText(sanitizeText(finalQuizQuestions[next].question));
                     setPhase('FINAL_QUIZ');
                 }
-            }, 1000);
+                setProcessing(false); // Unlock
+            }, 1000); // reduced delay
         }
     };
 
@@ -532,7 +552,8 @@ export default function StudyDateGame() {
 
     // Transition to INTRO when content is ready
     useEffect(() => {
-        if (contentReady && pendingCurriculum && phase === 'LOADING') {
+        // If we are in LOADING_WAIT (from submitName) AND content is ready
+        if (contentReady && pendingCurriculum && (phase === 'LOADING_WAIT' || phase === 'LOADING')) {
             setSegments(pendingCurriculum);
             setIntroData(pendingIntroData);
             setFinalQuizQuestions(pendingFinalQuizQuestions || []);
@@ -540,26 +561,44 @@ export default function StudyDateGame() {
             // Start the natural conversation
             setPhase('INTRO');
             setIntroStep(0);
-            setEmotion('happy');
-            if (pendingIntroData) {
-                setCurrentText(pendingIntroData.greeting);
-            } else {
-                // Fallback
-                setCurrentText(`Alright ${userName}, let's talk about ${topic}!`);
-            }
+            // Replace placeholder Name
+            let greeting = pendingIntroData?.greeting || `Alright ${userName}, let's talk about ${topic}!`;
+            greeting = greeting.replace(/User/g, userName).replace(/friend/g, userName);
+
+            setCurrentText(greeting);
+
+            // Set start emotion based on mood
+            setEmotion(mood < 50 ? 'disappointed' : 'happy');
         }
-    }, [contentReady, pendingCurriculum, phase, pendingIntroData, pendingFinalQuizQuestions, userName, topic]);
+    }, [contentReady, pendingCurriculum, phase, pendingIntroData, pendingFinalQuizQuestions, userName, topic, mood]);
 
     const submitSetup = async () => {
         if (!topic.trim()) return;
 
-        // Show Fahi's excited reaction
-        setPhase('LOADING');
-        setCurrentText(`${topic}! Oh I love that topic!`);
-        setEmotion('excited');
-
-        // Start generating content
+        // Start Generating immediately
+        // Pass specific mood
         generateCurriculumInBackground();
+
+        // Move to Ask Name
+        setPhase('ASK_NAME');
+        setTextInput(''); // Clear for name input
+    };
+
+    // New Submit Name logic
+    const submitName = () => {
+        if (!textInput.trim()) return;
+        setUserName(textInput.trim());
+        setTextInput('');
+
+        if (contentReady) {
+            // If ready, trigger effect by setting generic loading/wait phase if needed, or direct?
+            // Effect watches LOADING_WAIT
+            setPhase('LOADING_WAIT');
+        } else {
+            setPhase('LOADING'); // Show Loading screen
+            setCurrentText(`Okay ${textInput}, just a sec...`);
+            setEmotion(mood < 50 ? 'neutral' : 'happy');
+        }
     };
 
     const generateCurriculumInBackground = async () => {
@@ -567,7 +606,8 @@ export default function StudyDateGame() {
             const response = await fetch('/api/study-date', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals, clos, userName })
+                // Note: userName is not set yet, handled by placeholder
+                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals, clos, mood })
             });
             const result = await response.json();
 
@@ -622,7 +662,7 @@ export default function StudyDateGame() {
             ];
             setPendingCurriculum(fallback);
             setPendingIntroData({
-                greeting: `Hey ${userName}, let's dive into ${topic}!`,
+                greeting: `Hey User, let's dive into ${topic}!`,
                 funFact: "It's a huge topic with lots to explore.",
                 passionReason: "I love how it challenges the way we think.",
                 opinionQuestion: "What's the hardest part about it for you?"
@@ -1555,6 +1595,55 @@ export default function StudyDateGame() {
                                 </button>
                             </div>
                         </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ASK NAME MODAL */}
+            <AnimatePresence>
+                {phase === 'ASK_NAME' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            className="bg-white border-4 border-pink-300 rounded-2xl shadow-2xl"
+                            style={{ padding: `${getSize(20, 24, 32)}px`, width: isMobile ? '90%' : `${getSize(300, 360, 420)}px`, maxWidth: '90%' }}
+                        >
+                            <h2 className="text-pink-500 font-black text-center mb-6" style={{ fontSize: `${getSize(20, 24, 28)}px` }}>👋 One sec!</h2>
+
+                            <label className="block font-bold text-slate-700 mb-2" style={{ fontSize: `${getSize(13, 15, 17)}px` }}>What should I call you?</label>
+                            <input
+                                className="w-full bg-pink-50 border-2 border-pink-200 rounded-xl mb-6 focus:outline-none focus:border-pink-400 text-slate-800 placeholder-slate-400 text-center font-bold"
+                                style={{ padding: `${getSize(12, 14, 16)}px`, fontSize: `${getSize(16, 18, 20)}px` }}
+                                placeholder="Your Name"
+                                value={textInput}
+                                onChange={e => setTextInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && submitName()}
+                                autoFocus
+                            />
+
+                            <button
+                                onClick={() => { playClick(); submitName(); }}
+                                disabled={!textInput.trim()}
+                                className="w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all shadow-lg"
+                                style={{ padding: `${getSize(12, 14, 18)}px`, fontSize: `${getSize(14, 16, 18)}px` }}
+                            >
+                                Start Date! 💕
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* LOADING SCREENS */}
+            <AnimatePresence>
+                {(phase === 'LOADING' || phase === 'LOADING_WAIT') && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-md">
+                        <div className="text-center">
+                            <div className="text-6xl mb-4 animate-bounce">🤔</div>
+                            <h2 className="text-pink-500 font-bold text-2xl mb-2">Thinking...</h2>
+                            <p className="text-pink-400">Fahi is preparing her notes about {topic}...</p>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
