@@ -327,6 +327,7 @@ export default function StudyDateGame() {
             .replace(/^\s*\{[\s\S]*\}\s*$/g, '') // Remove pure JSON objects
             .replace(/\*\*/g, '')
             .replace(/\*/g, '')
+            .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '') // Remove emojis
             .trim();
     };
 
@@ -571,9 +572,11 @@ export default function StudyDateGame() {
             // Set start emotion based on mood
             setEmotion(mood < 50 ? 'disappointed' : 'happy');
 
-            // Show Mood Popup
-            setShowMoodPopup(true);
-            setTimeout(() => setShowMoodPopup(false), 4000);
+            // Show Mood Popup only if mood is low
+            if (mood <= 50) {
+                setShowMoodPopup(true);
+                setTimeout(() => setShowMoodPopup(false), 4000);
+            }
         }
     }, [contentReady, pendingCurriculum, phase, pendingIntroData, pendingFinalQuizQuestions, userName, topic, mood]);
 
@@ -1030,6 +1033,38 @@ export default function StudyDateGame() {
             {/* BACKGROUND */}
             <img src={bgImg.src} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
 
+            {/* Parallax Background - Persistent across all phases */}
+            {[...Array(50)].map((_, i) => {
+                const size = 15 + Math.random() * 30;
+                const duration = 20 + Math.random() * 20;
+                const delay = Math.random() * -40;
+                const startX = Math.random() * 100;
+                const startY = Math.random() * 100;
+                const icon = ['♥', '★', '✦', '✨'][Math.floor(Math.random() * 4)];
+
+                return (
+                    <motion.div
+                        key={i}
+                        className="absolute text-pink-300/30 select-none pointer-events-none z-[5]"
+                        initial={{ x: `${startX}vw`, y: `${startY}vh`, opacity: 0 }}
+                        animate={{
+                            x: [`${startX}vw`, `${startX + 20}vw`],
+                            y: [`${startY}vh`, `${startY + (Math.random() * 10 - 5)}vh`],
+                            opacity: [0, 1, 0]
+                        }}
+                        transition={{
+                            duration: duration,
+                            ease: "linear",
+                            repeat: Infinity,
+                            delay: delay
+                        }}
+                        style={{ fontSize: `${size}px` }}
+                    >
+                        {icon}
+                    </motion.div>
+                );
+            })}
+
             {/* LOADING SCREEN - Shows while assets preload */}
             <AnimatePresence>
                 {!assetsLoaded && (
@@ -1094,38 +1129,6 @@ export default function StudyDateGame() {
                         className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
                         style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fad0c4 100%)' }}
                     >
-                        {/* Parallax Background Icons - Hearts and Stars only */}
-                        {[...Array(50)].map((_, i) => {
-                            const size = 15 + Math.random() * 30;
-                            const duration = 20 + Math.random() * 20;
-                            const delay = Math.random() * -40;
-                            const startX = Math.random() * 100;
-                            const startY = Math.random() * 100;
-                            const icon = ['♥', '★', '✦', '✨'][Math.floor(Math.random() * 4)];
-
-                            return (
-                                <motion.div
-                                    key={i}
-                                    className="absolute text-pink-300/30 select-none pointer-events-none"
-                                    initial={{ x: `${startX}vw`, y: `${startY}vh`, opacity: 0 }}
-                                    animate={{
-                                        x: [`${startX}vw`, `${startX + 20}vw`],
-                                        y: [`${startY}vh`, `${startY + (Math.random() * 10 - 5)}vh`],
-                                        opacity: [0, 1, 0]
-                                    }}
-                                    transition={{
-                                        duration: duration,
-                                        ease: "linear",
-                                        repeat: Infinity,
-                                        delay: delay
-                                    }}
-                                    style={{ fontSize: `${size}px` }}
-                                >
-                                    {icon}
-                                </motion.div>
-                            );
-                        })}
-
                         {/* TITLE SCREEN CONTENT */}
                         {phase === 'TITLE' && (
                             <motion.div
@@ -1690,18 +1693,18 @@ export default function StudyDateGame() {
             <AnimatePresence>
                 {showMoodPopup && (
                     <motion.div
-                        initial={{ opacity: 0, y: -50, x: '-50%' }}
-                        animate={{ opacity: 1, y: 0, x: '-50%' }}
-                        exit={{ opacity: 0, y: -20, x: '-50%' }}
-                        className="absolute top-24 left-1/2 z-[100] bg-white/90 backdrop-blur border-2 border-pink-300 px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3"
+                        initial={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
+                        animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+                        exit={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
+                        className="absolute top-1/2 left-1/2 z-[100] bg-white/95 backdrop-blur border-l-4 border-red-500 px-8 py-6 rounded-lg shadow-2xl flex items-center gap-4 min-w-[300px]"
                     >
-                        <span className="text-2xl">{mood > 50 ? '😊' : '😟'}</span>
+                        <div className="bg-red-100 p-3 rounded-full">
+                            <span className="text-2xl text-red-500 font-bold">!</span>
+                        </div>
                         <div>
-                            <h3 className="font-bold text-pink-600 text-sm uppercase tracking-wider">Current Mood: {mood}%</h3>
-                            <p className="text-slate-700 text-sm font-medium">
-                                {mood > 50
-                                    ? "Fahi is in a good mood! Keep it up!"
-                                    : "Fahi is annoyed... Watch your answers!"}
+                            <h3 className="font-bold text-slate-800 text-lg mb-1">Be Careful</h3>
+                            <p className="text-slate-600 font-medium">
+                                Fahi is impatient right now.
                             </p>
                         </div>
                     </motion.div>
