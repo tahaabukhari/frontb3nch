@@ -1036,48 +1036,62 @@ export default function StudyDateGame() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-50 flex flex-col items-center justify-center"
-                        style={{ background: 'linear-gradient(180deg, #1a0a1f 0%, #2d1b3d 30%, #4a2060 50%, #2d1b3d 70%, #1a0a1f 100%)' }}
+                        className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
+                        style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fad0c4 100%)' }} // Pastel pink gradient
                     >
-                        {/* Floating particles effect */}
-                        {[...Array(20)].map((_, i) => (
-                            <motion.div
-                                key={i}
-                                className="absolute text-pink-300/40"
-                                style={{
-                                    left: `${Math.random() * 100}%`,
-                                    top: `${Math.random() * 100}%`,
-                                    fontSize: `${10 + Math.random() * 20}px`
-                                }}
-                                animate={{
-                                    y: [0, -30, 0],
-                                    opacity: [0.2, 0.6, 0.2],
-                                    scale: [1, 1.2, 1]
-                                }}
-                                transition={{
-                                    duration: 3 + Math.random() * 2,
-                                    repeat: Infinity,
-                                    delay: Math.random() * 2
-                                }}
-                            >
-                                {['♥', '✧', '♡', '✦'][Math.floor(Math.random() * 4)]}
-                            </motion.div>
-                        ))}
+                        {/* Parallax Background Icons */}
+                        {[...Array(30)].map((_, i) => {
+                            const size = 15 + Math.random() * 30;
+                            const duration = 15 + Math.random() * 20; // Slow floating
+                            const delay = Math.random() * -30; // Start instantly at random progress
+                            const startX = Math.random() * 100;
+                            const startY = Math.random() * 100;
+                            const icon = ['♥', '★', '✦', '✿'][Math.floor(Math.random() * 4)];
 
-                        {/* Title */}
+                            return (
+                                <motion.div
+                                    key={i}
+                                    className="absolute select-none pointer-events-none"
+                                    style={{
+                                        color: Math.random() > 0.5 ? 'rgba(255, 182, 193, 0.4)' : 'rgba(255, 105, 180, 0.2)', // Soft pastel icons
+                                        fontSize: `${size}px`,
+                                        left: `${startX}%`,
+                                        top: `${startY}%`,
+                                    }}
+                                    animate={{
+                                        x: ['10vw', '-100vw'], // Move left
+                                        y: ['-10vh', '110vh'], // Move down (simulating angle)
+                                        rotate: [0, 360],
+                                    }}
+                                    transition={{
+                                        duration: duration,
+                                        repeat: Infinity,
+                                        ease: "linear",
+                                        delay: delay
+                                    }}
+                                >
+                                    {icon}
+                                </motion.div>
+                            );
+                        })}
+
+                        {/* Content Container */}
                         <motion.div
-                            initial={{ y: -50, opacity: 0 }}
+                            initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.3, type: 'spring' }}
-                            className="text-center mb-8"
+                            transition={{ delay: 0.3 }}
+                            className="text-center z-10"
                         >
                             <h1
-                                className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400"
-                                style={{ fontSize: isMobile ? '40px' : '64px', textShadow: '0 4px 30px rgba(219,112,147,0.5)' }}
+                                className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-sm"
+                                style={{
+                                    fontSize: isMobile ? '42px' : '72px',
+                                    filter: 'drop-shadow(0 4px 0 rgba(255,255,255,0.8))' // White outline effect
+                                }}
                             >
                                 StudyDate 4000
                             </h1>
-                            <p className="text-pink-200/80 mt-2" style={{ fontSize: isMobile ? '14px' : '18px' }}>
+                            <p className="text-pink-500/80 mt-2 font-bold tracking-widest uppercase" style={{ fontSize: isMobile ? '14px' : '18px' }}>
                                 Learn with Fahi
                             </p>
                         </motion.div>
