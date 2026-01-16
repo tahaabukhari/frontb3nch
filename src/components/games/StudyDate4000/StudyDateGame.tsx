@@ -793,7 +793,7 @@ export default function StudyDateGame() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 z-50 flex flex-col items-center justify-center"
-                        style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(139,69,140,0.5) 50%, rgba(0,0,0,0.7) 100%)' }}
+                        style={{ background: 'linear-gradient(180deg, #1a0a1f 0%, #2d1b3d 30%, #4a2060 50%, #2d1b3d 70%, #1a0a1f 100%)' }}
                     >
                         {/* Floating particles effect */}
                         {[...Array(20)].map((_, i) => (
