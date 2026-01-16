@@ -1033,8 +1033,21 @@ export default function StudyDateGame() {
             {/* BACKGROUND */}
             <img src={bgImg.src} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
 
-            {/* Parallax Background - Persistent across all phases */}
-            {[...Array(50)].map((_, i) => {
+            {/* Title Screen Gradient Background - Layered between GameBG and Parallax */}
+            <AnimatePresence>
+                {(phase === 'TITLE' || phase === 'ASK_NAME' || phase === 'SETUP') && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-[4]"
+                        style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fad0c4 100%)' }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Parallax Background - Only on Title, Ask Name, and Setup */}
+            {['TITLE', 'ASK_NAME', 'SETUP'].includes(phase) && [...Array(50)].map((_, i) => {
                 const size = 15 + Math.random() * 30;
                 const duration = 20 + Math.random() * 20;
                 const delay = Math.random() * -40;
@@ -1126,51 +1139,52 @@ export default function StudyDateGame() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
-                        style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fad0c4 100%)' }}
+                        className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden pointer-events-none"
                     >
-                        {/* TITLE SCREEN CONTENT */}
-                        {phase === 'TITLE' && (
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                exit={{ y: -20, opacity: 0 }}
-                                className="text-center z-10 flex flex-col items-center"
-                            >
-                                <h1
-                                    className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-sm mb-2"
-                                    style={{
-                                        fontSize: isMobile ? '42px' : '72px',
-                                        filter: 'drop-shadow(0 4px 0 rgba(255,255,255,0.8))'
-                                    }}
+                        <div className="pointer-events-auto w-full h-full flex flex-col items-center justify-center">
+                            {/* TITLE SCREEN CONTENT */}
+                            {phase === 'TITLE' && (
+                                <motion.div
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: -20, opacity: 0 }}
+                                    className="text-center z-10 flex flex-col items-center"
                                 >
-                                    StudyDate 4000
-                                </h1>
-                                <p className="text-pink-500/80 mb-8 font-bold tracking-widest uppercase" style={{ fontSize: isMobile ? '14px' : '18px' }}>
-                                    Learn with Fahi
-                                </p>
+                                    <h1
+                                        className="font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 drop-shadow-sm mb-2"
+                                        style={{
+                                            fontSize: isMobile ? '42px' : '72px',
+                                            filter: 'drop-shadow(0 4px 0 rgba(255,255,255,0.8))'
+                                        }}
+                                    >
+                                        StudyDate 4000
+                                    </h1>
+                                    <p className="text-pink-500/80 mb-8 font-bold tracking-widest uppercase" style={{ fontSize: isMobile ? '14px' : '18px' }}>
+                                        Learn with Fahi
+                                    </p>
 
-                                <motion.button
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => {
-                                        playClick();
-                                        setPhase('SETUP'); // Correct Flow: Setup First
-                                    }}
-                                    className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden shadow-xl"
-                                    style={{
-                                        background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
-                                        backgroundSize: '200% 200%',
-                                        animation: 'shimmer 3s ease infinite',
-                                        fontSize: isMobile ? '18px' : '22px'
-                                    }}
-                                >
-                                    <span className="relative z-10">♥ Start Journey ♥</span>
-                                </motion.button>
-                            </motion.div>
-                        )}
+                                    <motion.button
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => {
+                                            playClick();
+                                            setPhase('SETUP'); // Correct Flow: Setup First
+                                        }}
+                                        className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden shadow-xl"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
+                                            backgroundSize: '200% 200%',
+                                            animation: 'shimmer 3s ease infinite',
+                                            fontSize: isMobile ? '18px' : '22px'
+                                        }}
+                                    >
+                                        <span className="relative z-10">♥ Start Journey ♥</span>
+                                    </motion.button>
+                                </motion.div>
+                            )}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
