@@ -301,11 +301,62 @@ export default function StudyDateGame() {
         } else setPhase('SETUP'); // Go to topic setup first
     };
 
+    // State for background content generation
+    const [contentReady, setContentReady] = useState(false);
+    const [pendingCurriculum, setPendingCurriculum] = useState<any>(null);
+
     const submitSetup = async () => {
         if (!topic.trim()) return;
-        setPhase('ASK_NAME');
-        setCurrentText(`${topic}! That sounds interesting~ And what's your name?`);
+
+        // Show Fahi's excited reaction
+        setPhase('LOADING'); // Using LOADING as intermediate "reaction" phase
+        setCurrentText(`${topic}! Oh that's a fun one~`);
         setEmotion('excited');
+
+        // Start generating content in background immediately
+        generateCurriculumInBackground();
+
+        // After reaction, ask for name
+        setTimeout(() => {
+            setCurrentText(`By the way, what should I call you?`);
+            setEmotion('happy-neutral');
+            setPhase('ASK_NAME');
+        }, 1500);
+    };
+
+    const generateCurriculumInBackground = async () => {
+        try {
+            const response = await fetch('/api/study-date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'generate_curriculum', topic, notes: goals, clos })
+            });
+            const result = await response.json();
+
+            if (result.success && result.data?.subsections?.length > 0) {
+                const curriculum = result.data.subsections.map((sub: any) => ({
+                    id: sub.id,
+                    title: sanitizeText(sub.title || ''),
+                    explanation: (sub.explanation || [`So let's talk about this.`, 'Pretty straightforward.', 'Makes sense?']).map(sanitizeText),
+                    question: sanitizeText(sub.question || ''),
+                    options: sub.options || [],
+                    correctAnswer: sub.correctAnswer || sub.expectedAnswer || '',
+                    isTextInput: sub.isTextInput === true
+                }));
+                setPendingCurriculum(curriculum);
+                setContentReady(true);
+            }
+        } catch (e) {
+            console.error('Background curriculum error:', e);
+            // Fallback curriculum
+            const fallback: Segment[] = [
+                { id: 1, title: `${topic} Basics`, explanation: [`So ${topic} - basics first.`, `This part is foundational.`, `Gets easier from here.`], question: `What's key to understanding ${topic}?`, options: ['Getting the basics', 'Skipping ahead', 'Memorizing', 'Guessing'], correctAnswer: 'Getting the basics', isTextInput: false },
+                { id: 2, title: `${topic} Deep Dive`, explanation: [`Now the meaty part.`, `This is where it clicks.`, `Think about how it connects.`], question: `Best way to learn this?`, options: ['Practice often', 'Cram later', 'Skip it', 'Wing it'], correctAnswer: 'Practice often', isTextInput: false },
+                { id: 3, title: `${topic} Discussion`, explanation: [`Let's wrap up.`, `Put it in your own words.`, `Show me what you got.`], question: `How would you explain ${topic}?`, options: [], correctAnswer: '', isTextInput: true }
+            ];
+            setPendingCurriculum(fallback);
+            setContentReady(true);
+        }
     };
 
     const submitName = async () => {
@@ -313,30 +364,32 @@ export default function StudyDateGame() {
         const name = textInput.trim();
         setUserName(name);
         setTextInput('');
-        setPhase('LOADING');
-        setCurrentText('Give me a sec to prep everything...');
-        setEmotion('neutral');
 
-        // Generate dynamic AI opening
-        try {
-            const introResponse = await fetch('/api/study-date', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_opening', topic, goals, userName: name })
-            });
-            const introResult = await introResponse.json();
+        // Show personalized greeting
+        setCurrentText(`Nice to meet you, ${name}!`);
+        setEmotion('happy');
 
-            if (introResult.success && introResult.data?.opening) {
-                setCurrentText(introResult.data.opening);
-                setTextKey(prev => prev + 1);
-                setEmotion('happy');
+        // Wait for content to be ready, then start
+        const startTeaching = () => {
+            if (pendingCurriculum) {
+                setSegments(pendingCurriculum);
+                setCurrentSegmentIndex(0);
+                setDialogueIndex(0);
+                setCorrectAnswers([]);
+                setMistakes([]);
+                const first = pendingCurriculum[0];
+                setTimeout(() => {
+                    setCurrentText(`Alright, let's start with ${first.title}!`);
+                    setEmotion('explaining');
+                    setPhase('TEACHING');
+                }, 1500);
+            } else {
+                // Content not ready yet, wait a bit more
+                setTimeout(startTeaching, 500);
             }
-        } catch (e) {
-            setCurrentText(`Alright ${name}, let's dive into ${topic} together!`);
-        }
+        };
 
-        // Start curriculum generation after showing opening
-        setTimeout(() => handleStart(), 2500);
+        setTimeout(startTeaching, 1000);
     };
 
     const handleStart = async () => {
@@ -845,7 +898,7 @@ export default function StudyDateGame() {
                             transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setPhase('INTRO')}
+                            onClick={() => setPhase('SETUP')}
                             className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden"
                             style={{
                                 background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #ec4899 100%)',
