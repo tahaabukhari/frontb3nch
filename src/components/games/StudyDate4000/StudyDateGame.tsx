@@ -139,6 +139,7 @@ export default function StudyDateGame() {
     // Loading state
     const [assetsLoaded, setAssetsLoaded] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState(0);
+    const [audioInitialized, setAudioInitialized] = useState(false);
 
     // Preloaded audio refs - prevents lag by keeping audio in memory
     const audioCache = useRef<Record<string, HTMLAudioElement>>({});
@@ -155,12 +156,20 @@ export default function StudyDateGame() {
                 try {
                     const audio = new Audio(SOUNDS[key]);
                     audio.preload = 'auto';
+                    // Force load by playing and immediately pausing (trick for some browsers)
+                    audio.load();
+
                     await new Promise<void>((resolve) => {
-                        audio.addEventListener('canplaythrough', () => resolve(), { once: true });
-                        audio.load();
-                        // Fallback timeout
-                        setTimeout(resolve, 2000);
+                        // Use a shorter timeout or readyState check
+                        if (audio.readyState >= 3) {
+                            resolve();
+                        } else {
+                            audio.addEventListener('canplaythrough', () => resolve(), { once: true });
+                            // Fallback timeout to prevent hanging the loader
+                            setTimeout(resolve, 1000);
+                        }
                     });
+
                     audioCache.current[key] = audio;
                     loaded++;
                     setLoadingProgress(Math.round((loaded / soundKeys.length) * 100));
@@ -171,6 +180,7 @@ export default function StudyDateGame() {
             }
 
             // Setup background music ref
+            const musicDesc = Object.getOwnPropertyDescriptor(HTMLAudioElement.prototype, 'volume');
             bgMusicRef.current = new Audio(SOUNDS.gametrack);
             bgMusicRef.current.loop = true;
             bgMusicRef.current.volume = 0.4;
@@ -181,15 +191,39 @@ export default function StudyDateGame() {
         preloadAudio();
     }, []);
 
-    // Play sound effect utility - uses cached audio with cloning for overlapping sounds
+    // Initialize audio context on first user interaction
+    const initializeAudio = useCallback(() => {
+        if (audioInitialized) return;
+
+        // Resume AudioContext if it exists (for Web Audio API based sounds if we used them)
+        // Here we just ensure our loaded audios are ready
+
+        // Start background music immediately
+        if (bgMusicRef.current) {
+            bgMusicRef.current.play().then(() => {
+                setMusicPlaying(true);
+            }).catch(e => console.log("Music play failed", e));
+        }
+
+        setAudioInitialized(true);
+    }, [audioInitialized]);
+
+    // Play sound effect utility - uses cached audio 
     const playSound = useCallback((soundKey: keyof typeof SOUNDS, volume: number = 0.5) => {
         try {
             const cachedAudio = audioCache.current[soundKey];
             if (cachedAudio) {
-                // Clone for overlapping plays
+                // For sound effects (short sounds), using cloneNode is standard to allow overlap.
+                // However, creating a new Audio object from the source URL might be more reliable if cloneNode lags.
+                // Let's stick to cloneNode but ensure volume is set before play.
                 const audio = cachedAudio.cloneNode() as HTMLAudioElement;
                 audio.volume = volume;
-                audio.play().catch(() => { });
+
+                // Promise handling to avoid unhandled rejections if user hasn't interacted yet (though initializeAudio should prevent this)
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => { });
+                }
             }
         } catch (e) {
             console.log('Sound play error:', e);
@@ -198,14 +232,6 @@ export default function StudyDateGame() {
 
     // Play click sound - used throughout UI
     const playClick = useCallback(() => playSound('click', 0.3), [playSound]);
-
-    // Start background music (call on first user interaction)
-    const startMusic = useCallback(() => {
-        if (!musicPlaying && bgMusicRef.current) {
-            bgMusicRef.current.play().catch(() => { });
-            setMusicPlaying(true);
-        }
-    }, [musicPlaying]);
 
     // Stop background music with fade
     const stopMusic = useCallback(() => {
@@ -225,8 +251,9 @@ export default function StudyDateGame() {
         }
     }, [musicPlaying]);
 
-    // Stop music when leaving title
+    // Stop music when leaving title phase (transitioning to SETUP/INTRO)
     useEffect(() => {
+        // Only stop if we are leaving TITLE phase
         if (phase !== 'TITLE' && musicPlaying) {
             stopMusic();
         }
@@ -963,7 +990,7 @@ export default function StudyDateGame() {
                             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                             className="w-16 h-16 border-4 border-pink-500/30 border-t-pink-500 rounded-full mb-6"
                         />
-                        <h2 className="text-pink-300 font-bold text-xl mb-2">Loading...</h2>
+                        <h2 className="text-pink-300 font-bold text-xl mb-2">Loading Assets...</h2>
                         {/* Progress bar */}
                         <div className="w-48 h-2 bg-purple-900/50 rounded-full overflow-hidden">
                             <motion.div
@@ -978,16 +1005,39 @@ export default function StudyDateGame() {
                 )}
             </AnimatePresence>
 
+            {/* CLICK TO START OVERLAY - Forces audio context unlock */}
+            <AnimatePresence>
+                {assetsLoaded && !audioInitialized && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-[90] flex flex-col items-center justify-center bg-black/90 cursor-pointer"
+                        onClick={initializeAudio}
+                    >
+                        <motion.button
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-8 py-4 bg-pink-500 text-white rounded-full font-bold text-xl shadow-lg border-2 border-pink-300"
+                        >
+                            Click to Initialize Audio 🔊
+                        </motion.button>
+                        <p className="mt-4 text-gray-400 text-sm">Required for game sounds</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* TITLE SCREEN */}
             <AnimatePresence>
-                {phase === 'TITLE' && assetsLoaded && (
+                {phase === 'TITLE' && assetsLoaded && audioInitialized && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 z-50 flex flex-col items-center justify-center"
                         style={{ background: 'linear-gradient(180deg, #1a0a1f 0%, #2d1b3d 30%, #4a2060 50%, #2d1b3d 70%, #1a0a1f 100%)' }}
-                        onClick={startMusic} // Start music on any click
                     >
                         {/* Floating particles effect */}
                         {[...Array(20)].map((_, i) => (
@@ -1041,7 +1091,6 @@ export default function StudyDateGame() {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => {
                                 playClick();
-                                startMusic();
                                 setPhase('SETUP');
                             }}
                             className="relative px-12 py-4 rounded-full font-bold text-white overflow-hidden"
@@ -1171,8 +1220,14 @@ export default function StudyDateGame() {
                     <motion.div
                         initial={{ opacity: 0, x: isMobile ? 0 : 10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="bg-white/95 backdrop-blur-md rounded-xl rounded-bl-none shadow-2xl border-2 border-pink-300 relative"
+                        className="bg-white/95 backdrop-blur-md rounded-xl rounded-bl-none shadow-2xl border-2 border-pink-300 relative cursor-pointer active:scale-[0.99] transition-transform"
                         style={{ padding: isMobile ? '14px 16px' : `${getSize(18, 20, 24)}px ${getSize(20, 24, 28)}px` }}
+                        onClick={() => {
+                            if (phase === 'INTRO' || phase === 'TEACHING') {
+                                playClick();
+                                phase === 'INTRO' ? advanceIntro() : advanceDialogue();
+                            }
+                        }}
                     >
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-pink-500 font-black" style={{ fontSize: `${getSize(14, 18, 22)}px` }}>Fahi</span>
@@ -1185,7 +1240,11 @@ export default function StudyDateGame() {
 
                         {(phase === 'INTRO' || phase === 'TEACHING') && !isTyping && (
                             <button
-                                onClick={() => { playClick(); phase === 'INTRO' ? advanceIntro() : advanceDialogue(); }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    playClick();
+                                    phase === 'INTRO' ? advanceIntro() : advanceDialogue();
+                                }}
                                 className="absolute top-3 right-3 bg-pink-100 hover:bg-pink-200 text-pink-500 rounded-full font-bold transition-all flex items-center justify-center"
                                 style={{ width: `${getSize(26, 32, 38)}px`, height: `${getSize(26, 32, 38)}px`, fontSize: `${getSize(12, 14, 16)}px` }}
                             >
@@ -1251,7 +1310,7 @@ export default function StudyDateGame() {
                                 />
                                 <span className="absolute bottom-2 right-3 text-gray-400" style={{ fontSize: `${getSize(10, 11, 12)}px` }}>{textInput.length}/{TEXT_INPUT_LIMIT}</span>
                             </div>
-                            <button onClick={handleTextSubmit} disabled={!textInput.trim()}
+                            <button onClick={() => { playClick(); handleTextSubmit(); }} disabled={!textInput.trim()}
                                 className="w-full mt-2 bg-pink-400 hover:bg-pink-500 disabled:bg-gray-300 text-white rounded-lg font-bold transition-all"
                                 style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
                                 Send
@@ -1279,7 +1338,7 @@ export default function StudyDateGame() {
                                     autoFocus
                                 />
                             </div>
-                            <button onClick={handleFinalQuizSubmit} disabled={!textInput.trim()}
+                            <button onClick={() => { playClick(); handleFinalQuizSubmit(); }} disabled={!textInput.trim()}
                                 className="w-full mt-2 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 text-white rounded-lg font-bold transition-all"
                                 style={{ padding: `${getSize(10, 12, 14)}px`, fontSize: `${getSize(13, 15, 17)}px` }}>
                                 Submit Answer
