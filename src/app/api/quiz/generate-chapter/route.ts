@@ -117,12 +117,12 @@ export async function POST(request: Request) {
             slosList,
             '',
             'Guidelines:',
+            '- All questions and answers MUST be in English only',
             '- Create questions that directly test these learning outcomes',
             '- Include a mix of conceptual, application, and numerical questions where applicable',
             '- Each question must have exactly 4 options (1 correct answer + 3 distractors)',
             '- Distractors should be plausible but clearly incorrect',
             '- Questions should be clear and under 200 characters',
-            '- Use Urdu context where appropriate (Pakistani cities, currency PKR, etc.)',
             '- Balance between medium and hard difficulty',
         ].join('\n');
 
