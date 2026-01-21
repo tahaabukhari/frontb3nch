@@ -1,11 +1,15 @@
 import type { GameMode } from './questions';
 
-const modeDurations: Record<GameMode, number | null> = {
+// POP Quiz duration constant (10 minutes)
+export const POP_QUIZ_DURATION = 600;
+
+const modeDurations: Record<GameMode | 'pop-quiz', number | null> = {
   normal: null,
   timed: 20,
+  'pop-quiz': POP_QUIZ_DURATION,
 };
 
-export const getDurationForMode = (mode: GameMode | null) => (mode ? modeDurations[mode] : null);
+export const getDurationForMode = (mode: GameMode | 'pop-quiz' | null) => (mode ? modeDurations[mode] : null);
 
 export const formatSeconds = (seconds: number) => `${seconds.toFixed(1)}s`;
 
