@@ -19,29 +19,44 @@ export async function POST(request: NextRequest) {
             if (mood < 50) {
                 vibe = "Bored, uninterested, slightly annoyed. You don't really want to be here, but you're doing it. Short sentences. Sarcastic or aloof. Keep it brief.";
             } else if (mood > 80) {
-                vibe = "Super excited, high energy, geeking out! You LOVE this topic. Use exclamation marks, maybe emojis. Very enthusiastic.";
+                vibe = "Super excited, high energy, geeking out! You LOVE this topic. Very enthusiastic.";
             }
         }
 
         if (action === 'generate_curriculum') {
             const { notes, clos } = body;
             const prompt = `
-   - Mix of multiple choice (4 options) and open-ended. s
+Generate a study session for topic: "${topic}"
+${notes ? `Context/Notes: "${notes}"` : ''}
+${clos ? `Learning Objectives: "${clos}"` : ''}
+Student Name: "[Name]"
+Mood: ${mood}/100 (${mood < 50 ? 'bored/annoyed' : mood > 80 ? 'super excited' : 'chill friendly'})
 
-JSON Output Format (Strictly adhere to this):
+${vibe}
+
+CRITICAL RULES:
+1. Each line of dialogue MUST be unique - NO repeated phrases
+2. Sound like a real friend explaining, not a teacher
+3. Keep explanations SHORT (max 3 lines each, under 60 chars per line)
+4. Questions should test understanding naturally
+5. Mix MCQ (4 options) and open-ended questions
+6. Generate EXACTLY 3 subsections
+7. NO emojis in any text
+
+JSON Output Format:
 {
   "intro": {
-    "greeting": "Hey [Name]! I am SO hyped to talk about [Topic]...",
-    "funFact": "Did you know that...",
-    "passionReason": "I honestly love this because...",
+    "greeting": "Hey [Name], [topic] - nice choice!",
+    "funFact": "One interesting thing about this...",
+    "passionReason": "I find this cool because...",
     "opinionQuestion": "What's your take on...?"
   },
   "subsections": [
     {
       "id": 1,
-      "title": "Creative Title",
-      "explanation": ["Line 1", "Line 2", "Line 3"],
-      "question": "Quick check question?",
+      "title": "Creative Topic Title",
+      "explanation": ["First point.", "Second point.", "Third point."],
+      "question": "Quick check - what's key here?",
       "options": ["A", "B", "C", "D"],
       "correctAnswer": "A",
       "isTextInput": false
@@ -49,20 +64,16 @@ JSON Output Format (Strictly adhere to this):
   ],
   "finalQuizQuestions": [
     {
-      "question": "Question 1 related to seg 1",
+      "question": "Review question about subsection 1",
       "isTextInput": false,
       "options": ["A", "B", "C", "D"],
       "correctAnswer": "A"
-    },
-    {
-      "question": "Question 2 related to seg 1",
-      "isTextInput": true,
-      "expectedAnswer": "Concept keywords"
     }
   ]
 }
 
-Ensure "finalQuizQuestions" length is exactly 2 * subsections.length.
+Generate 3 subsections and exactly 6 final quiz questions (2 per subsection).
+Ensure ALL text sounds natural and conversational. No robot-speak.
 `;
             try {
                 const result = await model.generateContent([SYSTEM_PROMPT, prompt]);

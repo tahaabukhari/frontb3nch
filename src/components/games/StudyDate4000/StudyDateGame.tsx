@@ -93,6 +93,29 @@ const WRONG_FRUSTRATED = [
     "Seriously?!", "How are you still missing this?", "Come on...",
     "This really shouldn't be this hard.", "Focus please!"
 ];
+
+// Varied transition phrases for natural flow
+const INTRO_TO_TEACHING_TRANSITIONS = [
+    "That's an interesting take! Let's dig into it.",
+    "I like how you think! Okay, let me break this down.",
+    "Fair enough! Let's get into the details.",
+    "Nice perspective! Alright, here we go."
+];
+
+const SEGMENT_TRANSITIONS = [
+    (title: string) => `Alright, let's talk about ${title}.`,
+    (title: string) => `Moving on to ${title}.`,
+    (title: string) => `Next part: ${title}. Here's the deal.`,
+    (title: string) => `Okay, ${title} is up next.`
+];
+
+const FINAL_QUIZ_INTROS = [
+    "Nice! We covered everything. Quick review time.",
+    "That's all the main stuff. Let me check what stuck.",
+    "Alright, main topics done! Pop quiz time.",
+    "Good progress! Let's see how much you remember."
+];
+
 const TEXT_INPUT_LIMIT = 150;
 
 // Star particle component - appears above head like frustration
@@ -480,8 +503,9 @@ export default function StudyDateGame() {
         if (!textInput.trim()) return;
         setTextInput('');
 
-        // Transition to Teaching
-        setCurrentText("That's an interesting perspective! Let's get into the details.");
+        // Transition to Teaching with varied message
+        const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+        setCurrentText(pick(INTRO_TO_TEACHING_TRANSITIONS));
         setEmotion('excited');
         setPhase('TEACHING');
         // Reset teaching state
@@ -747,19 +771,21 @@ export default function StudyDateGame() {
                 setFailCount(0);
                 const next = currentSegmentIndex + 1;
                 if (next >= segments.length) {
-                    // Go to final quiz
+                    // Go to final quiz with varied intro
                     setFinalQuizIndex(0);
-                    setCurrentText(`Nice! That covers all the main parts. Now let's do a quick review~`);
+                    const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+                    setCurrentText(pick(FINAL_QUIZ_INTROS));
                     setEmotion('excited');
                     playSound('nextStage', 0.4);
                     setPhase('FINAL_QUIZ');
                 } else {
-                    // Move to next segment
+                    // Move to next segment with varied transition
                     playSound('nextStage', 0.4);
                     setCurrentSegmentIndex(next);
                     setDialogueIndex(0);
                     setExplainFrame(0);
-                    setCurrentText(`Next up: ${segments[next].title}`);
+                    const transitionFn = SEGMENT_TRANSITIONS[Math.floor(Math.random() * SEGMENT_TRANSITIONS.length)];
+                    setCurrentText(transitionFn(segments[next].title));
                     setPhase('TEACHING');
                 }
             } else {
@@ -862,7 +888,8 @@ export default function StudyDateGame() {
                     if (next >= segments.length) {
                         // All segments done - time for final quiz!
                         setFinalQuizIndex(0);
-                        setCurrentText(`Nice work getting through all that! Now let's do a quick review to make sure everything stuck~`);
+                        const pickArr = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+                        setCurrentText(pickArr(FINAL_QUIZ_INTROS));
                         setEmotion('excited');
                         setPhase('FINAL_QUIZ');
                     } else {
@@ -870,7 +897,8 @@ export default function StudyDateGame() {
                         setDialogueIndex(0);
                         setExplainFrame(0);
                         setFailCount(0);
-                        setCurrentText(`Next up: ${segments[next].title}`);
+                        const transitionFn = SEGMENT_TRANSITIONS[Math.floor(Math.random() * SEGMENT_TRANSITIONS.length)];
+                        setCurrentText(transitionFn(segments[next].title));
                         setPhase('TEACHING'); // User clicks to see explanations
                     }
                 }, 2000);
@@ -1026,7 +1054,7 @@ export default function StudyDateGame() {
     const upcomingTopics = segments.slice(currentSegmentIndex + 1).map(s => s.title);
 
     const showUI = ['INTRO', 'ASK_NAME', 'TEACHING', 'QUIZ', 'TEXT_INPUT', 'FEEDBACK', 'LOADING', 'FINAL_QUIZ'].includes(phase);
-    const showBars = !['INTRO', 'ASK_NAME', 'SETUP', 'PAUSED', 'ENDING'].includes(phase);
+    const showBars = !['TITLE', 'INTRO', 'ASK_NAME', 'SETUP', 'PAUSED', 'ENDING'].includes(phase);
 
     return (
         <div className="fixed inset-0 w-screen h-screen overflow-hidden font-sans select-none bg-black">
@@ -1048,7 +1076,7 @@ export default function StudyDateGame() {
 
             {/* Parallax Background - Only on Title, Ask Name, and Setup */}
             {['TITLE', 'ASK_NAME', 'SETUP'].includes(phase) && [...Array(40)].map((_, i) => {
-                const size = 15 + Math.random() * 25;
+                const size = 20 + Math.random() * 30; // Larger size
                 const duration = 15 + Math.random() * 20;
                 const delay = Math.random() * -30;
                 const startX = Math.random() * 100;
@@ -1058,12 +1086,12 @@ export default function StudyDateGame() {
                 return (
                     <motion.div
                         key={i}
-                        className="absolute text-pink-300/40 select-none pointer-events-none z-[5]"
+                        className="absolute text-pink-400/70 select-none pointer-events-none z-[5]" // Higher opacity color
                         initial={{ x: `${startX}vw`, y: `${startY}vh`, opacity: 0 }}
                         animate={{
                             x: [`${startX}vw`, `${startX + 15}vw`],
                             y: [`${startY}vh`, `${startY + (Math.random() * 10 - 5)}vh`],
-                            opacity: [0, 0.8, 0]
+                            opacity: [0.4, 1, 0.4] // More visible pulse
                         }}
                         transition={{
                             duration: duration,
