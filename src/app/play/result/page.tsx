@@ -6,7 +6,10 @@ import { motion } from 'framer-motion';
 import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '@/lib/store';
 import { calculateAverage, computeScorePercent, formatDuration, totalDuration } from '@/lib/utils';
-import ResultBadge from '@/components/ResultBadge';
+import AnimatedCircle from '@/components/Result/AnimatedCircle';
+import StatGrid from '@/components/Result/StatGrid';
+import AIInsightPanel from '@/components/Result/AIInsightPanel';
+import AnswerReviewPanel from '@/components/Result/AnswerReviewPanel';
 
 type ReviewStatus = 'idle' | 'loading' | 'ready' | 'error';
 interface CoachReview {
@@ -46,12 +49,14 @@ const ResultPage = () => {
   const average = calculateAverage(responseTimes);
   const totalTime = totalDuration(responseTimes);
   const totalTimeLabel = formatDuration(totalTime);
+
   const shareText = [
     `ParhaiPlay ${quizId || 'custom deck'} · ${mode ?? 'solo'} mode`,
     `Score: ${percent}% (${score}/${questions.length})`,
     `Time: ${totalTimeLabel}`,
     wrongQs.length ? `Missed: ${wrongQs.map((w) => w.correct).join(', ')}` : 'Flawless run!',
   ].join('\n');
+
   const includeAnalysis = quizId === 'upload' && Boolean(analysis?.questionSet?.length);
   const summaryForAi = includeAnalysis ? analysis?.summary : undefined;
   const highlightsForAi = includeAnalysis && analysis?.highlights ? analysis.highlights : undefined;
@@ -122,122 +127,90 @@ const ResultPage = () => {
 
   return (
     <motion.section
-      className="px-4 py-14 sm:px-6 sm:py-16"
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
+      className="min-h-screen px-4 py-10 sm:px-6 sm:py-14"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
     >
       <h1 className="sr-only">Quiz results summary</h1>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-4 rounded-3xl bg-dark-card p-6 shadow-xl border border-dark-border sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary sm:text-sm">Scoreboard</p>
-            <p className="text-3xl font-bold text-white sm:text-4xl">{percent}%</p>
-            <p className="text-sm text-gray-400 sm:text-base">
-              You solved {score} / {questions.length} questions.
-            </p>
-            <p className="text-sm text-gray-500">Average response time: {average}</p>
-            <p className="text-sm text-gray-500">Total time: {totalTimeLabel}</p>
-            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:pt-4">
-              <button
-                type="button"
-                onClick={() => router.push('/play/import')}
-                className="rounded-full bg-white px-6 py-3 text-center text-sm font-bold text-black shadow-lg sm:flex-1 hover:bg-gray-200 transition-colors"
-              >
-                Play again
-              </button>
-              <button
-                type="button"
-                onClick={handleShare}
-                className="rounded-full border border-gray-700 px-6 py-3 text-center text-sm font-semibold text-gray-300 sm:flex-1 hover:text-white hover:border-gray-500 transition-colors"
-              >
-                {copied ? 'Link copied!' : 'Share'}
-              </button>
-            </div>
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-600">Deck: {quizId || 'custom upload'}</p>
+
+      {/* Main 3-column layout */}
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto_1fr] lg:items-start">
+          {/* Left Panel - AI Insights */}
+          <div className="order-2 lg:order-1">
+            <AIInsightPanel
+              isLoading={reviewStatus === 'loading'}
+              error={reviewError}
+              review={coachReview}
+              summary={summaryForAi}
+            />
           </div>
-          <ResultBadge score={percent} />
-        </div>
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="rounded-3xl border border-dashed border-dark-border bg-dark-card/50 p-6 text-left shadow-inner sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Shareable recap</p>
-            <p className="mt-3 text-2xl font-bold text-white">Spent {totalTimeLabel}</p>
-            <p className="mt-2 text-sm text-gray-400">
-              {score} of {questions.length} prompts solved · Mode: {mode ?? 'normal'}
-            </p>
-            <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-black/50 border border-dark-border p-4 text-left text-xs text-gray-300">{shareText}</pre>
-            <button
-              type="button"
-              onClick={handleShare}
-              className="mt-4 w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-black shadow-lg transition hover:bg-gray-200"
-            >
-              {copied ? 'Copied!' : 'Share snapshot'}
-            </button>
-          </div>
-          <div className="rounded-3xl bg-dark-card p-6 shadow-xl border border-dark-border sm:p-8">
-            <p className="text-lg font-semibold text-white sm:text-xl">Review your stumbles</p>
-            {wrongQs.length === 0 ? (
-              <p className="mt-4 text-sm text-gray-400 sm:text-base">Flawless victory! No wrong answers recorded.</p>
-            ) : (
-              <ul className="mt-4 space-y-4">
-                {wrongQs.map((item, idx) => (
-                  <li key={`${item.q}-${idx}`} className="rounded-2xl border border-dark-border bg-dark-bg/50 p-4">
-                    <p className="font-semibold text-gray-200">{item.q}</p>
-                    {item.user && (
-                      <p className="text-sm text-red-400">
-                        Your pick: <span className="font-semibold">{item.user}</span>
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-500">
-                      Correct answer: <span className="font-semibold text-primary">{item.correct}</span>
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="rounded-3xl border border-dark-border bg-dark-card p-6 shadow-xl sm:p-8">
-            <p className="text-lg font-semibold text-white sm:text-xl">AI review & insights</p>
-            {coachReview && (
-              <div className="mt-3 space-y-3 text-sm text-gray-400">
-                <p className="text-base font-semibold text-primary">{coachReview.headline}</p>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Strengths</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-4">
-                    {coachReview.strengths.map((item) => (
-                      <li key={`strength-${item}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-500">Focus next</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-4">
-                    {coachReview.focus.map((item) => (
-                      <li key={`focus-${item}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Next actions</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-4">
-                    {coachReview.actions.map((item) => (
-                      <li key={`action-${item}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
+
+          {/* Center Panel - Main Result Card */}
+          <motion.div
+            className="order-1 lg:order-2 flex flex-col items-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5, type: 'spring' }}
+          >
+            <div className="rounded-3xl bg-gradient-to-b from-dark-card to-black/60 backdrop-blur-xl p-8 shadow-2xl border border-white/10 w-full max-w-md">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+                  Quiz Complete
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {quizId || 'Custom Quiz'} · {mode ?? 'Normal'} Mode
+                </p>
               </div>
-            )}
-            {reviewStatus === 'loading' && <p className="mt-4 text-sm text-gray-500">Asking Gemini for coaching tips…</p>}
-            {reviewError && <p className="mt-4 text-sm text-red-400">{reviewError}</p>}
-            {!coachReview && reviewStatus === 'ready' && !reviewError && (
-              <p className="mt-4 text-sm text-gray-500">No AI insights available yet.</p>
-            )}
-            {summaryForAi && (
-              <details className="mt-6 rounded-2xl border border-dark-border bg-dark-bg/30 p-4 text-left text-sm text-gray-400">
-                <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">PDF summary</summary>
-                <p className="mt-2">{summaryForAi}</p>
-              </details>
-            )}
+
+              {/* Animated Circle */}
+              <div className="flex justify-center">
+                <AnimatedCircle percentage={percent} duration={2.5} size={220} strokeWidth={14} />
+              </div>
+
+              {/* Stats Grid */}
+              <StatGrid
+                accuracy={percent}
+                correct={score}
+                wrong={wrongQs.length}
+                totalQuestions={questions.length}
+                averageTime={average}
+                totalTime={totalTimeLabel}
+              />
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3 mt-8 sm:flex-row">
+                <motion.button
+                  type="button"
+                  onClick={() => router.push('/play/import')}
+                  className="flex-1 rounded-full bg-primary px-6 py-3 text-center text-sm font-bold text-black shadow-lg hover:brightness-110 transition-all"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Play Again
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={handleShare}
+                  className="flex-1 rounded-full border border-white/20 px-6 py-3 text-center text-sm font-semibold text-gray-300 hover:text-white hover:border-white/40 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {copied ? '✓ Copied!' : 'Share Results'}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right Panel - Answer Review */}
+          <div className="order-3">
+            <AnswerReviewPanel
+              wrongAnswers={wrongQs}
+              totalQuestions={questions.length}
+              correctCount={score}
+            />
           </div>
         </div>
       </div>
