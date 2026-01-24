@@ -173,18 +173,17 @@ export default function AnimatedCircle({
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                        className="flex flex-col items-center"
+                        className="flex items-center justify-center"
                     >
                         <span
-                            className="text-6xl font-black"
-                            style={{ color: colors.main, textShadow: `0 0 20px ${colors.main}` }}
+                            className="text-7xl font-black text-white"
+                            style={{ textShadow: `0 0 30px ${colors.main}, 0 0 60px ${colors.main}` }}
                         >
                             {grade}
                         </span>
-                        <span className="text-2xl font-bold text-white mt-2">{displayPercent}%</span>
                     </motion.div>
                 ) : (
-                    <span className="text-4xl font-bold text-white tabular-nums">{displayPercent}%</span>
+                    <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
                 )}
             </div>
         </div>
