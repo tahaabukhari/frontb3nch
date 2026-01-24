@@ -130,7 +130,7 @@ export default function AnimatedCircle({
     const strokeDashoffset = circumference - (displayPercent / 100) * circumference;
 
     return (
-        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <div className="relative flex items-center justify-center p-8" style={{ width: size + 64, height: size + 64 }}>
             {/* Background glow */}
             <div
                 className="absolute inset-0 rounded-full blur-xl opacity-30"
