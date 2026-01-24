@@ -183,7 +183,7 @@ export default function AnimatedCircle({
                         </span>
                     </motion.div>
                 ) : (
-                    <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span className="text-5xl font-bold text-white tabular-nums">{displayPercent}%</span>
                 )}
             </div>
         </div>
