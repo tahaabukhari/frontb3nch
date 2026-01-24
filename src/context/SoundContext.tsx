@@ -24,19 +24,23 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         clickSoundRef.current = new Audio('/sounds/button-click.mp3');
         clickSoundRef.current.volume = 0.4;
 
-        // Global click listener for all buttons
+        // Global click listener for all interactive elements
         const handleClick = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            const isButton =
-                target.tagName === 'BUTTON' ||
-                target.closest('button') ||
-                target.getAttribute('role') === 'button' ||
-                target.closest('[role="button"]');
 
-            // Exclude game elements
+            // Check for various interactive element types
+            const isButton = target.tagName === 'BUTTON' || target.closest('button');
+            const isLink = target.tagName === 'A' || target.closest('a');
+            const hasButtonRole = target.getAttribute('role') === 'button' || target.closest('[role="button"]');
+            const isClickable = target.classList.contains('cursor-pointer') || target.closest('.cursor-pointer');
+
+            const isInteractive = isButton || isLink || hasButtonRole || isClickable;
+
+            // Exclude game elements and input fields
             const isInGame = target.closest('[data-no-click-sound]');
+            const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT';
 
-            if (isButton && !isInGame && clickSoundRef.current) {
+            if (isInteractive && !isInGame && !isInput && clickSoundRef.current) {
                 const sound = clickSoundRef.current.cloneNode() as HTMLAudioElement;
                 sound.volume = 0.4;
                 sound.play().catch(() => { });
