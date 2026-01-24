@@ -59,8 +59,10 @@ export default function AnimatedCircle({
     const popSoundRef = useRef<HTMLAudioElement | null>(null);
 
     const radius = (size - strokeWidth) / 2;
-    const innerRadius = radius - strokeWidth - 4; // Inner pie chart radius
+    const innerStrokeWidth = strokeWidth / 2; // Donut width is half of main stroke
+    const innerRadius = radius - strokeWidth / 2 - innerStrokeWidth / 2; // Hugs the main circle
     const circumference = 2 * Math.PI * radius;
+    const innerCircumference = 2 * Math.PI * innerRadius;
     const grade = getGrade(percentage);
     const gradeColor = getGradeColor(grade);
 
@@ -144,8 +146,8 @@ export default function AnimatedCircle({
 
     const strokeDashoffset = circumference - (displayPercent / 100) * circumference;
 
-    // Create inner pie chart segments
-    const renderInnerPieChart = () => {
+    // Create inner donut chart segments (arcs, not filled pie)
+    const renderInnerDonutChart = () => {
         const segments = [];
         const cx = size / 2;
         const cy = size / 2;
@@ -155,34 +157,23 @@ export default function AnimatedCircle({
             const endPercent = i < GRADE_SEGMENTS.length - 1 ? GRADE_SEGMENTS[i + 1].threshold : 100;
             const color = GRADE_SEGMENTS[i].color;
 
-            // Convert percentages to angles (starting from top, going clockwise)
-            const startAngle = (startPercent / 100) * 360 - 90;
-            const endAngle = (endPercent / 100) * 360 - 90;
-
-            // Calculate arc path
-            const startRad = (startAngle * Math.PI) / 180;
-            const endRad = (endAngle * Math.PI) / 180;
-
-            const x1 = cx + innerRadius * Math.cos(startRad);
-            const y1 = cy + innerRadius * Math.sin(startRad);
-            const x2 = cx + innerRadius * Math.cos(endRad);
-            const y2 = cy + innerRadius * Math.sin(endRad);
-
-            const largeArc = endPercent - startPercent > 50 ? 1 : 0;
-
-            const pathD = `
-        M ${cx} ${cy}
-        L ${x1} ${y1}
-        A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${x2} ${y2}
-        Z
-      `;
+            // Calculate stroke dash for this segment
+            const segmentPercent = endPercent - startPercent;
+            const segmentLength = (segmentPercent / 100) * innerCircumference;
+            const segmentOffset = innerCircumference - (startPercent / 100) * innerCircumference;
 
             segments.push(
-                <path
+                <circle
                     key={`segment-${i}`}
-                    d={pathD}
-                    fill={color}
-                    opacity={0.25}
+                    cx={cx}
+                    cy={cy}
+                    r={innerRadius}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={innerStrokeWidth}
+                    strokeDasharray={`${segmentLength} ${innerCircumference - segmentLength}`}
+                    strokeDashoffset={segmentOffset}
+                    opacity={0.35}
                     className="transition-opacity duration-300"
                 />
             );
@@ -205,13 +196,13 @@ export default function AnimatedCircle({
             {/* SVG Container */}
             <svg width={size} height={size} className="transform -rotate-90">
                 <defs>
-                    {/* Animated gradient for the progress stroke */}
+                    {/* Animated gradient for the progress stroke - uses darker shade */}
                     <linearGradient
                         id="progressGradient"
                         gradientTransform={`rotate(${gradientRotation})`}
                     >
                         <stop offset="0%" stopColor={gradeColor} />
-                        <stop offset="50%" stopColor="#ffffff" stopOpacity="0.8" />
+                        <stop offset="50%" stopColor={gradeColor} stopOpacity="0.4" />
                         <stop offset="100%" stopColor={gradeColor} />
                     </linearGradient>
 
@@ -225,10 +216,8 @@ export default function AnimatedCircle({
                     </filter>
                 </defs>
 
-                {/* Inner Pie Chart showing grade thresholds */}
-                <g className="transform rotate-90" style={{ transformOrigin: 'center' }}>
-                    {renderInnerPieChart()}
-                </g>
+                {/* Inner Donut Chart showing grade thresholds */}
+                {renderInnerDonutChart()}
 
                 {/* Track circle */}
                 <circle
