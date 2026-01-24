@@ -76,6 +76,7 @@ export default function AnimatedCircle({
 
     const lastSoundThresholdRef = useRef(0); // Track last threshold where sound played
     const hasPlayedImpactRef = useRef(false); // Guard for metal impact
+    const animationRef = useRef<number | null>(null); // Track animation frame
 
     useEffect(() => {
         // Initialize audio refs (non-looping fill sound)
@@ -101,10 +102,17 @@ export default function AnimatedCircle({
             tingSoundRef.current?.pause();
             applauseSoundRef.current?.pause();
             popSoundRef.current?.pause();
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+            }
         };
     }, []);
 
     useEffect(() => {
+        // Reset the impact flag at the start of each animation cycle
+        hasPlayedImpactRef.current = false;
+        lastSoundThresholdRef.current = 0;
+
         const startTime = performance.now();
         const durationMs = duration * 1000;
 
@@ -119,10 +127,9 @@ export default function AnimatedCircle({
             if (currentThreshold > lastSoundThresholdRef.current && currentPercent > 0) {
                 lastSoundThresholdRef.current = currentThreshold;
                 if (fillSoundRef.current) {
-                    // Clone audio for overlapping plays, adjust pitch based on progress
                     const sound = fillSoundRef.current.cloneNode() as HTMLAudioElement;
-                    sound.volume = 0.3 + progress * 0.4; // Volume increases as we go
-                    sound.playbackRate = 0.7 + progress * 0.8; // Pitch rises
+                    sound.volume = 0.3 + progress * 0.4;
+                    sound.playbackRate = 0.7 + progress * 0.8;
                     sound.play().catch(() => { });
                 }
             }
@@ -130,11 +137,11 @@ export default function AnimatedCircle({
             setDisplayPercent(currentPercent);
 
             if (progress < 1) {
-                requestAnimationFrame(animate);
+                animationRef.current = requestAnimationFrame(animate);
             } else {
                 setShowGrade(true);
 
-                // Play metal impact ONLY ONCE using ref guard
+                // Play metal impact ONLY ONCE
                 if (!hasPlayedImpactRef.current && tingSoundRef.current) {
                     hasPlayedImpactRef.current = true;
                     tingSoundRef.current.currentTime = 0;
@@ -153,7 +160,13 @@ export default function AnimatedCircle({
             }
         };
 
-        requestAnimationFrame(animate);
+        animationRef.current = requestAnimationFrame(animate);
+
+        return () => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+            }
+        };
     }, [percentage, duration, onFillComplete]);
 
     const strokeDashoffset = circumference - (displayPercent / 100) * circumference;

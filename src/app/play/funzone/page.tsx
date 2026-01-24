@@ -162,6 +162,7 @@ export default function FunzonePage() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[200]"
+                        data-no-click-sound
                     >
                         <FlappyBird onBack={() => setActiveGameId(null)} />
                     </motion.div>
