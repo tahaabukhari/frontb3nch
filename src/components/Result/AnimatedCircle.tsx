@@ -78,7 +78,7 @@ export default function AnimatedCircle({
         // Initialize audio refs
         fillSoundRef.current = new Audio('/sounds/fill-bar.mp3');
         fillSoundRef.current.loop = true;
-        fillSoundRef.current.volume = 0.5;
+        fillSoundRef.current.volume = 0.1; // Start quiet
 
         tingSoundRef.current = new Audio('/sounds/metal-impact.mp3');
         tingSoundRef.current.volume = 0.8;
@@ -98,9 +98,12 @@ export default function AnimatedCircle({
     }, []);
 
     useEffect(() => {
+        let hasPlayedImpact = false; // Guard to prevent double play
+
         if (fillSoundRef.current) {
             fillSoundRef.current.currentTime = 0;
             fillSoundRef.current.playbackRate = 0.5;
+            fillSoundRef.current.volume = 0.1; // Start quiet
             fillSoundRef.current.play().catch(() => { });
         }
 
@@ -114,6 +117,9 @@ export default function AnimatedCircle({
             const currentPercent = Math.round(easedProgress * percentage);
 
             if (fillSoundRef.current) {
+                // Fade in volume: 0.1 -> 0.7
+                fillSoundRef.current.volume = 0.1 + progress * 0.6;
+                // Speed up pitch: 0.5x -> 2.0x
                 fillSoundRef.current.playbackRate = 0.5 + progress * 1.5;
             }
 
@@ -126,8 +132,13 @@ export default function AnimatedCircle({
                 if (fillSoundRef.current) fillSoundRef.current.currentTime = 0;
 
                 setShowGrade(true);
-                if (tingSoundRef.current) tingSoundRef.current.currentTime = 0;
-                tingSoundRef.current?.play().catch(() => { });
+
+                // Play metal impact only once
+                if (!hasPlayedImpact && tingSoundRef.current) {
+                    hasPlayedImpact = true;
+                    tingSoundRef.current.currentTime = 0;
+                    tingSoundRef.current.play().catch(() => { });
+                }
 
                 const finalGrade = getGrade(percentage);
                 if (finalGrade === 'S' || finalGrade === 'SS') {
