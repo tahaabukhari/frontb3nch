@@ -62,6 +62,13 @@ const ResultPage = () => {
   const highlightsForAi = includeAnalysis && analysis?.highlights ? analysis.highlights : undefined;
 
   useEffect(() => {
+    // Play page flip sound on mount
+    const audio = new Audio('/sounds/page-flip.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(() => { });
+  }, []);
+
+  useEffect(() => {
     if (!questions.length) return;
     const controller = new AbortController();
     const run = async () => {

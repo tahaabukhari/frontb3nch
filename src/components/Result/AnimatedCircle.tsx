@@ -13,53 +13,64 @@ interface AnimatedCircleProps {
     onFillComplete?: () => void;
 }
 
+// Grade thresholds with colors
+const GRADE_SEGMENTS = [
+    { threshold: 0, color: '#EF5350', label: 'D' },    // Red: 0-50%
+    { threshold: 50, color: '#FF9800', label: 'C' },   // Orange: 50-70%
+    { threshold: 70, color: '#FFEB3B', label: 'B' },   // Yellow: 70-90%
+    { threshold: 90, color: '#7CB342', label: 'A' },   // Green: 90-95%
+    { threshold: 95, color: '#42A5F5', label: 'S' },   // Blue: 95-99%
+    { threshold: 99, color: '#E040FB', label: 'SS' },  // Neon Purple: 100%
+];
+
 function getGrade(percent: number): Grade {
     if (percent >= 100) return 'SS';
     if (percent >= 95) return 'S';
-    if (percent > 90) return 'A';
-    if (percent > 80) return 'B';
-    if (percent > 50) return 'C';
+    if (percent >= 90) return 'A';
+    if (percent >= 70) return 'B';
+    if (percent >= 50) return 'C';
     return 'D';
 }
 
 function getGradeColor(grade: Grade): string {
     switch (grade) {
-        case 'SS': return '#FFD700';  // Gold
-        case 'S': return '#C0C0C0';   // Silver
-        case 'A': return '#7CB342';   // Green (primary)
-        case 'B': return '#42A5F5';   // Blue
+        case 'SS': return '#E040FB';  // Neon Purple
+        case 'S': return '#42A5F5';   // Blue
+        case 'A': return '#7CB342';   // Green
+        case 'B': return '#FFEB3B';   // Yellow
         case 'C': return '#FF9800';   // Orange
         case 'D': return '#EF5350';   // Red
     }
-}
-
-function getProgressColors(percent: number): { main: string; track: string } {
-    const grade = getGrade(percent);
-    const mainColor = getGradeColor(grade);
-    return {
-        main: mainColor,
-        track: 'rgba(255,255,255,0.1)',
-    };
 }
 
 export default function AnimatedCircle({
     percentage,
     duration = 2,
     size = 240,
-    strokeWidth = 12,
+    strokeWidth = 14,
     onFillComplete,
 }: AnimatedCircleProps) {
     const [displayPercent, setDisplayPercent] = useState(0);
     const [showGrade, setShowGrade] = useState(false);
+    const [gradientRotation, setGradientRotation] = useState(0);
     const fillSoundRef = useRef<HTMLAudioElement | null>(null);
     const tingSoundRef = useRef<HTMLAudioElement | null>(null);
     const applauseSoundRef = useRef<HTMLAudioElement | null>(null);
     const popSoundRef = useRef<HTMLAudioElement | null>(null);
 
     const radius = (size - strokeWidth) / 2;
+    const innerRadius = radius - strokeWidth - 4; // Inner pie chart radius
     const circumference = 2 * Math.PI * radius;
     const grade = getGrade(percentage);
-    const colors = getProgressColors(percentage);
+    const gradeColor = getGradeColor(grade);
+
+    // Gradient rotation animation
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setGradientRotation((prev) => (prev + 2) % 360);
+        }, 50);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         // Initialize audio refs
@@ -67,8 +78,8 @@ export default function AnimatedCircle({
         fillSoundRef.current.loop = true;
         fillSoundRef.current.volume = 0.5;
 
-        tingSoundRef.current = new Audio('/sounds/rank-ting.mp3');
-        tingSoundRef.current.volume = 0.7;
+        tingSoundRef.current = new Audio('/sounds/metal-impact.mp3');
+        tingSoundRef.current.volume = 0.8;
 
         applauseSoundRef.current = new Audio('/sounds/applause.mp3');
         applauseSoundRef.current.volume = 0.6;
@@ -85,8 +96,11 @@ export default function AnimatedCircle({
     }, []);
 
     useEffect(() => {
-        // Play fill sound
-        fillSoundRef.current?.play().catch(() => { });
+        if (fillSoundRef.current) {
+            fillSoundRef.current.currentTime = 0;
+            fillSoundRef.current.playbackRate = 0.5;
+            fillSoundRef.current.play().catch(() => { });
+        }
 
         const startTime = performance.now();
         const durationMs = duration * 1000;
@@ -94,24 +108,25 @@ export default function AnimatedCircle({
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / durationMs, 1);
-            // Easing: ease-out cubic
             const easedProgress = 1 - Math.pow(1 - progress, 3);
             const currentPercent = Math.round(easedProgress * percentage);
+
+            if (fillSoundRef.current) {
+                fillSoundRef.current.playbackRate = 0.5 + progress * 1.5;
+            }
 
             setDisplayPercent(currentPercent);
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Stop fill sound
                 fillSoundRef.current?.pause();
                 if (fillSoundRef.current) fillSoundRef.current.currentTime = 0;
 
-                // Show grade with ting sound
                 setShowGrade(true);
+                if (tingSoundRef.current) tingSoundRef.current.currentTime = 0;
                 tingSoundRef.current?.play().catch(() => { });
 
-                // If S or SS, play celebration sounds
                 const finalGrade = getGrade(percentage);
                 if (finalGrade === 'S' || finalGrade === 'SS') {
                     setTimeout(() => {
@@ -129,40 +144,115 @@ export default function AnimatedCircle({
 
     const strokeDashoffset = circumference - (displayPercent / 100) * circumference;
 
+    // Create inner pie chart segments
+    const renderInnerPieChart = () => {
+        const segments = [];
+        const cx = size / 2;
+        const cy = size / 2;
+
+        for (let i = 0; i < GRADE_SEGMENTS.length; i++) {
+            const startPercent = GRADE_SEGMENTS[i].threshold;
+            const endPercent = i < GRADE_SEGMENTS.length - 1 ? GRADE_SEGMENTS[i + 1].threshold : 100;
+            const color = GRADE_SEGMENTS[i].color;
+
+            // Convert percentages to angles (starting from top, going clockwise)
+            const startAngle = (startPercent / 100) * 360 - 90;
+            const endAngle = (endPercent / 100) * 360 - 90;
+
+            // Calculate arc path
+            const startRad = (startAngle * Math.PI) / 180;
+            const endRad = (endAngle * Math.PI) / 180;
+
+            const x1 = cx + innerRadius * Math.cos(startRad);
+            const y1 = cy + innerRadius * Math.sin(startRad);
+            const x2 = cx + innerRadius * Math.cos(endRad);
+            const y2 = cy + innerRadius * Math.sin(endRad);
+
+            const largeArc = endPercent - startPercent > 50 ? 1 : 0;
+
+            const pathD = `
+        M ${cx} ${cy}
+        L ${x1} ${y1}
+        A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${x2} ${y2}
+        Z
+      `;
+
+            segments.push(
+                <path
+                    key={`segment-${i}`}
+                    d={pathD}
+                    fill={color}
+                    opacity={0.25}
+                    className="transition-opacity duration-300"
+                />
+            );
+        }
+
+        return segments;
+    };
+
     return (
-        <div className="relative flex items-center justify-center p-8" style={{ width: size + 64, height: size + 64 }}>
+        <div
+            className="relative flex items-center justify-center p-8"
+            style={{ width: size + 64, height: size + 64 }}
+        >
             {/* Background glow */}
             <div
-                className="absolute inset-0 rounded-full blur-xl opacity-30"
-                style={{ backgroundColor: colors.main }}
+                className="absolute inset-0 rounded-full blur-2xl opacity-40"
+                style={{ backgroundColor: gradeColor }}
             />
 
-            {/* SVG Circle */}
+            {/* SVG Container */}
             <svg width={size} height={size} className="transform -rotate-90">
-                {/* Track */}
+                <defs>
+                    {/* Animated gradient for the progress stroke */}
+                    <linearGradient
+                        id="progressGradient"
+                        gradientTransform={`rotate(${gradientRotation})`}
+                    >
+                        <stop offset="0%" stopColor={gradeColor} />
+                        <stop offset="50%" stopColor="#ffffff" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor={gradeColor} />
+                    </linearGradient>
+
+                    {/* Glow filter */}
+                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                        <feMerge>
+                            <feMergeNode in="coloredBlur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                {/* Inner Pie Chart showing grade thresholds */}
+                <g className="transform rotate-90" style={{ transformOrigin: 'center' }}>
+                    {renderInnerPieChart()}
+                </g>
+
+                {/* Track circle */}
                 <circle
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
                     fill="none"
-                    stroke={colors.track}
+                    stroke="rgba(255,255,255,0.1)"
                     strokeWidth={strokeWidth}
                 />
-                {/* Progress */}
+
+                {/* Progress circle with animated gradient */}
                 <circle
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
                     fill="none"
-                    stroke={colors.main}
+                    stroke="url(#progressGradient)"
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeDashoffset}
-                    style={{
-                        filter: `drop-shadow(0 0 8px ${colors.main})`,
-                        transition: 'stroke 0.3s ease',
-                    }}
+                    filter="url(#glow)"
+                    style={{ transition: 'stroke 0.3s ease' }}
                 />
             </svg>
 
@@ -177,7 +267,7 @@ export default function AnimatedCircle({
                     >
                         <span
                             className="text-7xl font-black text-white"
-                            style={{ textShadow: `0 0 30px ${colors.main}, 0 0 60px ${colors.main}` }}
+                            style={{ textShadow: `0 0 30px ${gradeColor}, 0 0 60px ${gradeColor}` }}
                         >
                             {grade}
                         </span>
