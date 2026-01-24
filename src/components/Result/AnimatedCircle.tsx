@@ -74,11 +74,14 @@ export default function AnimatedCircle({
         return () => clearInterval(interval);
     }, []);
 
+    const lastSoundThresholdRef = useRef(0); // Track last threshold where sound played
+    const hasPlayedImpactRef = useRef(false); // Guard for metal impact
+
     useEffect(() => {
-        // Initialize audio refs
+        // Initialize audio refs (non-looping fill sound)
         fillSoundRef.current = new Audio('/sounds/fill-bar.mp3');
-        fillSoundRef.current.loop = true;
-        fillSoundRef.current.volume = 0.1; // Start quiet
+        fillSoundRef.current.loop = false;
+        fillSoundRef.current.volume = 0.5;
 
         tingSoundRef.current = new Audio('/sounds/metal-impact.mp3');
         tingSoundRef.current.volume = 0.8;
@@ -89,6 +92,10 @@ export default function AnimatedCircle({
         popSoundRef.current = new Audio('/sounds/celebration-pop.mp3');
         popSoundRef.current.volume = 0.7;
 
+        // Reset refs on mount
+        lastSoundThresholdRef.current = 0;
+        hasPlayedImpactRef.current = false;
+
         return () => {
             fillSoundRef.current?.pause();
             tingSoundRef.current?.pause();
@@ -98,15 +105,6 @@ export default function AnimatedCircle({
     }, []);
 
     useEffect(() => {
-        let hasPlayedImpact = false; // Guard to prevent double play
-
-        if (fillSoundRef.current) {
-            fillSoundRef.current.currentTime = 0;
-            fillSoundRef.current.playbackRate = 0.5;
-            fillSoundRef.current.volume = 0.1; // Start quiet
-            fillSoundRef.current.play().catch(() => { });
-        }
-
         const startTime = performance.now();
         const durationMs = duration * 1000;
 
@@ -116,11 +114,17 @@ export default function AnimatedCircle({
             const easedProgress = 1 - Math.pow(1 - progress, 3);
             const currentPercent = Math.round(easedProgress * percentage);
 
-            if (fillSoundRef.current) {
-                // Fade in volume: 0.1 -> 0.7
-                fillSoundRef.current.volume = 0.1 + progress * 0.6;
-                // Speed up pitch: 0.5x -> 2.0x
-                fillSoundRef.current.playbackRate = 0.5 + progress * 1.5;
+            // Play fill sound once per 3 score points
+            const currentThreshold = Math.floor(currentPercent / 3) * 3;
+            if (currentThreshold > lastSoundThresholdRef.current && currentPercent > 0) {
+                lastSoundThresholdRef.current = currentThreshold;
+                if (fillSoundRef.current) {
+                    // Clone audio for overlapping plays, adjust pitch based on progress
+                    const sound = fillSoundRef.current.cloneNode() as HTMLAudioElement;
+                    sound.volume = 0.3 + progress * 0.4; // Volume increases as we go
+                    sound.playbackRate = 0.7 + progress * 0.8; // Pitch rises
+                    sound.play().catch(() => { });
+                }
             }
 
             setDisplayPercent(currentPercent);
@@ -128,14 +132,11 @@ export default function AnimatedCircle({
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                fillSoundRef.current?.pause();
-                if (fillSoundRef.current) fillSoundRef.current.currentTime = 0;
-
                 setShowGrade(true);
 
-                // Play metal impact only once
-                if (!hasPlayedImpact && tingSoundRef.current) {
-                    hasPlayedImpact = true;
+                // Play metal impact ONLY ONCE using ref guard
+                if (!hasPlayedImpactRef.current && tingSoundRef.current) {
+                    hasPlayedImpactRef.current = true;
                     tingSoundRef.current.currentTime = 0;
                     tingSoundRef.current.play().catch(() => { });
                 }
